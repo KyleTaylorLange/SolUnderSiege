@@ -2,14 +2,14 @@
 
 Author: Kyle Taylor Lange
 
-[Download Windows 10 64-bit Executable](https://1drv.ms/u/s!ApUEptdrQboHiL5VZ1RkKqs5RuKizQ?e=JKqORE)
+[Download Windows 10 64-bit Executable](https://1drv.ms/u/s!ApUEptdrQboHiL5VWqADVujp1HvbDg?e=2h4bO5)
 
-[Download UE4 Project Files](https://1drv.ms/u/s!ApUEptdrQboHiL5XjLP1MsC0zeNmqg?e=sdCZMh)
+[Download UE4 Project Files](https://1drv.ms/u/s!ApUEptdrQboHiL5VWqADVujp1HvbDg?e=2h4bO5)
 
 ## Introduction
 
   Sol Under Siege is a first-person shooter game created by me, Kyle Taylor Lange, in the Unreal Engine 4.
-It has been in on/off development since 2015, and it is set throughout the planets and moons of the Solar
+It has been in on/off development since at least 2017, and it is set throughout the planets and moons of the Solar
 System as war and rebellion envelop them. Its goal is to blend the sense of realism in games like ARMA and
 Red Orchestra with sci-fi environments and technology, and the gameplay will span small arena-style levels
 for small-scale deathmatch to large open-terrain battlefields for objective-based big team battles.
