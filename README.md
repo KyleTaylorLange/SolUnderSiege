@@ -6,6 +6,8 @@ Author: Kyle Taylor Lange
 
 [Download UE4 Project Files]()
 
+## Introduction
+
   Sol Under Siege is a first-person shooter game created by me, Kyle Taylor Lange, in the Unreal Engine 4.
 It has been in on/off development since 2015, and it is set throughout the planets and moons of the Solar
 System as war and rebellion envelop them. Its goal is to blend the sense of realism in games like ARMA and
@@ -19,11 +21,13 @@ features. It is currently only being distributed to potential employers and inte
 my programming skills. Almost all graphics are very simple placeholders. I intend to publicly release the
 game once more core features are complete and more thorougly tested.
 
+## Notes
 
   The game originally went under a working title "Lastim" that is still reflected in the name of the core 
 module and certain classes that may be deleted or heavily modified in the future. Most of these references 
 have already been replaced, e.g. "LastimGameMode" being renamed to "SolGameMode".
 
+## Copyright/Use
 
   All code has been written by me with the exception of sections taken or inspired by the source code from
 the ShooterGame example project and [Unreal Tournament](https://github.com/EpicGames/UnrealTournament). Most of those code sections involve the Slate-
