@@ -1,10 +1,10 @@
 # Sol Under Siege
 
-Code Readme
-
-Last updated: 2020-03-02
-
 Author: Kyle Taylor Lange
+
+[Download Windows 10 64-bit Executable](https://1drv.ms/u/s!ApUEptdrQboHiL5VZ1RkKqs5RuKizQ?e=JKqORE)
+
+[Download UE4 Project Files]()
 
   Sol Under Siege is a first-person shooter game created by me, Kyle Taylor Lange, in the Unreal Engine 4.
 It has been in on/off development since 2015, and it is set throughout the planets and moons of the Solar
