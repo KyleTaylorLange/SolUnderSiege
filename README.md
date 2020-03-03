@@ -26,7 +26,7 @@ have already been replaced, e.g. "LastimGameMode" being renamed to "SolGameMode"
 
 
   All code has been written by me with the exception of sections taken or inspired by the source code from
-the ShooterGame example project and Unreal Tournament (4). Most of those code sections involve the Slate-
+the ShooterGame example project and [Unreal Tournament](https://github.com/EpicGames/UnrealTournament). Most of those code sections involve the Slate-
 based HUD elements (like the scoreboard), the infrastructure for creating network games, and some menu items
 (like the key bindings), though the ShooterGame example project still has influence on parts of some weapon 
 and game mode code since I largely figured out how the Unreal Engine worked by playing with that example 
