@@ -21,6 +21,7 @@ class LASTIM_API USolCharacterMovementComponent : public UCharacterMovementCompo
 
 	virtual float CalculateJumpVelocity() const;
 
+public:
 	/** Maximum speed when activating sprint. **/
 	UPROPERTY(EditAnywhere)
 	float MaxSprintSpeed;
@@ -28,5 +29,8 @@ class LASTIM_API USolCharacterMovementComponent : public UCharacterMovementCompo
 	/** Maximum speed when aiming. Also used for slow walking. **/
 	UPROPERTY(EditAnywhere)
 	float MaxAimingSpeed;
-	
+
+	/** The percentage of the player's speed that the player will always have when walking/sprinting. */
+	UPROPERTY(EditAnywhere)
+	float MinDamagedSpeedPct;
 };

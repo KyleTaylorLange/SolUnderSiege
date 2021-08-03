@@ -18,14 +18,13 @@ class LASTIM_API ASolPlayerController : public APlayerController
 
 	virtual void SetupInputComponent() override;
 
+	virtual void ReceivedPlayer() override;
+
 	/** Returns a pointer to the current Lastim Character. May return NULL. **/
 	ASolCharacter* GetSolCharacter() const;
 
 	/** Returns a pointer to the current Lastim Spectator Pawn. May return NULL. **/
 	ASolSpectatorPawn* GetSolSpectatorPawn() const;
-
-	/** Returns a pointer to the Lastim HUD. May return NULL. **/
-	ASolHUD* GetSolHUD() const;
 
 	/* Finds a static spot for the camera upon death.
 		Copied from ShooterGame and not ideal, but works for now. */
@@ -42,6 +41,23 @@ class LASTIM_API ASolPlayerController : public APlayerController
 	// When player presses (and releases) use.
 	void OnUse();
 	void OnStopUse();
+
+	// When player presses (and releases) reload.
+	void OnReload();
+	void OnStopReload();
+
+	// When player presses (and releases) reload.
+	void OnSwitchFireMode();
+	void OnStopSwitchFireMode();
+
+	// When move forward (value = 1) or backward (value = -1) is held down.
+	void MoveForward(float Value);
+
+	// When move forward (value = 1) or backward (value = -1) is held down.
+	void MoveRight(float Value);
+
+	// When moving up (value = 1) or down (value = -1) is held down.
+	void MoveUp(float Value);
 
 	// When player presses (and releases) jump.
 	void OnJump();
@@ -88,7 +104,23 @@ class LASTIM_API ASolPlayerController : public APlayerController
 
 	void IncrementWeapSelectIndex(int32 Amount);
 
+	UFUNCTION(exec)
+	void SetColors(FLinearColor Primary, FLinearColor Secondary);
+
 public:
+
+	UFUNCTION(Exec)
+	void Say(const FString& Msg);
+
+	UFUNCTION(Exec)
+	void TeamSay(const FString& Msg);
+
+	UFUNCTION(Unreliable, Server, WithValidation)
+	void ServerSay(const FString& Msg, FName Type);
+
+	// Sends a message to all players.
+	UFUNCTION(Reliable, Client)
+	virtual void ClientSendMessage(class ASolPlayerState* SenderPlayerState, const FString& S, FName Type);
 
 	/* Basically called whenever the player dies. */
 	void PawnPendingDestroy(APawn* P) override;
@@ -102,9 +134,14 @@ public:
 
 	/* Sets a static location for the player's death camera. 
 		Copied from ShooterGame and not ideal, but works for now. */
-	UFUNCTION(reliable, client)
+	UFUNCTION(Reliable, Client)
 	void ClientSetSpectatorCamera(FVector CameraLocation, FRotator CameraRotation);
 
 	/* Writes a death message to the player's HUD. */
+	UFUNCTION(Reliable, Client)
 	void OnDeathMessage(class ASolPlayerState* KillerPlayerState, class ASolPlayerState* KilledPlayerState, const UDamageType* KillerDamageType);
+
+	/* Sets the player's colors. */
+	UFUNCTION(Reliable, Server)
+	void SetPlayerColors(FLinearColor Primary, FLinearColor Secondary);
 };

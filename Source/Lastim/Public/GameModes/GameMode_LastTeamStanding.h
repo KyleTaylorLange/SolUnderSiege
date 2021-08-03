@@ -13,13 +13,13 @@
 UCLASS()
 class LASTIM_API AGameMode_LastTeamStanding : public ATeamGameMode
 {
-	GENERATED_BODY()
-
-public:
-
-	AGameMode_LastTeamStanding(const FObjectInitializer& ObjectInitializer);
+	GENERATED_UCLASS_BODY()
 
 	virtual void OnPlayerDeath(AController* Killer, AController* KilledPlayer, APawn* KilledPawn, const UDamageType* DamageType);
+
+	virtual void GetGameOptions(TArray<struct FGameOption> &OptionsList) override;
+
+	virtual void InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage) override;
 
 protected:
 
@@ -39,5 +39,12 @@ protected:
 	virtual void DetermineMatchWinner() override;
 
 	virtual void CheckForMatchWinner() override;
+
+	// Class of the battle royale shield each player spawns with.
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<class ABattleRoyaleShield> BattleRoyaleShieldClass;
+
+	// Should we spawn with a battle royale shield?
+	bool bUseBattleRoyaleShield;
 };
 

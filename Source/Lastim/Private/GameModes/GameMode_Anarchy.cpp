@@ -25,7 +25,7 @@ void AGameMode_Anarchy::DetermineMatchWinner()
 
 	for (int32 i = 0; i < MyGameState->PlayerArray.Num(); i++)
 	{
-		const float PlayerScore = MyGameState->PlayerArray[i]->Score;
+		const float PlayerScore = MyGameState->PlayerArray[i]->GetScore();
 		if (BestScore < PlayerScore)
 		{
 			BestScore = PlayerScore;
@@ -47,7 +47,7 @@ void AGameMode_Anarchy::CheckForMatchWinner()
 
 	for (int32 i = 0; i < MyGameState->PlayerArray.Num(); i++)
 	{
-		const float PlayerScore = MyGameState->PlayerArray[i]->Score;
+		const float PlayerScore = MyGameState->PlayerArray[i]->GetScore();
 		if (MyGameState->ScoreLimit <= PlayerScore)
 		{
 			FinishMatch();

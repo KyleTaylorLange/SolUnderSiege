@@ -3,6 +3,7 @@
 #include "Lastim.h"
 #include "UnrealNetwork.h"
 #include "SolCharacter.h"
+#include "SolDamageType.h"
 #include "Projectile.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 
@@ -46,16 +47,16 @@ AProjectile::AProjectile(const FObjectInitializer& ObjectInitializer)
 void AProjectile::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
-
-	//PrimitiveComp->MoveIgnoreActors.Add(Instigator);
 }
 
-void AProjectile::InitVelocity(FVector& ShootDirection)
+void AProjectile::InheritVelocity(FVector& OwnerVelocity)
 {
 	if (ProjectileMovement)
 	{
-		// TEST: Pawn's velocity is ShootDirection. Try to inherit velocity.
-		ProjectileMovement->Velocity += ShootDirection; //ShootDirection * ProjectileMovement->InitialSpeed;
+		FVector NewVelocity = ProjectileMovement->Velocity + OwnerVelocity;
+		ProjectileMovement->InitialSpeed = NewVelocity.Size();
+		ProjectileMovement->MaxSpeed = NewVelocity.Size();
+		ProjectileMovement->Velocity = NewVelocity;
 	}
 }
 
@@ -77,7 +78,7 @@ void AProjectile::OnImpact(UPrimitiveComponent* HitComponent, AActor* OtherActor
 void AProjectile::Detonate(const FHitResult Hit)
 {
 	// Convert to PointDamageEvent for localized damage.
-	FPointDamageEvent PDEvent;
+	FSolPointDamageEvent PDEvent;
 	PDEvent.HitInfo = Hit;
 
 	const FVector NudgedImpactLocation = Hit.ImpactPoint + Hit.ImpactNormal * 10.0f;
@@ -216,7 +217,11 @@ void AProjectile::SpawnImpactEffects(const FHitResult& Impact)
 		}
 		if (ImpactFX)
 		{
-			UGameplayStatics::SpawnEmitterAtLocation(this, ImpactFX, GetActorLocation(), GetActorRotation());
+			UParticleSystemComponent* SpawnedFX = UGameplayStatics::SpawnEmitterAtLocation(this, ImpactFX, GetActorLocation(), GetActorRotation());
+			if (SpawnedFX)
+			{
+				//SpawnedFX->SetVectorParameter("ImpactColour", FVector(1.f, 0.f, 1.f));
+			}
 		}
 	}
 	

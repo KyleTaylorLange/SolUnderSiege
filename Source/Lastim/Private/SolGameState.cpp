@@ -2,6 +2,7 @@
 
 #include "Lastim.h"
 #include "UnrealNetwork.h"
+#include "SolGameMode.h"
 #include "SolGameState.h"
 
 void ASolGameState::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & OutLifetimeProps) const
@@ -30,7 +31,7 @@ void ASolGameState::GetRankedMap(int32 TeamIndex, RankedPlayerMap& OutRankedMap)
 		ASolPlayerState* CurPlayerState = Cast<ASolPlayerState>(PlayerArray[i]);
 		if (CurPlayerState && (CurPlayerState->GetTeamNum() == TeamIndex))
 		{
-			SortedMap.Add(FMath::TruncToInt(CurPlayerState->Score), CurPlayerState);
+			SortedMap.Add(FMath::TruncToInt(CurPlayerState->GetScore()), CurPlayerState);
 		}
 	}
 
@@ -45,4 +46,21 @@ void ASolGameState::GetRankedMap(int32 TeamIndex, RankedPlayerMap& OutRankedMap)
 	{
 		OutRankedMap.Add(Rank++, It.Value());
 	}
+}
+
+void ASolGameState::GetGameModes(TArray<UClass*>& GameModes) const
+{
+	for (TObjectIterator<UClass> It; It; ++It)
+	{
+		UClass* CurClass = (*It);
+		if (CurClass->IsChildOf(ASolGameMode::StaticClass()) && !CurClass->HasAnyClassFlags(CLASS_Abstract))
+		{
+			GameModes.Add(CurClass);
+		}
+	}
+}
+
+void ASolGameState::GetMaps(TArray<FAssetData>& Maps, AGameMode* GameMode) const
+{
+	//TODO: Actually find maps.
 }

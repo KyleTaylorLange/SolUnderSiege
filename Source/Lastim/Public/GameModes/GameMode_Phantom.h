@@ -11,7 +11,7 @@
 UCLASS()
 class LASTIM_API AGameMode_Phantom : public ASolGameMode
 {
-	GENERATED_BODY()
+	GENERATED_UCLASS_BODY()
 	
 	
 	

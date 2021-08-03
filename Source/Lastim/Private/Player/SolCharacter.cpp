@@ -8,6 +8,7 @@
 #include "TeamState.h"
 #include "SolGameState.h"
 #include "InventoryItem.h"
+#include "SolDamageType.h"
 #include "Firearm.h"
 #include "Ammo.h"
 #include "AmmoBag.h"
@@ -27,12 +28,14 @@ ASolCharacter::ASolCharacter(const FObjectInitializer& ObjectInitializer) //: Su
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(47.5f, 87.5f); //175cm tall, 112.5cm crouching (56.25cm HH)
 	GetCapsuleComponent()->SetCollisionResponseToChannel(COLLISION_PROJECTILE, ECR_Ignore);
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Ignore);
+	GetCapsuleComponent()->CanCharacterStepUpOn = ECB_Yes;
 	BaseEyeHeight = 72.5f; // 15 cm from top of head.
 	CrouchedEyeHeight = 41.25f;
-	USolCharacterMovementComponent* LastimMC = Cast<USolCharacterMovementComponent>(GetMovementComponent());
-	if (LastimMC)
+	USolCharacterMovementComponent* SolMoveComp = Cast<USolCharacterMovementComponent>(GetMovementComponent());
+	if (SolMoveComp)
 	{
-		LastimMC->CrouchedHalfHeight = 87.5f; //56.25f;
+		SolMoveComp->CrouchedHalfHeight = 87.5f; //56.25f;
 	}
 
 	// set our turn rates for input
@@ -46,8 +49,9 @@ ASolCharacter::ASolCharacter(const FObjectInitializer& ObjectInitializer) //: Su
 	FirstPersonCameraComponent->bUsePawnControlRotation = true;
 
 	// Mesh sockets
+	WeaponAttachPoint = "HandRSocket"; //"GunSocketTest";
 	HelmetAttachPoint = "HelmetSocket";
-	WeaponAttachPoint = "GunSocketTest";
+	RightThighAttachPoint = "ThighRSocket";
 
 	// Create a mesh component that will be used when being viewed from a '1st person' view (when controlling this pawn)
 	Mesh1P = ObjectInitializer.CreateDefaultSubobject<USkeletalMeshComponent>(this, TEXT("CharacterMesh1P"));
@@ -73,14 +77,85 @@ ASolCharacter::ASolCharacter(const FObjectInitializer& ObjectInitializer) //: Su
 	HelmetMesh->SetCollisionObjectType(ECC_Pawn);
 	HelmetMesh->SetupAttachment(GetMesh(), HelmetAttachPoint);
 
+	/** There are nine different body sections so far. */
+	BodySections.SetNum(9);
+	BodySections[EBodySection::Head].Bones.Add("head");
+	BodySections[EBodySection::Head].Bones.Add("neck_01");
+
+	BodySections[EBodySection::UpperTorso].Bones.Add("spine_03");
+	BodySections[EBodySection::UpperTorso].Bones.Add("spine_02");
+
+	BodySections[EBodySection::LowerTorso].Bones.Add("pelvis");
+	BodySections[EBodySection::LowerTorso].Bones.Add("spine_01");
+
+	BodySections[EBodySection::LeftTorso].Bones.Add("clavicle_l");
+
+	BodySections[EBodySection::RightTorso].Bones.Add("clavicle_r");
+
+	BodySections[EBodySection::LeftLeg].Bones.Add("thigh_l");
+	BodySections[EBodySection::LeftLeg].Bones.Add("calf_l");
+	BodySections[EBodySection::LeftLeg].Bones.Add("foot_l");
+	BodySections[EBodySection::LeftLeg].Bones.Add("ball_l");
+
+	BodySections[EBodySection::RightLeg].Bones.Add("thigh_r");
+	BodySections[EBodySection::RightLeg].Bones.Add("calf_r");
+	BodySections[EBodySection::RightLeg].Bones.Add("foot_r");
+	BodySections[EBodySection::RightLeg].Bones.Add("ball_r");
+
+	BodySections[EBodySection::LeftArm].Bones.Add("upperarm_l");
+	BodySections[EBodySection::LeftArm].Bones.Add("lowerarm_l");
+	BodySections[EBodySection::LeftArm].Bones.Add("hand_l");
+	BodySections[EBodySection::LeftArm].Bones.Add("index_01_l");
+	BodySections[EBodySection::LeftArm].Bones.Add("index_02_l");
+	BodySections[EBodySection::LeftArm].Bones.Add("index_03_l");
+	BodySections[EBodySection::LeftArm].Bones.Add("middle_01_l");
+	BodySections[EBodySection::LeftArm].Bones.Add("middle_02_l");
+	BodySections[EBodySection::LeftArm].Bones.Add("middle_03_l");
+	BodySections[EBodySection::LeftArm].Bones.Add("ring_01_l");
+	BodySections[EBodySection::LeftArm].Bones.Add("ring_02_l");
+	BodySections[EBodySection::LeftArm].Bones.Add("ring_03_l");
+	BodySections[EBodySection::LeftArm].Bones.Add("pinky_01_l");
+	BodySections[EBodySection::LeftArm].Bones.Add("pinky_02_l");
+	BodySections[EBodySection::LeftArm].Bones.Add("pinky_03_l");
+	BodySections[EBodySection::LeftArm].Bones.Add("thumb_01_l");
+	BodySections[EBodySection::LeftArm].Bones.Add("thumb_02_l");
+	BodySections[EBodySection::LeftArm].Bones.Add("thumb_03_l");
+
+	BodySections[EBodySection::RightArm].Bones.Add("upperarm_r");
+	BodySections[EBodySection::RightArm].Bones.Add("lowerarm_r");
+	BodySections[EBodySection::RightArm].Bones.Add("hand_r");
+	BodySections[EBodySection::RightArm].Bones.Add("index_01_r");
+	BodySections[EBodySection::RightArm].Bones.Add("index_02_r");
+	BodySections[EBodySection::RightArm].Bones.Add("index_03_r");
+	BodySections[EBodySection::RightArm].Bones.Add("middle_01_r");
+	BodySections[EBodySection::RightArm].Bones.Add("middle_02_r");
+	BodySections[EBodySection::RightArm].Bones.Add("middle_03_r");
+	BodySections[EBodySection::RightArm].Bones.Add("ring_01_r");
+	BodySections[EBodySection::RightArm].Bones.Add("ring_02_r");
+	BodySections[EBodySection::RightArm].Bones.Add("ring_03_r");
+	BodySections[EBodySection::RightArm].Bones.Add("pinky_01_r");
+	BodySections[EBodySection::RightArm].Bones.Add("pinky_02_r");
+	BodySections[EBodySection::RightArm].Bones.Add("pinky_03_r");
+	BodySections[EBodySection::RightArm].Bones.Add("thumb_01_r");
+	BodySections[EBodySection::RightArm].Bones.Add("thumb_02_r");
+	BodySections[EBodySection::RightArm].Bones.Add("thumb_03_r");
+
 	Health = 100.f;
-	MaxHealth = 100.f;
+	FullHealth = 100.f;
+	MaxHealth = 150.f;
 	SevereDamage = 0.f;
-	SevereDamageScalar = 0.125f;
+	SevereDamageScalar = 1.0f; //0.125f;
 	HealthRegenRate = 1.5f;
 	HealthTicksPerSec = 8.f;
+	LegHealth = 50.f;
+	FullLegHealth = 50.f;
+
+	Energy = 100.f;
+	FullEnergy = 100.f;
+	MaxEnergy = 150.f;
 	Stamina = 10.f;
-	MaxEquipment = 5;
+	DefaultInventoryMassCapacity = 10.f;
+	CurrentInventoryMass = 0.f;
 
 	CurrentAimPct = 0.f;
 	bIsDying = false;
@@ -104,20 +179,18 @@ ASolCharacter::ASolCharacter(const FObjectInitializer& ObjectInitializer) //: Su
 	RecoilTimeScalar = 0.5f;
 
 	HeldWeaponOffset = FRotator::ZeroRotator;
+	AimBreathingOffset = FRotator::ZeroRotator;
 	LastControlRotation = FRotator::ZeroRotator;
-	MaxFreeAimRadius = 10.f; //5.f;
+	MaxFreeAimRadius = 7.5f; //10.f;
 	MaxRecoilOffsetRadius = 10.f;
+
+	WeaponSwayTime = 0.0f;
+	BreathingTime = 0.f;
 }
 
 void ASolCharacter::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
-
-	if (GetLocalRole() == ROLE_Authority)
-	{
-		// Called by Game Mode now.
-		//SpawnInitialInventory();
-	}
 
 	// Create material instances so we can manipulate them later.
 	for (int32 iMat = 0; iMat < GetMesh()->GetNumMaterials(); iMat++)
@@ -149,32 +222,34 @@ void ASolCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
+	float MAX_STAMINA = 10.f;
+
 	if (!bIsDying)
 	{
 		/** Use stamina if sprinting **/
 		if (IsSprinting())
 		{
-			Stamina -= 1 * DeltaSeconds;
+			Stamina -= 0.9f * DeltaSeconds;
 			if (Stamina < 0.f)
 			{
 				SetSprinting(false);
 			}
 		}
 		/**Regenerate stamina if not sprinting **/
-		else if (Stamina < 11.f && !IsSprinting())
+		else if (Stamina < MAX_STAMINA && !IsSprinting())
 		{
 			Stamina += 1 * DeltaSeconds;
-			if (Stamina > 11.f)
+			if (Stamina > MAX_STAMINA)
 			{
-				Stamina = 11.f;
+				Stamina = MAX_STAMINA;
 			}
 		}
 
 		/** Adjust the weapon's aim percentage. **/
-		if (EquippedWeapon) //Since the weapon itself has the aim speed.
+		if (EquippedItem) //Since the weapon itself has the aim speed.
 		{
 			float AimSpeed = 0.5f;
-			AFirearm* EquippedFirearm = Cast<AFirearm>(EquippedWeapon);
+			AFirearm* EquippedFirearm = Cast<AFirearm>(EquippedItem);
 			if (EquippedFirearm)
 			{
 				AimSpeed = EquippedFirearm->GetAimSpeed();
@@ -200,15 +275,9 @@ void ASolCharacter::Tick(float DeltaSeconds)
 		/** Add recoil to character if necessary. */
 		if (RecoilCurveTime > 0.0f)
 		{
-			ProcessRecoil(DeltaSeconds);
+			//ProcessRecoil(DeltaSeconds);
 		}
-		/*
-		AActor* UseItem = GetUsableObject();
-		if (UseItem != nullptr)
-		{
-			// Do stuff here
-		}
-		*/
+		AddWeaponSway(DeltaSeconds);
 	}
 }
 
@@ -220,21 +289,7 @@ void ASolCharacter::SetupPlayerInputComponent(class UInputComponent* InputCompon
 	// set up gameplay key bindings
 	check(InputComponent);
 
-	InputComponent->BindAction("Reload", IE_Pressed, this, &ASolCharacter::OnReload);
-	//InputComponent->BindAction("Reload", IE_Released, this, &ASolCharacter::OnStopReload);
-
-	InputComponent->BindAction("SwitchFireMode", IE_Pressed, this, &ASolCharacter::OnSwitchFireMode);
-
-	InputComponent->BindAction("SwitchWeapon", IE_Pressed, this, &ASolCharacter::OnSwitchWeapon);
-
-	InputComponent->BindAction("EquipSidearm", IE_Pressed, this, &ASolCharacter::OnEquipSidearm);
-	InputComponent->BindAction("EquipPrimary", IE_Pressed, this, &ASolCharacter::OnEquipPrimary);
-	InputComponent->BindAction("EquipSecondary", IE_Pressed, this, &ASolCharacter::OnEquipSecondary);
-
 	InputComponent->BindAction("DropWeapon", IE_Pressed, this, &ASolCharacter::OnDropWeapon);
-
-	InputComponent->BindAxis("MoveForward", this, &ASolCharacter::MoveForward);
-	InputComponent->BindAxis("MoveRight", this, &ASolCharacter::MoveRight);
 	
 	// We have 2 versions of the rotation bindings to handle different kinds of devices differently
 	// "turn" handles devices that provide an absolute delta, such as a mouse.
@@ -245,50 +300,39 @@ void ASolCharacter::SetupPlayerInputComponent(class UInputComponent* InputCompon
 	InputComponent->BindAxis("LookUpRate", this, &ASolCharacter::LookUpAtRate);
 }
 
-/** Below functions currently are the input. This will later be relegated to the PlayerController.
+/** Below functions currently are the input. Those listed above will eventually be relegated to the player controller.
     This will allow us to do actions while dead ("Press [Fire] To Respawn") or to relegate those
 	functions to controlled vehicles. **/
 
 void ASolCharacter::StartFire()
 {
-	if (EquippedWeapon && bWeaponFiringAllowed)
+	if (EquippedItem && bWeaponFiringAllowed)
 	{
-		EquippedWeapon->StartFire();
-	}
-
-	// try and play a firing animation if specified
-	if(FireAnimation != NULL)
-	{
-		// Get the animation object for the arms mesh
-		UAnimInstance* AnimInstance = Mesh1P->GetAnimInstance();
-		if(AnimInstance != NULL)
-		{
-			AnimInstance->Montage_Play(FireAnimation, 1.f);
-		}
+		EquippedItem->StartFire();
 	}
 }
 
 void ASolCharacter::StopFire()
 {
-	if (EquippedWeapon)
+	if (EquippedItem)
 	{
-		EquippedWeapon->StopFire();
+		EquippedItem->StopFire();
 	}
 }
 
 void ASolCharacter::OnReload()
 {
-	if (EquippedWeapon)
+	if (EquippedItem)
 	{
-		EquippedWeapon->StartReload();
+		EquippedItem->StartReload();
 	}
 }
 
 void ASolCharacter::OnSwitchFireMode()
 {
-	if (EquippedWeapon)
+	if (EquippedItem)
 	{
-		EquippedWeapon->StartSwitchFireMode();
+		EquippedItem->StartSwitchFireMode();
 	}
 }
 
@@ -340,12 +384,6 @@ void ASolCharacter::OnStopSprint()
 	SetSprinting(false);
 }
 
-// Currently identical to OnNextWeapon()
-void ASolCharacter::OnSwitchWeapon() //(int8 WeapNum)
-{
-	EquipWeaponByDeltaIndex(1);
-}
-
 void ASolCharacter::OnPrevWeapon()
 {
 	EquipWeaponByDeltaIndex(-1);
@@ -358,52 +396,28 @@ void ASolCharacter::OnNextWeapon()
 
 void ASolCharacter::EquipWeaponByDeltaIndex(int32 DeltaIndex)
 {
-	if (GetInventoryCount() >= 1 && (EquippedWeapon == NULL || EquippedWeapon->GetWeaponState() != "Equipping"))
+	if (GetInventoryCount() >= 1 && (EquippedItem == NULL || EquippedItem->GetWeaponState() != "Equipping"))
 	{
-		const int32 EquippedWeaponIdx = WeaponInventory.IndexOfByKey(EquippedWeapon); //Becomes -1 if there is no equipped weapon.
-		AWeapon* NewWeapon = WeaponInventory[FMath::Abs(EquippedWeaponIdx + DeltaIndex) % GetInventoryCount()];
-		if (NewWeapon && NewWeapon != EquippedWeapon)
+		const int32 EquippedItemIdx = ItemInventory.IndexOfByKey(EquippedItem); //Becomes -1 if there is no equipped weapon.
+		AInventoryItem* NewItem = ItemInventory[FMath::Abs(EquippedItemIdx + DeltaIndex) % GetInventoryCount()];
+		if (NewItem && NewItem->CanBeEquipped() && NewItem != EquippedItem)
 		{
-			SetPendingWeapon(NewWeapon); //EquipWeapon(NewWeapon);
+			SetPendingWeapon(NewItem); //EquipItem(NewWeapon);
 		}
-	}
-}
-
-void ASolCharacter::OnEquipSidearm()
-{
-	if (SidearmWeapon && SidearmWeapon != EquippedWeapon)
-	{
-		SetPendingWeapon(SidearmWeapon); //EquipWeapon(SidearmWeapon);
-	}
-}
-
-void ASolCharacter::OnEquipPrimary()
-{
-	if (PrimaryWeapon && PrimaryWeapon != EquippedWeapon)
-	{
-		SetPendingWeapon(PrimaryWeapon); //EquipWeapon(PrimaryWeapon);
-	}
-}
-
-void ASolCharacter::OnEquipSecondary()
-{
-	if (SecondaryWeapon && SecondaryWeapon != EquippedWeapon)
-	{
-		SetPendingWeapon(SecondaryWeapon);  //EquipWeapon(SecondaryWeapon);
 	}
 }
 
 void ASolCharacter::OnDropWeapon()
 {
-	if (EquippedWeapon)
+	if (EquippedItem)
 	{
-		DropInventory(EquippedWeapon);
+		DropInventory(EquippedItem);
 	}
 }
 
-bool ASolCharacter::OnStartUse()
+void ASolCharacter::OnStartUse()
 {
-	return HandleUse();
+	HandleUse();
 }
 
 void ASolCharacter::OnStopUse()
@@ -413,7 +427,7 @@ void ASolCharacter::OnStopUse()
 
 /** Below functions deal with the result of the input. **/
 
-void ASolCharacter::EquipWeapon(AWeapon* Weapon)
+void ASolCharacter::EquipItem(AInventoryItem* Weapon)
 {
 	if (Weapon)
 	{
@@ -428,14 +442,14 @@ void ASolCharacter::EquipWeapon(AWeapon* Weapon)
 	}
 }
 
-bool ASolCharacter::ServerEquipWeapon_Validate(AWeapon* Weapon)
+bool ASolCharacter::ServerEquipWeapon_Validate(AInventoryItem* Weapon)
 {
 	return true;
 }
 
-void ASolCharacter::ServerEquipWeapon_Implementation(AWeapon* Weapon)
+void ASolCharacter::ServerEquipWeapon_Implementation(AInventoryItem* Weapon)
 {
-	EquipWeapon(Weapon); //EquipWeapon(Weapon);
+	EquipItem(Weapon);
 }
 
 void ASolCharacter::DropInventory(AInventoryItem* Inv)
@@ -447,7 +461,7 @@ void ASolCharacter::DropInventory(AInventoryItem* Inv)
 			FVector SpawnVector = GetWeaponAimLoc(); //+ (GetWeaponAimRot().RotateVector(FVector(50.f, 0.f, 0.f)));
 			FTransform SpawnTM(GetWeaponAimRot(), SpawnVector);
 			// Changed DroppedPickup class to SpecificPickup class since physics don't work on the DroppedPickup.
-			ASpecificPickup* DroppedPickup = Cast<ASpecificPickup>(UGameplayStatics::BeginDeferredActorSpawnFromClass(this, DroppedPickup->StaticClass(), SpawnTM));
+			ASpecificPickup* DroppedPickup = Cast<ASpecificPickup>(UGameplayStatics::BeginDeferredActorSpawnFromClass(this, ASpecificPickup::StaticClass(), SpawnTM));
 			if (DroppedPickup)
 			{
 				UE_LOG(LogDamage, Warning, TEXT("%s: Dropping item %s."), *GetName(), *Inv->GetName());
@@ -554,20 +568,14 @@ AActor* ASolCharacter::GetUsableObject()
 	{
 		for (int32 i = 0; i < OutHits.Num(); i++)
 		{
-			AActor* FoundObject = nullptr;
 			UPrimitiveComponent* FoundComp = Cast<UPrimitiveComponent>(OutHits[i].GetComponent());
-			if (FoundComp)
+			IUsableObjectInterface* FoundItem = Cast<IUsableObjectInterface>(FoundComp->GetOwner());
+			if (FoundItem && FoundItem->CanBeUsedBy(this))
 			{
-				FoundObject = FoundComp->GetOwner();
-			}
-			APickup* PickupObject = Cast<APickup>(FoundObject);
-			// Temporarily forcing this to only consider root components.
-			if (PickupObject && PickupObject->GetRootComponent() == FoundComp)
-			{
-				if ( CanPickupItem(PickupObject->GetHeldItem()) )
+				AActor* FoundActor = Cast<AActor>(FoundItem);
+				if (FoundActor)
 				{
-					UsableObject = PickupObject;
-					// Immediately return this pickup for now.
+					UsableObject = FoundActor;
 					return UsableObject;
 				}
 			}
@@ -576,7 +584,7 @@ AActor* ASolCharacter::GetUsableObject()
 	return UsableObject;
 }
 
-bool ASolCharacter::HandleUse()
+void ASolCharacter::HandleUse()
 {
 	// If we're a client, notify the server.
 	if (GetLocalRole() < ROLE_Authority)
@@ -585,27 +593,20 @@ bool ASolCharacter::HandleUse()
 	}
 
 	bool bUseSuccessful = false;
-	AActor* UsableObject = GetUsableObject();
+	IUsableObjectInterface* UsableObject = Cast< IUsableObjectInterface>(GetUsableObject());
 	if (UsableObject != nullptr)
 	{
-		//GEngine->AddOnScreenDebugMessage(-1, 15.f, FColor::Blue, FString::Printf(TEXT("Usable Item")));
-		APickup* PickupObject = Cast<APickup>(UsableObject);
-		if (PickupObject)
-		{	
-			PickupObject->PickupOnUse(this);
-			bUseSuccessful = true;
-			if (PickupItemSound && IsLocallyControlled())
-			{
-				UGameplayStatics::PlaySoundAtLocation(this, PickupItemSound, GetActorLocation());
-			}
+		bUseSuccessful = UsableObject->OnStartUseBy(this);
+		// Only play sound if local player controller owns this pawn.
+		if (PickupItemSound && IsFirstPerson())
+		{
+			UGameplayStatics::PlaySoundAtLocation(this, PickupItemSound, GetActorLocation());
 		}
 	}
-	if (!bUseSuccessful && UseDenialSound && IsLocallyControlled())
+	if (!bUseSuccessful && UseDenialSound && IsFirstPerson())
 	{
-		//GEngine->AddOnScreenDebugMessage(-1, 15.f, FColor::Black, FString::Printf(TEXT("No item!")));
 		UGameplayStatics::PlaySoundAtLocation(this, UseDenialSound, GetActorLocation());
 	}
-	return bUseSuccessful;
 }
 
 bool ASolCharacter::ServerHandleUse_Validate()
@@ -642,29 +643,99 @@ float ASolCharacter::GetHealth() const
 	return Health;
 }
 
+float ASolCharacter::GetFullHealth() const
+{
+	return FullHealth;
+}
+
+float ASolCharacter::GetCappedHealth() const
+{
+	return FullHealth - SevereDamage;
+}
+
 float ASolCharacter::GetMaxHealth() const
 {
 	return MaxHealth;
 }
 
-float ASolCharacter::GetCappedHealth() const
+void ASolCharacter::SetHealth(float NewHealth)
 {
-	return MaxHealth - SevereDamage;
+	Health = FMath::Clamp(NewHealth, 0.f, MaxHealth);
 }
 
-AWeapon* ASolCharacter::GetEquippedWeapon() const
+void ASolCharacter::SetFullHealth(float NewFullHealth)
 {
-	return EquippedWeapon;
+	FullHealth = FMath::Max(NewFullHealth, 0.f);
+	// Ensure max health is never below full health.
+	if (FullHealth > MaxHealth)
+	{
+		SetMaxHealth(FullHealth);
+	}
 }
 
-AWeapon* ASolCharacter::GetPendingWeapon()
+void ASolCharacter::SetMaxHealth(float NewMaxHealth)
 {
-	return PendingWeapon;
+	MaxHealth = FMath::Max(NewMaxHealth, 0.f);
+	// Ensure full health is never above max health.
+	if (MaxHealth < FullHealth)
+	{
+		SetFullHealth(MaxHealth);
+	}
+}
+
+float ASolCharacter::GetLegHealth() const
+{
+	return LegHealth;
+}
+
+float ASolCharacter::GetFullLegHealth() const
+{
+	return FullLegHealth;
+}
+
+float ASolCharacter::GetEnergy() const
+{
+	return Energy;
+}
+
+float ASolCharacter::GetFullEnergy() const
+{
+	return FullEnergy;
+}
+
+float ASolCharacter::GetMaxEnergy() const
+{
+	return MaxEnergy;
+}
+
+AInventoryItem* ASolCharacter::GetEquippedItem() const
+{
+	return EquippedItem;
+}
+
+AInventoryItem* ASolCharacter::GetPendingItem()
+{
+	return PendingItem;
 }
 
 FName ASolCharacter::GetWeaponAttachPoint() const
 {
 	return WeaponAttachPoint;
+}
+
+FName ASolCharacter::DetermineItemAttachPoint(AInventoryItem* Inv)
+{
+	/**
+	if (Inv == SidearmWeapon)
+	{
+		return RightThighAttachPoint;
+	}
+	else if ((Inv == PrimaryWeapon && SecondaryWeapon == EquippedItem) || (Inv == SecondaryWeapon && PrimaryWeapon == EquippedItem))
+	{
+		return BackAttachPoint;
+	}
+	*/
+	return "None";
 }
 
 FVector ASolCharacter::GetHeadLocation() const
@@ -697,9 +768,9 @@ void ASolCharacter::SetWeaponFiringAllowed(bool bInWeaponFiringAllowed)
 }
 
 /** Just for debug purposes right now. **/
-AWeapon* ASolCharacter::GetSpecificWeapon(int32 WeapNum)
+AInventoryItem* ASolCharacter::GetInventoryItem(int32 WeapNum)
 {
-	AWeapon* TestWeapon = WeaponInventory[WeapNum];
+	AInventoryItem* TestWeapon = ItemInventory[WeapNum];
 	if (TestWeapon != NULL)
 	{
 		return TestWeapon;
@@ -712,35 +783,35 @@ AWeapon* ASolCharacter::GetSpecificWeapon(int32 WeapNum)
 
 void ASolCharacter::EquipSpecificWeapon(int32 WeapNum)
 {
-	if (GetInventoryCount() >= (WeapNum + 1) && (EquippedWeapon == NULL || EquippedWeapon->GetWeaponState() != "Equipping"))
+	if (GetInventoryCount() >= (WeapNum + 1) && (EquippedItem == NULL || EquippedItem->GetWeaponState() != "Equipping"))
 	{
-		AWeapon* NewWeapon = WeaponInventory[WeapNum];
+		AInventoryItem* NewItem = ItemInventory[WeapNum];
 		/** Don't re-equip the same weapon. **/
-		if (NewWeapon && NewWeapon != EquippedWeapon)
+		if (NewItem && NewItem->CanBeEquipped() && NewItem != EquippedItem)
 		{
-			SetPendingWeapon(NewWeapon); // EquipWeapon(NewWeapon);
+			SetPendingWeapon(NewItem); // EquipItem(NewWeapon);
 		}
 	}
 }
 
-void ASolCharacter::SetEquippedWeapon(class AWeapon* NewWeapon, class AWeapon* LastWeapon)
+void ASolCharacter::SetEquippedWeapon(AInventoryItem* NewWeapon, AInventoryItem* LastWeapon)
 {
-	AWeapon* LocalLastWeapon = NULL;
+	AInventoryItem* LocalLastWeapon = nullptr;
 
-	if (LastWeapon != NULL)
+	if (!LastWeapon)
 	{
 		LocalLastWeapon = LastWeapon;
 	}
-	else if (NewWeapon != EquippedWeapon)
+	else if (NewWeapon != EquippedItem)
 	{
-		LocalLastWeapon = EquippedWeapon;
+		LocalLastWeapon = EquippedItem;
 	}
 
 	if (LocalLastWeapon)
 	{
 		LocalLastWeapon->OnUnequip();
 	}
-	EquippedWeapon = NewWeapon;
+	EquippedItem = NewWeapon;
 	if (NewWeapon)
 	{
 		NewWeapon->SetOwningPawn(this);
@@ -748,33 +819,39 @@ void ASolCharacter::SetEquippedWeapon(class AWeapon* NewWeapon, class AWeapon* L
 	}
 }
 
-void ASolCharacter::SetPendingWeapon(class AWeapon* NewWeapon)
+void ASolCharacter::SetPendingWeapon(AInventoryItem* NewWeapon)
 {
-	PendingWeapon = NewWeapon;
+	PendingItem = NewWeapon;
 
-	if (EquippedWeapon != NULL)
+	if (EquippedItem)
 	{
-		EquippedWeapon->OnUnequip();
+		EquippedItem->OnUnequip();
 	}
 
-	if (EquippedWeapon == NULL)
+	if (!EquippedItem)
 	{
-		EquipWeapon(PendingWeapon);
-		PendingWeapon = NULL;
+		EquipItem(PendingItem);
+		PendingItem = nullptr;
 	}
 }
 
-void ASolCharacter::OnWeaponUnequipFinish(class AWeapon* OldWeapon)
+void ASolCharacter::OnWeaponUnequipFinish(AInventoryItem* OldWeapon)
 {
-	if (EquippedWeapon == OldWeapon)
+	if (EquippedItem == OldWeapon)
 	{
-		EquippedWeapon = NULL;
+		EquippedItem = nullptr;
+		IdleAnimSeq = DefaultIdleAnimSeq;
 	}
-	if (PendingWeapon)
+	if (PendingItem)
 	{
-		EquipWeapon(PendingWeapon);
-		PendingWeapon = NULL;
+		EquipItem(PendingItem);
+		PendingItem = nullptr;
 	}
+}
+
+UAnimSequence* ASolCharacter::GetIdleAnimSequence() const
+{
+	return IdleAnimSeq;
 }
 
 void ASolCharacter::SpawnInitialInventory(TArray<TSubclassOf<AInventoryItem>> DefaultInventoryToAdd, bool bUsePawnDefaultInventory)
@@ -783,52 +860,34 @@ void ASolCharacter::SpawnInitialInventory(TArray<TSubclassOf<AInventoryItem>> De
 	{
 		return;
 	}
-	int32 NumWeaponClasses = DefaultWeaponClasses.Num();
+	// Spawn the pawm's default inventory.
 	if (bUsePawnDefaultInventory)
 	{
-		for (int32 i = 0; i < NumWeaponClasses; i++)
+		for (int32 i = 0; i < DefaultInventoryClasses.Num(); i++)
 		{
-			if (DefaultWeaponClasses[i])
+			if (DefaultInventoryClasses[i])
 			{
-				CreateNewInventoryItem(DefaultWeaponClasses[i]);
+				CreateNewInventoryItem(DefaultInventoryClasses[i]);
 			}
 		}
 	}
-	NumWeaponClasses = DefaultInventoryToAdd.Num();
-	if (0 < NumWeaponClasses)
+	// Spawn inventory given to use from the game mode.
+	for (int32 i = 0; i < DefaultInventoryToAdd.Num(); i++)
 	{
-		for (int32 i = 0; i < NumWeaponClasses; i++)
+		if (DefaultInventoryToAdd[i])
 		{
-			if (DefaultInventoryToAdd[i])
-			{
-				CreateNewInventoryItem(DefaultInventoryToAdd[i]);
-			}
+			CreateNewInventoryItem(DefaultInventoryToAdd[i]);
 		}
 	}
-
-	// Equip the best weapon
-	if (!EquippedWeapon)
+	// Equip an item we can wield.
+	if (!EquippedItem)
 	{
-		if (PrimaryWeapon)
+		for (int32 i = 0; i < ItemInventory.Num(); i++)
 		{
-			EquipWeapon(PrimaryWeapon);
-		}
-		else if (SecondaryWeapon)
-		{
-			EquipWeapon(SecondaryWeapon);
-		}
-		else if (SidearmWeapon)
-		{
-			EquipWeapon(SidearmWeapon);
-		}
-		else
-		{
-			for (int32 i = 0; i < Equipment.Num(); i++)
+			if (ItemInventory[i] && ItemInventory[i]->CanBeEquipped())
 			{
-				if (Equipment[i])
-				{
-					EquipWeapon(Equipment[i]);
-				}
+				EquipItem(ItemInventory[i]);
+				break;
 			}
 		}
 	}
@@ -836,21 +895,11 @@ void ASolCharacter::SpawnInitialInventory(TArray<TSubclassOf<AInventoryItem>> De
 
 int32 ASolCharacter::GetInventoryCount() const
 {
-	return WeaponInventory.Num();
+	return ItemInventory.Num();
 }
 
 void ASolCharacter::DestroyInventory()
 {
-	for (int32 i = 0; i < GetInventoryCount(); i++)
-	{
-		if (WeaponInventory[i]->GetOwningPawn() != this && WeaponInventory[i]->GetOwningPawn() != nullptr)
-		{
-			UE_LOG(LogDamage, Warning, TEXT("%s: Item %s belonged to another pawn!"), *GetName(), *ItemInventory[i]->GetName());
-		}
-		WeaponInventory[i]->SetOwningPawn(NULL);
-		WeaponInventory[i]->Destroy();
-	}
-	
 	for (int32 i = 0; i < ItemInventory.Num(); i++)
 	{
 		UE_LOG(LogDamage, Warning, TEXT("%s: Deleting Item %s."), *GetName(), *ItemInventory[i]->GetName());
@@ -858,7 +907,7 @@ void ASolCharacter::DestroyInventory()
 		{
 			UE_LOG(LogDamage, Warning, TEXT("%s: Item %s belonged to another pawn!"), *GetName(), *ItemInventory[i]->GetName());
 		}
-		ItemInventory[i]->SetOwningPawn(NULL);
+		ItemInventory[i]->SetOwningPawn(nullptr);
 		ItemInventory[i]->Destroy();
 	}
 }
@@ -876,185 +925,69 @@ AInventoryItem* ASolCharacter::CreateNewInventoryItem(TSubclassOf<class AInvento
 	return NewItem;
 }
 
-
-void ASolCharacter::AddToInventory(AInventoryItem* NewItem)
+void ASolCharacter::AddToInventory(AInventoryItem* NewItem, AInventoryItem* OldItem)
 {
 	if (NewItem != nullptr && GetLocalRole() == ROLE_Authority)
 	{
-		ItemInventory.Add(NewItem);
-		AWeapon* NewWeapon = Cast<AWeapon>(NewItem);
-		if (NewWeapon)
+		if (CanHoldItem(NewItem) || CanSwapForItem(NewItem))
 		{
-			FName NewWeaponSlot = NewWeapon->WeaponSlotType;
-			//AFirearm* NewFirearm = Cast<AFirearm>(NewWeapon);
-			/* Add the weapon to the right inventory slot. */
-			if (NewWeaponSlot == WeaponSlotType::Main)
+			if (!CanHoldItem(NewItem))
 			{
-				if (PrimaryWeapon == NULL)
+				OldItem = CanSwapForItem(NewItem);
+				if (OldItem)
 				{
-					PrimaryWeapon = NewWeapon;
-				}
-				else if (PrimaryWeapon->WeaponSlotType == WeaponSlotType::Sidearm && SidearmWeapon == NULL)
-				{
-					SidearmWeapon = PrimaryWeapon;
-					PrimaryWeapon = NewWeapon;
-				}
-				else if (SecondaryWeapon == NULL)
-				{
-					SecondaryWeapon = NewWeapon;
-				}
-				else if (SecondaryWeapon->WeaponSlotType == WeaponSlotType::Sidearm && SidearmWeapon == NULL)
-				{
-					SidearmWeapon = SecondaryWeapon;
-					SecondaryWeapon = NewWeapon;
+					DropInventory(OldItem);
 				}
 			}
-			else if (NewWeaponSlot == WeaponSlotType::Sidearm)
+			ItemInventory.Add(NewItem);
+			CurrentInventoryMass += NewItem->GetMassInInventory();
+			NewItem->OnEnterInventory(this);
+			// Check if NewItem is nullptr just in case it is immediately deleted by the above function.
+			if (!GetEquippedItem() && NewItem && NewItem->CanBeEquipped())
 			{
-				if (SidearmWeapon == NULL)
-				{
-					SidearmWeapon = NewWeapon;
-				}
-				else if (PrimaryWeapon == NULL)
-				{
-					PrimaryWeapon = NewWeapon;
-				}
-				else if (SecondaryWeapon == NULL)
-				{
-					SecondaryWeapon = NewWeapon;
-				}
+				EquipItem(NewItem);
 			}
-			else if (NewWeaponSlot == WeaponSlotType::Equipment && Equipment.Num() < MaxEquipment)
-			{
-				Equipment.AddUnique(NewWeapon);
-			}
-
-			WeaponInventory.Remove(NewWeapon);
-			RemakeWeaponList();
 		}
-		NewItem->OnEnterInventory(this);
 	}
 }
 
-void ASolCharacter::RemoveFromInventory(AInventoryItem* ItemToRemove)
+bool ASolCharacter::RemoveFromInventory(AInventoryItem* ItemToRemove)
 {
 	if (ItemToRemove && GetLocalRole() == ROLE_Authority)
 	{
 		ItemInventory.Remove(ItemToRemove);
-		AWeapon* RemovedWeapon = Cast<AWeapon>(ItemToRemove);
-		if (RemovedWeapon)
+		CurrentInventoryMass -= FMath::Min(ItemToRemove->GetMassInInventory(), CurrentInventoryMass);
+		if (EquippedItem == ItemToRemove)
 		{
-			if (RemovedWeapon == EquippedWeapon)
-			{
-				EquippedWeapon = nullptr;
-			}
-			if (RemovedWeapon == PendingWeapon)
-			{
-				PendingWeapon = nullptr;
-			}
-			if (RemovedWeapon == PrimaryWeapon)
-			{
-				PrimaryWeapon = nullptr;
-			}
-			if (RemovedWeapon == SecondaryWeapon)
-			{
-				SecondaryWeapon = nullptr;
-			}
-			if (RemovedWeapon == SidearmWeapon)
-			{
-				SidearmWeapon = nullptr;
-			}
-			Equipment.Remove(RemovedWeapon);
-
-			WeaponInventory.Remove(RemovedWeapon);
-			RemakeWeaponList();
+			EquippedItem = nullptr;
 		}
 		ItemToRemove->OnLeaveInventory();
-	}
-}
-
-void ASolCharacter::RemakeWeaponList()
-{
-	/* Rearrange the inventory list. */
-	TArray<AWeapon*> OldWeaponInv = WeaponInventory;
-	TArray<AWeapon*> NewWeaponInv;
-	if (SidearmWeapon != NULL)
-	{
-		NewWeaponInv.AddUnique(SidearmWeapon);
-		OldWeaponInv.Remove(SidearmWeapon);
-	}
-	if (PrimaryWeapon != NULL)
-	{
-		NewWeaponInv.AddUnique(PrimaryWeapon);
-		OldWeaponInv.Remove(PrimaryWeapon);
-	}
-	if (SecondaryWeapon != NULL)
-	{
-		NewWeaponInv.AddUnique(SecondaryWeapon);
-		OldWeaponInv.Remove(SecondaryWeapon);
-	}
-	for (int32 i = 0; i < Equipment.Num(); i++)
-	{
-		if (Equipment[i] != NULL)
-		{
-			NewWeaponInv.AddUnique(Equipment[i]);
-			OldWeaponInv.Remove(Equipment[i]);
-		}
-	}
-	/* For now, append anything that doesn't fit in our slots to the end. */
-	for (int32 i = 0; i < OldWeaponInv.Num(); i++)
-	{
-		if (OldWeaponInv[i] != NULL)
-		{
-			NewWeaponInv.Add(OldWeaponInv[i]);
-		}
-	}
-	WeaponInventory = NewWeaponInv;
-}
-
-bool ASolCharacter::CanPickupItem(AInventoryItem* Item) const
-{
-	AFirearm* TestFirearm = Cast<AFirearm>(Item);
-	if (TestFirearm)
-	{
-		// Currently, limit the player to eight inventory items.
-		if (GetInventoryCount() >= 8)
-		{
-			return false;
-		}
-		FName SlotType = TestFirearm->WeaponSlotType;
-		////GEngine->AddOnScreenDebugMessage(-1, 15.f, FColor::Green, FString::Printf(TEXT("InItemType: %s."), *SlotType.ToString()));
-		if (SlotType == WeaponSlotType::Main && PrimaryWeapon != NULL && SecondaryWeapon != NULL) //(SlotType == WeaponSlotType::Sidearm || SlotType == WeaponSlotType::Main)
-		{
-			return false;
-		}
-		if (SlotType == WeaponSlotType::Sidearm && SidearmWeapon != NULL && PrimaryWeapon != NULL && SecondaryWeapon != NULL)
-		{
-			return false;
-		}
-		if (SlotType == WeaponSlotType::Equipment && Equipment.Num() >= MaxEquipment)
-		{
-			return false;
-		}
 	}
 	return true;
 }
 
 AInventoryItem* ASolCharacter::CanSwapForItem(AInventoryItem* Item) const
 {
-	AFirearm* TestFirearm = Cast<AFirearm>(Item);
-	if (TestFirearm)
+	// Can't swap if there's no equipped weapon to swap.
+	if (EquippedItem && Item)
 	{
-		FName ItemSlotType = TestFirearm->WeaponSlotType;
-		if (EquippedWeapon)
+		const float MassWithSwap = CurrentInventoryMass - EquippedItem->GetMassInInventory() + Item->GetMassInInventory();
+		if (MassWithSwap <= DefaultInventoryMassCapacity)
 		{
-			if (EquippedWeapon->WeaponSlotType == ItemSlotType)
-			{
-				return EquippedWeapon;
-			}
+			return EquippedItem;
 		}
 	}
 	return nullptr;
+}
+
+bool ASolCharacter::CanHoldItem(AInventoryItem* Item) const
+{
+	return Item && CurrentInventoryMass + Item->GetMassInInventory() <= DefaultInventoryMassCapacity;
+}
+
+bool ASolCharacter::CanPickUpItem(AInventoryItem* Item) const
+{
+	return CanHoldItem(Item) || CanSwapForItem(Item);
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -1123,7 +1056,6 @@ void ASolCharacter::FaceRotation(FRotator NewControlRotation, float DeltaTime)
 		DeltaAimLagYaw = (-360.f + NCR.Yaw - LCR.Yaw);
 	}
 
-	bool bThreshhold = false;
 	while (DeltaAimLagPitch > 360.f || DeltaAimLagPitch < -360.f)
 	{
 		if (DeltaAimLagPitch > 360.f)
@@ -1134,7 +1066,6 @@ void ASolCharacter::FaceRotation(FRotator NewControlRotation, float DeltaTime)
 		{
 			DeltaAimLagPitch += 360.f;
 		}
-		bThreshhold = true;
 	}
 	while (DeltaAimLagYaw > 360.f || DeltaAimLagYaw < -360.f)
 	{
@@ -1146,16 +1077,11 @@ void ASolCharacter::FaceRotation(FRotator NewControlRotation, float DeltaTime)
 		{
 			DeltaAimLagYaw += 360.f;
 		}
-		bThreshhold = true;
-	}
-	if (bThreshhold)
-	{
-		//GEngine->AddOnScreenDebugMessage(-1, 30.f, FColor::Red, FString::Printf(TEXT("THRESHHOLD! THE END IS NIGH!")));
 	}
 	if (DeltaAimLagPitch != 0 || DeltaAimLagYaw != 0)
 	{
 		const float AimLagScalar = 0.5f;
-		AddWeaponOffset(FRotator(DeltaAimLagPitch * AimLagScalar, DeltaAimLagYaw * AimLagScalar, 0.0f), MaxFreeAimRadius, MaxFreeAimRadius);
+		//AddWeaponOffset(FRotator(DeltaAimLagPitch * AimLagScalar, DeltaAimLagYaw * AimLagScalar, 0.0f), MaxFreeAimRadius, MaxFreeAimRadius);
 	}
 
 	LastControlRotation = NewControlRotation;
@@ -1178,6 +1104,11 @@ void ASolCharacter::OnCameraUpdate(const FVector& CameraLocation, const FRotator
 	FVector EyeHeightVector = FVector(0.0f, 0.0f, EyeHeightTemp);
 	FirstPersonCameraComponent->SetRelativeLocation(EyeHeightVector);
 	FVector TempOffset = FVector(-27.5f, 0.5f, -35.f) + EyeHeightVector; //FVector(-25.f, 1.f, -37.5f);  //23.49, 0, 141.24 vs 0, 0, 165
+	// Temp to remove arms when nothing is equipped.
+	if (!EquippedItem)
+	{
+		TempOffset -= FVector(0.f, 0.f, -200.f);
+	}
 	FVector TestLocFinal = MeshLoc + TempOffset + GetWeaponLocationOffset();
 
 	const FMatrix DefMeshLS = FRotationTranslationMatrix(DefMesh1P->GetRelativeRotation(), TestLocFinal); // DefMesh1P->RelativeLocation
@@ -1201,21 +1132,19 @@ void ASolCharacter::OnCameraUpdate(const FVector& CameraLocation, const FRotator
 
 FRotator ASolCharacter::GetWeaponRotationOffset() const
 {
-	// The clamp probably isn't necessary, but I like to be safe.
-	const float AimScalar = FMath::Clamp(1.0f - (CurrentAimPct * 0.8f), 0.0f, 1.0f);
-	const FRotator FinalRot = HeldWeaponOffset * AimScalar;
+	const FRotator FinalRot = HeldWeaponOffset + AimBreathingOffset;
 	return FinalRot;
 }
 
 FVector ASolCharacter::GetWeaponLocationOffset() const
 {
-	const AWeapon* Weapon = GetEquippedWeapon();
+	const AInventoryItem* Weapon = GetEquippedItem();
 	FVector AimedVector = FVector::ZeroVector;
 	FVector UnaimedVector = FVector::ZeroVector;
 	if (Weapon)
 	{
-		UnaimedVector += Weapon->GetWeaponOffset();
-		AFirearm* Firearm = Cast<AFirearm>(EquippedWeapon);
+		UnaimedVector += Weapon->GetMeshOffset();
+		AFirearm* Firearm = Cast<AFirearm>(EquippedItem);
 		if (Firearm)
 		{
 			AimedVector += Firearm->GetAimedOffset();
@@ -1237,7 +1166,7 @@ FRotator ASolCharacter::GetWeaponAimRot() const
 FVector ASolCharacter::GetWeaponAimLoc() const
 {
 	const FVector EyeLocation = GetActorLocation() + FVector(0.f, 0.f, BaseEyeHeight);
-	const FVector WeaponOffset = GetWeaponLocationOffset() + FVector(75.f, 0.f, -7.5f); //Temporary offset for muzzle.
+	const FVector WeaponOffset = GetWeaponLocationOffset(); // +FVector(75.f, 0.f, -7.5f); //Temporary offset for muzzle.
 	const FVector FinalLocation = EyeLocation + GetWeaponAimRot().RotateVector(WeaponOffset);
 	return FinalLocation;
 }
@@ -1278,7 +1207,7 @@ void ASolCharacter::ProcessRecoil(float DeltaSeconds)
 		//const FVector CameraRecoilThisTick = TotalRecoilThisTick * PctCameraRecoil;
 		//const FVector OffsetRecoilThisTick = TotalRecoilThisTick - CameraRecoilThisTick;
 		AddWeaponOffset(FRotator(TotalRecoilThisTick.X, TotalRecoilThisTick.Y, 0.0f), MaxRecoilOffsetRadius, MaxRecoilOffsetRadius); // REMOVE ME IF UNCOMMENTING OTHER CODE.
-		//FRotator Remainder = AddWeaponOffset(FRotator(OffsetRecoilThisTick.X, OffsetRecoilThisTick.Y, 0.0f), 15.f, 15.f);
+		//FRotator Remainder = AddWeaponOffset(FRotator(OffsetRecoilThisTick.X, OffsetRecoilThisTick.Y, 0.0f), MaxRecoilOffsetRadius, MaxRecoilOffsetRadius);
 		//AddControllerPitchInput(-CameraRecoilThisTick.X - Remainder.Pitch);
 		//AddControllerYawInput(-CameraRecoilThisTick.Y - Remainder.Yaw);
 
@@ -1287,6 +1216,78 @@ void ASolCharacter::ProcessRecoil(float DeltaSeconds)
 		RecoilCurveTime = NewRecoilTime;
 		CurrentRecoilVelocity -= TotalRecoilThisTick;
 	}
+}
+
+void ASolCharacter::AddWeaponSway(float DeltaSeconds)
+{
+	// Handle bob due to breathing. Happens no matter what.
+	float BreathingRate = 1.f;
+	float LastBreathingTime = BreathingTime;
+	BreathingTime += DeltaSeconds * BreathingRate;
+
+	float BreathPitchSwayValue = FMath::Cos(BreathingTime * 1.875f) - FMath::Cos(LastBreathingTime * 1.875f);
+	float BreathYawSwayValue = FMath::Sin(BreathingTime) - FMath::Sin(LastBreathingTime);
+
+	FRotator BreathingSwayRange(0.25f, 0.125f, 0.125f);
+	FRotator BreathingSwayChange = FRotator(BreathingSwayRange.Pitch * BreathPitchSwayValue, BreathingSwayRange.Yaw * BreathYawSwayValue, 0);
+	AimBreathingOffset += BreathingSwayChange;
+
+	// Handle weapon bob due to movement.
+	USolCharacterMovementComponent* SolMoveComp = Cast< USolCharacterMovementComponent>(GetCharacterMovement());
+	if (SolMoveComp)
+	{
+		// If moving, keep swaying left to right.
+		if (!SolMoveComp->Velocity.IsZero() && SolMoveComp->IsWalking())
+		{
+			// Values to probably define elsewhere so they're modifiable.
+			FRotator WalkingSwayRange(1.25f, 1.5f, 0.25f);
+			FRotator SprintingSwayRange(2.25f, 2.75f, 0.5f);
+
+			// Increase the sway rate if moving on the ground.
+			float SpeedRatio = SolMoveComp->IsWalking() ? FMath::Clamp(SolMoveComp->Velocity.Size() / SolMoveComp->MaxWalkSpeed, 0.f, 2.f) : 0.f;
+			float LastWeaponSwayTime = WeaponSwayTime;
+			WeaponSwayTime += DeltaSeconds * FMath::Max(SpeedRatio * 6.f, 1.f);
+
+			float PitchSwayValue = FMath::Cos(WeaponSwayTime * 2) - FMath::Cos(LastWeaponSwayTime * 2);
+			float YawSwayValue = FMath::Sin(WeaponSwayTime) - FMath::Sin(LastWeaponSwayTime);
+			FRotator RotToAdd = FRotator::ZeroRotator;
+			// Running
+			if (SpeedRatio > 1.f) {
+				//RotToAdd = FRotator(4.f * PitchSwayValue, 7.5f * YawSwayValue, 0);
+				RotToAdd = FRotator(FMath::Lerp(WalkingSwayRange.Pitch, SprintingSwayRange.Pitch, SpeedRatio - 1.f) * PitchSwayValue,
+					                FMath::Lerp(WalkingSwayRange.Yaw, SprintingSwayRange.Yaw, SpeedRatio - 1.f) * YawSwayValue,
+					                0);
+			}
+			// Walking
+			else
+			{
+				RotToAdd = FRotator(FMath::Lerp(0.f, WalkingSwayRange.Pitch, SpeedRatio) * PitchSwayValue,
+					                FMath::Lerp(0.f, WalkingSwayRange.Yaw, SpeedRatio) * YawSwayValue,
+										0);
+			}
+			AddWeaponOffset(RotToAdd, MaxFreeAimRadius, MaxFreeAimRadius);
+		}
+		// Otherwise, return to the centre of the screen.
+		else
+		{
+			WeaponSwayTime = 0.f;
+			HeldWeaponOffset *= FMath::Max(0.0f, 1.0f - DeltaSeconds);
+		}
+	}
+}
+
+float ASolCharacter::IncreaseEnergy(float Amount, bool bCanGoToMax)
+{
+	const float AddedEnergy = FMath::Min(Amount, (bCanGoToMax ? MaxEnergy : FullEnergy) - Energy);
+	Energy += AddedEnergy;
+	return AddedEnergy;
+}
+
+float ASolCharacter::DecreaseEnergy(float Amount)
+{
+	const float UsedEnergy = FMath::Min(Amount, Energy);
+	Energy -= UsedEnergy;
+	return UsedEnergy;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -1307,6 +1308,15 @@ void ASolCharacter::MoveRight(float Value)
 	{
 		// add movement in that direction
 		AddMovementInput(GetActorRightVector(), Value);
+	}
+}
+
+void ASolCharacter::MoveUp(float Value)
+{
+	if (Value != 0.0f)
+	{
+		// add movement in that direction
+		AddMovementInput(GetActorUpVector(), Value);
 	}
 }
 
@@ -1336,7 +1346,15 @@ float ASolCharacter::TakeDamage(float Damage, struct FDamageEvent const& DamageE
 	ASolGameMode* const Game = GetWorld()->GetAuthGameMode<ASolGameMode>();
 	Damage = Game ? Game->ModifyDamage(Damage, this, DamageEvent, EventInstigator, DamageCauser) : 0.f;
 
-	if (DamageEvent.IsOfType(FPointDamageEvent::ClassID))
+	// Let inventory (e.g. armour) modify incoming damage.
+	for (auto InvItem : ItemInventory)
+	{
+		InvItem->ModifyDamageTaken(Damage, DamageEvent.DamageTypeClass);
+	}
+
+	bool TEST_bHitInLegs = false;
+
+	if (DamageEvent.IsOfType(FPointDamageEvent::ClassID) || DamageEvent.IsOfType(FSolPointDamageEvent::ClassID))
 	{
 		//(const FPointDamageEvent&)DamageEvent
 		FHitResult HitInfo;
@@ -1346,7 +1364,52 @@ float ASolCharacter::TakeDamage(float Damage, struct FDamageEvent const& DamageE
 		DamageEvent.GetBestHitInfo(this, DamageCauser, HitInfo, Dir); //(const FPointDamageEvent&)DamageEvent.GetBestHitInfo.BoneName;
 		FName HitBone = HitInfo.BoneName;
 
-		Damage = LocalizeDamage(Damage, HitBone);
+		// This could be done more modularly, but this works for now.
+		float DamagePctAtZero = 1.f;
+		float DamagePctAtEnd = 1.f;
+		float DamageCurveEnd = GetFullHealth();
+		// Head and neck
+		if (BodySections[EBodySection::Head].Bones.Contains(HitBone))
+		{
+			DamagePctAtEnd = 4.f;
+			DamageCurveEnd = 25.f;
+		}
+		// Upper body
+		else if (BodySections[EBodySection::UpperTorso].Bones.Contains(HitBone))
+		{
+			// No damage scaling
+		}
+		// Pelvis && stomach
+		else if (BodySections[EBodySection::LowerTorso].Bones.Contains(HitBone))
+		{
+			DamagePctAtZero = 1.f;
+			DamagePctAtEnd = 0.875f;
+		}
+		// Legs
+		else if (BodySections[EBodySection::LeftLeg].Bones.Contains(HitBone) || BodySections[EBodySection::RightLeg].Bones.Contains(HitBone))
+		{
+			DamagePctAtZero = 0.875f;
+			DamagePctAtEnd = 0.625f;
+			TEST_bHitInLegs = true;
+		}
+		// Arms (currently identical to being hit in the legs)
+		else if (BodySections[EBodySection::LeftArm].Bones.Contains(HitBone) || BodySections[EBodySection::RightArm].Bones.Contains(HitBone))
+		{
+			DamagePctAtZero = 0.875f;
+			DamagePctAtEnd = 0.625f;
+		}
+		// Shoulders? (clavicle)
+		else if (BodySections[EBodySection::LeftTorso].Bones.Contains(HitBone) || BodySections[EBodySection::RightTorso].Bones.Contains(HitBone))
+		{
+			DamagePctAtZero = 0.875f;
+			DamagePctAtEnd = 0.75f;
+		}
+		else
+		{
+			//GEngine->AddOnScreenDebugMessage(-1, 15.f, FColor::Red, FString::Printf(TEXT("TakeDamage(): Where was %s hit?!"), *this->GetName()));
+		}
+		const float DamageScalar = FMath::Lerp(DamagePctAtZero, DamagePctAtEnd, FMath::Clamp(Damage / DamageCurveEnd, 0.f, 1.f));
+		Damage *= DamageScalar;
 	}
 
 	const float DamageToHealth = Super::TakeDamage(Damage, DamageEvent, EventInstigator, DamageCauser);
@@ -1354,6 +1417,11 @@ float ASolCharacter::TakeDamage(float Damage, struct FDamageEvent const& DamageE
 	{
 		Health -= DamageToHealth;
 		SevereDamage += DamageToHealth * SevereDamageScalar;
+
+		if (TEST_bHitInLegs)
+		{
+			LegHealth -= FMath::Min(LegHealth, DamageToHealth);
+		}
 
 		if (Health <= 0)
 		{
@@ -1364,7 +1432,7 @@ float ASolCharacter::TakeDamage(float Damage, struct FDamageEvent const& DamageE
 		{
 			PlayHit(DamageToHealth, DamageEvent, EventInstigator ? EventInstigator->GetPawn() : NULL, DamageCauser);
 			// Start health regen if we are not doing so already.
-			if (Health < MaxHealth && !GetWorldTimerManager().IsTimerActive(TimerHandle_RegenHealth))
+			if (Health < FullHealth && !GetWorldTimerManager().IsTimerActive(TimerHandle_RegenHealth))
 			{
 				GetWorldTimerManager().SetTimer(TimerHandle_RegenHealth, this, &ASolCharacter::RegenHealth, 1 / HealthTicksPerSec, true);
 			}
@@ -1372,88 +1440,6 @@ float ASolCharacter::TakeDamage(float Damage, struct FDamageEvent const& DamageE
 		//MakeNoise(1.0f, EventInstigator ? EventInstigator->GetPawn() : this);
 	}
 	return Damage;
-}
-
-float ASolCharacter::LocalizeDamage(float Damage, FName HitBone)
-{
-	// TODO: Make arrays of bone names for each body part.
-	// TODO: Add events other than damage scaling.
-	float DamagePctAtZero = 1.f;
-	float DamagePctAtEnd = 1.f;
-	float DamageCurveEnd = GetMaxHealth();
-	// Head and neck
-	if (HitBone == "neck_01" || HitBone == "head")
-	{
-		DamagePctAtEnd = 4.f;
-		DamageCurveEnd = 25.f;
-	}
-	// Shoulders? (clavicle)
-	else if (HitBone == "clavicle_l" || HitBone == "clavicle_r")
-	{
-		DamagePctAtZero = 0.875f;
-		DamagePctAtEnd = 0.75f;
-	}
-	// Upper body
-	else if (HitBone == "spine_03" || HitBone == "spine_02")
-	{
-		// No damage scaling
-	}
-	// Pelvis && stomach
-	else if (HitBone == "pelvis" || HitBone == "spine_01")
-	{
-		DamagePctAtZero = 1.f;
-		DamagePctAtEnd = 0.875f;
-	}
-	// Legs
-	else if (HitBone == "thigh_l" || HitBone == "calf_l" || HitBone == "foot_l" || HitBone == "ball_l"
-		|| HitBone == "thigh_r" || HitBone == "calf_r" || HitBone == "foot_r" || HitBone == "ball_r")
-	{
-		DamagePctAtZero = 0.875f;
-		DamagePctAtEnd = 0.625f;
-	}
-	// Arms (do last since there are so many parts to check)
-	//      (but, currently, identical to being hit in the legs)
-	else if (HitBone == "upperarm_l" || HitBone == "lowerarm_l" || HitBone == "hand_l"
-		|| HitBone == "upperarm_r" || HitBone == "lowerarm_r" || HitBone == "hand_r"
-		|| HitBone == "index_01_l" || HitBone == "index_02_l" || HitBone == "index_03_l"
-		|| HitBone == "index_01_r" || HitBone == "index_02_r" || HitBone == "index_03_r"
-		|| HitBone == "middle_01_l" || HitBone == "middle_02_l" || HitBone == "middle_03_l"
-		|| HitBone == "middle_01_r" || HitBone == "middle_02_r" || HitBone == "middle_03_r"
-		|| HitBone == "ring_01_l" || HitBone == "ring_02_l" || HitBone == "ring_03_l"
-		|| HitBone == "ring_01_r" || HitBone == "ring_02_r" || HitBone == "ring_03_r"
-		|| HitBone == "pinky_01_l" || HitBone == "pinky_02_l" || HitBone == "pinky_03_l"
-		|| HitBone == "pinky_01_r" || HitBone == "pinky_02_r" || HitBone == "pinky_03_r"
-		|| HitBone == "thumb_01_l" || HitBone == "thumb_02_l" || HitBone == "thumb_03_l"
-		|| HitBone == "thumb_01_r" || HitBone == "thumb_02_r" || HitBone == "thumb_03_r")
-	{
-		DamagePctAtZero = 0.875f;
-		DamagePctAtEnd = 0.625f;
-	}
-	else
-	{
-		//GEngine->AddOnScreenDebugMessage(-1, 15.f, FColor::Red, FString::Printf(TEXT("TakeDamage(): Where was %s hit?!"), *this->GetName()));
-	}
-	const float DamageScalar = FMath::Lerp(DamagePctAtZero, DamagePctAtEnd, FMath::Clamp(Damage / DamageCurveEnd, 0.f, 1.f));
-	const float FinalDamage = Damage * DamageScalar;
-	// Fun debug stuff
-	/*if (GetPlayerState())
-	{
-		float RandFloat = FMath::FRand();
-		RandFloat *= RandFloat;
-		if (FMath::RandBool())
-		{
-			RandFloat *= -1;
-		}
-		float RandTest = Damage + (Damage * 0.1 * RandFloat);
-		//GEngine->AddOnScreenDebugMessage(-1, 15.f, FColor::Green, FString::Printf(TEXT("%s hit in %s: %f became %f (%f). Could have been %f."), 
-			*this->GetPlayerState()->GetPlayerName(),
-			*HitBone.ToString(),
-			Damage, 
-			FinalDamage, 
-			FinalDamage / Damage * 100,
-			RandTest));
-	}*/
-	return FinalDamage;
 }
 
 bool ASolCharacter::IsAlive() const
@@ -1543,12 +1529,12 @@ void ASolCharacter::OnDeath(float KillingDamage, struct FDamageEvent const& Dama
 		UGameplayStatics::PlaySoundAtLocation(this, DyingSound, GetActorLocation());
 	}
 
-	// Later relegate to another function, such as "DestroyInventory()"? **/
+	// Drop any inventory we can and destroy the rest.
 	if (GetLocalRole() == ROLE_Authority)
 	{
-		if (EquippedWeapon)
+		if (EquippedItem)
 		{
-			DropInventory(EquippedWeapon);
+			DropInventory(EquippedItem);
 		}
 		while (ItemInventory.IsValidIndex(0))
 		{
@@ -1628,6 +1614,7 @@ void ASolCharacter::RegenHealth()
 	{
 		const float HealthToRegen = HealthRegenRate / HealthTicksPerSec;
 		Health = FMath::Min(CappedHealth, Health + HealthToRegen);
+		LegHealth = FMath::Min(FullLegHealth, LegHealth + HealthToRegen);
 	}
 	else
 	{
@@ -1726,8 +1713,11 @@ void ASolCharacter::Landed(const FHitResult& Hit)
 	if (!bClientUpdating)
 	{
 		TakeFallingDamage(Hit, GetCharacterMovement()->Velocity.Z);
+		// TODO: Add landing view bob.
+		//HeldWeaponOffset.Pitch += FMath::Max(0.f, FMath::Abs(GetCharacterMovement()->Velocity.Z) * 0.125f);
 	}
 	Super::Landed(Hit);
+
 }
 
 void ASolCharacter::FellOutOfWorld(const UDamageType& DmgType)
@@ -1794,11 +1784,10 @@ FLinearColor ASolCharacter::GetPrimaryColor()
 	
 	FLinearColor PrimaryColor(0.25f, 0.25f, 0.35f);
 	
-	ASolPlayerState* MyPlayerState = Cast<ASolPlayerState>(GetPlayerState());
-	if (MyPlayerState)
+	if (GetPlayerState<ASolPlayerState>())
 	{
-		PrimaryColor = MyPlayerState->GetPrimaryColor();
-		ATeamState* MyTeam = MyPlayerState->GetTeam();
+		PrimaryColor = GetPlayerState<ASolPlayerState>()->GetPrimaryColor();
+		ATeamState* MyTeam = GetPlayerState<ASolPlayerState>()->GetTeam();
 		if (MyTeam)
 		{
 			PrimaryColor = MyTeam->GetTeamColor();
@@ -1867,7 +1856,7 @@ void ASolCharacter::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & Out
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	// only to local owner: weapon change requests are locally instigated, other clients don't need it
-	DOREPLIFETIME_CONDITION(ASolCharacter, WeaponInventory, COND_OwnerOnly);
+	DOREPLIFETIME_CONDITION(ASolCharacter, ItemInventory, COND_OwnerOnly);
 
 	// everyone except local owner: flag change is locally instigated
 	DOREPLIFETIME_CONDITION(ASolCharacter, bIsAiming, COND_SkipOwner);
@@ -1876,11 +1865,9 @@ void ASolCharacter::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & Out
 	DOREPLIFETIME_CONDITION(ASolCharacter, LastTakeHitInfo, COND_Custom);
 
 	// everyone
-	DOREPLIFETIME(ASolCharacter, EquippedWeapon);
-	DOREPLIFETIME(ASolCharacter, SidearmWeapon);
-	DOREPLIFETIME(ASolCharacter, PrimaryWeapon);
-	DOREPLIFETIME(ASolCharacter, SecondaryWeapon);
+	DOREPLIFETIME(ASolCharacter, EquippedItem);
 	DOREPLIFETIME(ASolCharacter, Health);
+	DOREPLIFETIME(ASolCharacter, Energy);
 }
 
 bool ASolCharacter::IsAiming() const
@@ -1898,9 +1885,9 @@ bool ASolCharacter::IsSprinting() const
 	return bIsSprinting;
 }
 
-void ASolCharacter::OnRep_EquippedWeapon(class AWeapon* LastWeapon)
+void ASolCharacter::OnRep_EquippedItem(class AInventoryItem* LastWeapon)
 {
-	SetEquippedWeapon(EquippedWeapon, LastWeapon);
+	SetEquippedWeapon(EquippedItem, LastWeapon);
 }
 
 /** Taken almost verbatim from ShooterGame example. **/

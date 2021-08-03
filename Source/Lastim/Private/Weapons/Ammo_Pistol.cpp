@@ -9,9 +9,21 @@ AAmmo_Pistol::AAmmo_Pistol(const FObjectInitializer& ObjectInitializer) : Super(
 
 	static ConstructorHelpers::FObjectFinder<USkeletalMesh> SkelMesh(TEXT("/Game/Meshes/Weapons/SK_RifleCartridge.SK_RifleCartridge"));
 	static ConstructorHelpers::FObjectFinder<UMaterialInstanceConstant> MatInstance(TEXT("/Game/Materials/MI_PistolCartridge.MI_PistolCartridge"));
-	Mesh3P->SetSkeletalMesh(SkelMesh.Object);
+	//Mesh3P->SetSkeletalMesh(SkelMesh.Object);
 	// This doesnt'seem to work.
-	Mesh3P->SetMaterial(0, MatInstance.Object);
+	//Mesh3P->SetMaterial(0, MatInstance.Object);
+
+	if (PickupMesh)
+	{
+		PickupMesh->DestroyComponent();
+		PickupMesh = nullptr;
+	}
+	USkeletalMeshComponent* Mesh3PSkel = ObjectInitializer.CreateDefaultSubobject<USkeletalMeshComponent>(this, TEXT("AmmoSkelMesh"));
+	Mesh3PSkel->SetSkeletalMesh(SkelMesh.Object);
+	PickupMesh = Mesh3PSkel;
+	Mesh3PSkel->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered;
+	PickupMesh->SetVisibility(false); // TEMP. TODO: Properly handle mesh visibility (when to hide and show).
+	PickupMesh->SetMaterial(0, MatInstance.Object);
 	
 	AmmoCount = 600;
 	MaxAmmo = 600;

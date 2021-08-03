@@ -10,28 +10,6 @@
 #include "PickupSpawner.h" // Currently only for RoamMap function
 #include "SolAIController.h"
 
-/* Using MoveToActor or MoveToLocation seems to sometimes crash the game. Doing it manually seems to work.
-// MoveToActor
-FAIMoveRequest MoveReq;
-//MoveReq.SetNavigationFilter(FilterClass);
-MoveReq.SetAllowPartialPath(true); //(bAllowPartialPath);
-MoveReq.SetAcceptanceRadius(25.f); //(AcceptableRadius);
-MoveReq.SetCanStrafe(true); //(bAllowStrafe);
-MoveReq.SetStopOnOverlap(true);  //(bStopOnOverlap);
-MoveReq.SetGoalActor(CurrentPickup);
-MoveTo(MoveReq);
-
-// MoveToLocation
-FAIMoveRequest MoveReq;
-//MoveReq.SetNavigationFilter(FilterClass);
-MoveReq.SetAllowPartialPath(true); //(bAllowPartialPath);
-MoveReq.SetAcceptanceRadius(100.f); //(AcceptableRadius);
-MoveReq.SetCanStrafe(false); //(bAllowStrafe);
-MoveReq.SetStopOnOverlap(true);  //(bStopOnOverlap);
-MoveReq.SetGoalLocation(CurrentEnemy->GetActorLocation());
-MoveTo(MoveReq);
-*/
-
 ASolAIController::ASolAIController(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
 	bWantsPlayerState = false;
@@ -41,19 +19,9 @@ ASolAIController::ASolAIController(const FObjectInitializer& ObjectInitializer) 
 	RotationSpeed = 270.f;
 	PeripheralVision = 0.5f;
 	CurrentTask = "";
-}
+	bTEMPDebugPathfinding = false;
 
-void ASolAIController::SetBotProfile(struct FBotProfile InProfile)
-{
-	BotProfile = InProfile;
-
-	/* Temporary to make alertness affect something. */
-	PeripheralVision = 0.5f - (0.25f * BotProfile.Alertness);
-	RotationSpeed = 270.f + (90 * BotProfile.Alertness);
-
-	MaxTargetPredictionError = 0.1f + (0.3f * FMath::Abs(BotProfile.Accuracy - 1.0f));
-	MaxAimOffsetError = 0.1f + (0.3f * FMath::Abs(BotProfile.Accuracy - 1.0f));
-	MaxRecoilCompensationError = 0.1f + (0.3f * FMath::Abs(BotProfile.Accuracy - 1.0f));
+	bCanPickUpItems = false;
 }
 
 void ASolAIController::OnPossess(APawn* InPawn)
@@ -97,45 +65,47 @@ void ASolAIController::Tick(float DeltaSeconds)
 {
 	// Update AI tick timer
 	AITickTimer -= DeltaSeconds;
-	//ASolCharacter* MyBot = Cast<ASolCharacter>(GetPawn());
+
 	// Do an AI update if needed.
-	if (GetSolPawn() != NULL && AITickTimer <= 0)
+	if (GetPawn<ASolCharacter>() && AITickTimer <= 0)
 	{
+		ASolCharacter* Test = this->GetPawn<ASolCharacter>();
 		/* Adding randomness to timer also currently helps make semi-auto shots more realistic.
 			In time we'll set an actual refire timer to handle that. */
-		AITickTimer = FMath::FRandRange(0.10f, 0.25f); //FMath::FRandRange(0.20f, 0.70f);
+		AITickTimer = FMath::FRandRange(1.25f, 2.5f);
 		
-		ScanEnvironment();
-		EquipBestWeapon();
+		if (!bTEMPDebugPathfinding)
+		{
+			ScanEnvironment();
+			EquipBestWeapon();
+		}
 
-		AFirearm* EquippedFirearm = Cast<AFirearm>(GetSolPawn()->GetEquippedWeapon());
+		AFirearm* EquippedFirearm = Cast<AFirearm>(GetPawn<ASolCharacter>()->GetEquippedItem());
 		/* Fire at enemy if visible. */
 		if (GetEnemy())
 		{
 			ShootEnemy();
 			UpdateAimError(DeltaSeconds);
-			AFirearm* MyFirearm = Cast<AFirearm>(GetSolPawn()->GetEquippedWeapon());
+			AFirearm* MyFirearm = Cast<AFirearm>(GetPawn<ASolCharacter>()->GetEquippedItem());
 			/* Stop reloading if we currently are in a shovel reload. */
 			if (MyFirearm && MyFirearm->GetWeaponState() == "Reloading")
 			{
-				GetSolPawn()->StartFire();
-				GetSolPawn()->StopFire();
+				GetPawn<ASolCharacter>()->StartFire();
+				GetPawn<ASolCharacter>()->StopFire();
 			}
 		}
 		/* Otherwise, reload the weapon if we should. */
 		if (EquippedFirearm && EquippedFirearm->CanReload() && ((EquippedFirearm->ShouldReload() && CurrentEnemy == NULL) || EquippedFirearm->GetAmmo() <= 0))
 		{
-			GetSolPawn()->OnReload();
+			GetPawn<ASolCharacter>()->OnReload();
 		}
-	}
-	if (GetSolPawn())
-	{
+
 		if (bWantsNewTask && !bGettingNewTask)
 		{
 			bGettingNewTask = true;
-			GetNextTask();
+			bool bGotNewTask = GetNextTask();
 			bGettingNewTask = false;
-			bWantsNewTask = false;
+			bWantsNewTask = !bGotNewTask;
 		}
 	}
 	Super::Tick(DeltaSeconds);
@@ -145,7 +115,7 @@ bool ASolAIController::GetNextTask()
 {
 	/* Clear enemy if they are dead. 
 	TODO: Move this somewhere more logical. */
-	if (GetSolPawn() && GetEnemy())
+	if (GetPawn<ASolCharacter>() && GetEnemy())
 	{
 		ASolCharacter* SoldierEnemy = Cast<ASolCharacter>(GetEnemy());
 		if (SoldierEnemy && CanSee(SoldierEnemy) && !SoldierEnemy->IsAlive())
@@ -153,10 +123,40 @@ bool ASolAIController::GetNextTask()
 			ClearEnemy();
 		}
 	}
-	
-	if (GetSolPawn() && GetSolPawn()->IsAlive() && !ShouldPostponePathUpdates())
+
+	// Temporary "just roam map" code to debug pathfinding.
+	if (bTEMPDebugPathfinding && GetPawn<ASolCharacter>() && GetPawn<ASolCharacter>()->IsAlive())
 	{
-		/* Only proceed if we have no objective. */
+		FVector RoamLoc = RoamMap();
+		if (RoamLoc != FVector::ZeroVector)
+		{
+			//UNavigationPath* NavPath = UNavigationSystem::FindPathToLocationSynchronously(GetWorld(), PathStart, Position, NULL);
+			MoveToLocation(RoamLoc, 10.f, false, true, false, false);
+			CurrentTask = "Roam";
+
+			bool bHasValidPath = GetPathFollowingComponent()->HasValidPath();
+			bool bHasPartialPath = GetPathFollowingComponent()->HasPartialPath();
+			if (!bHasValidPath)
+			{
+				GEngine->AddOnScreenDebugMessage(-1, 15.f, FColor::Green, FString::Printf(TEXT("%s has an invalid path to %s."), *this->GetName(), *RoamLoc.ToString()));
+			}
+			else if (bHasPartialPath)
+			{
+				GEngine->AddOnScreenDebugMessage(-1, 15.f, FColor::Green, FString::Printf(TEXT("%s has a partial path to %s."), *this->GetName(), *RoamLoc.ToString()));
+				//StopMovement();
+
+			}
+			else
+			{
+				GEngine->AddOnScreenDebugMessage(-1, 15.f, FColor::Green, FString::Printf(TEXT("%s has a valid path to %s."), *this->GetName(), *RoamLoc.ToString()));
+			}
+			return bHasValidPath && !bHasPartialPath;
+		}
+	}
+	
+	if (GetPawn<ASolCharacter>() && GetPawn<ASolCharacter>()->IsAlive() && !ShouldPostponePathUpdates())
+	{
+		// Only proceed if we have no objective.
 		if (!CheckObjective())
 		{
 			if (GetEnemy() && GetEnemy() != nullptr)
@@ -172,17 +172,18 @@ bool ASolAIController::GetNextTask()
 				{
 					MoveToLocation(EnemyLastKnownLocation, 10.f, false, true, true);
 					SetFocalPoint(EnemyLastKnownLocation);
-					CurrentTask = "Purusing Enemy";
+					CurrentTask = "Pursuing Enemy";
 					return true;
 				}
 			}
 			else if (GetPickup() && GetPickup() != nullptr)
 			{
-				MoveToActor(GetPickup(), 10.f, false, true, true);
+				MoveToActor(GetPickup(), 10.f, false, false, true);
+				SetFocus(GetPickup());
 				CurrentTask = "Getting Pickup";
 				return true;
 			}
-			/* Fall back to just roaming the map. */
+			// Fall back to just roaming the map.
 			else if (GetMoveStatus() == EPathFollowingStatus::Idle || !IsFollowingAPath())
 			{
 				FVector RoamLoc = RoamMap();
@@ -219,56 +220,60 @@ void ASolAIController::OnMoveCompleted(FAIRequestID RequestID, const FPathFollow
 
 void ASolAIController::ScanEnvironment()
 {
-	//ASolCharacter* MyBot = Cast<ASolCharacter>(GetPawn());
 	FindClosestEnemyWithLOS(nullptr);
-	APawn* EnemyToCheck = GetEnemy();
-	if (EnemyToCheck && EnemyToCheck != nullptr)
+	if (GetEnemy())
 	{
-		EnemyLastKnownLocation = EnemyToCheck->GetActorLocation();
+		EnemyLastKnownLocation = GetEnemy()->GetActorLocation();
 	}
-	FindClosestPickupWithLOS();
+	if (bCanPickUpItems)
+	{
+		FindClosestPickupWithLOS();
+	}
 }
 
 void ASolAIController::EquipBestWeapon()
 {
-	if (GetSolPawn())
+	if (GetPawn<ASolCharacter>())
 	{
-		int InvLength = GetSolPawn()->GetInventoryCount();
+		int InvLength = GetPawn<ASolCharacter>()->GetInventoryCount();
 		AWeapon* BestWeapon = nullptr;
-		AWeapon* EquippedWeapon = GetSolPawn()->GetEquippedWeapon();
+		AWeapon* EquippedWeapon = Cast<AWeapon>(GetPawn<ASolCharacter>()->GetEquippedItem());
 		int BestWeapIndex = -1;
 		float BestRating = 0.f;
 		for (int i = 0; i < InvLength; i++)
 		{
-			// For now, just get the base rating.
-			AWeapon* TestWeapon = GetSolPawn()->GetSpecificWeapon(i);
-			AFirearm* TestFirearm = Cast<AFirearm>(TestWeapon);
-			float TestRating = TestWeapon->GetAIRating();
-			// Prefer current weapon, especially if we have a visible enemy.
-			if (TestWeapon == EquippedWeapon)
+			// For now, just get the base rating. Do not equip anything with zero rating.
+			AInventoryItem* TestItem = GetPawn<ASolCharacter>()->GetInventoryItem(i);
+			float TestRating = 0.f;
+			AWeapon* TestWeapon = Cast<AWeapon>(TestItem);
+			if (TestWeapon)
 			{
-				TestRating *= CurrentEnemy != NULL ? 2.0f : 1.1f;
-			}
-			// Simple check for ammo: strongly prefer other weapons if we're nearly out of ammo.
-			/*
-			if (TestFirearm && TestFirearm->GetCurrentClips() <= 0)
-			{
-				TestRating *= 0.25f;
-				if (TestFirearm->GetEnergy() <= 0)
+				TestRating = TestWeapon->GetAIRating();
+				// Prefer current weapon, especially if we have a visible enemy.
+				if (TestWeapon == EquippedWeapon)
 				{
-					TestRating = 0.0f;
+					TestRating *= CurrentEnemy != NULL ? 2.0f : 1.1f;
 				}
-			}*/
-			if (TestRating >= BestRating)
+
+				AFirearm* TestFirearm = Cast<AFirearm>(TestWeapon);
+				if (TestFirearm)
+				{
+					if (TestFirearm && TestFirearm->GetAmmoForFireMode(TestFirearm->GetCurrentFireMode()) <= 0)
+					{
+						TestRating = 0.0f;
+					}
+				}
+			}
+			if (TestRating >= BestRating && TestRating > 0.f)
 			{
 				BestWeapon = TestWeapon;
 				BestWeapIndex = i;
 				BestRating = TestRating;
 			}
 		}
-		if (GetSolPawn() && BestWeapon && GetSolPawn()->GetPendingWeapon() == nullptr)
+		if (GetPawn<ASolCharacter>() && BestWeapon && GetPawn<ASolCharacter>()->GetPendingItem() == nullptr)
 		{
-			GetSolPawn()->EquipSpecificWeapon(BestWeapIndex);
+			GetPawn<ASolCharacter>()->EquipSpecificWeapon(BestWeapIndex);
 		}
 	}
 }
@@ -277,12 +282,12 @@ bool ASolAIController::CanSee(AActor* InActor) const
 {
 	bool bCanSeeObject = false;
 
-	if (InActor == nullptr)
+	if (!InActor)
 	{
 		return false;
 	}
 
-	if (InActor != nullptr && GetPawn())
+	if (InActor && GetPawn())
 	{
 		FVector MyViewVector = GetPawn()->GetControlRotation().Vector();
 		FVector IdealViewVector = (InActor->GetActorLocation() - GetPawn()->GetActorLocation());
@@ -351,6 +356,7 @@ bool ASolAIController::CanSee(FVector InVector) const
 
 bool ASolAIController::FindClosestPickupWithLOS()
 {
+	GEngine->AddOnScreenDebugMessage(-1, 15.f, FColor::Green, FString::Printf(TEXT("Finding Pickup w/ LOS")));
 	bool bGotPickup = false;
 	ASolCharacter* MyBot = Cast<ASolCharacter>(GetPawn());
 	if (MyBot != NULL)
@@ -363,14 +369,15 @@ bool ASolAIController::FindClosestPickupWithLOS()
 		{
 			APickup* TestPickup = *It;
 			UMeshComponent* TestMeshComp = TestPickup->PickupMesh;
-			FVector MeshLoc = TestMeshComp->GetCenterOfMass();
+			FVector MeshLoc = TestPickup->GetActorLocation(); //TestMeshComp->GetCenterOfMass();
 			if (TestMeshComp)
 			{
 				MeshLoc = TestMeshComp->GetCenterOfMass();
 				float Desirablility = (TestPickup->GetActorLocation() - MyLoc).SizeSquared();
 
-				//if (CanSee(*It))
-				//{
+				if (CanSee(*It) || LineOfSightTo(*It))
+				{
+					/**
 					AWeapon* TestWeapon = Cast<AWeapon>(TestPickup->GetHeldItem());
 
 					if (TestWeapon)
@@ -380,18 +387,19 @@ bool ASolAIController::FindClosestPickupWithLOS()
 							Desirablility = MAX_FLT;
 						}
 						Desirablility /= TestWeapon->GetAIRating();
-					}
+					}*/
 					if (Desirablility < BestDesirablility)
 					{
 						BestDesirablility = Desirablility;
 						BestPickup = TestPickup;
 						bGotPickup = true;
 					}
-				//}
+				}
 			}
 		}
 		if (BestPickup)
 		{
+			GEngine->AddOnScreenDebugMessage(-1, 15.f, FColor::Green, FString::Printf(TEXT("Best Pickup Found!")));
 			APickup* OldPickup = GetPickup();
 			SetPickup(BestPickup);
 			if (CurrentTask == "Getting Pickup" && OldPickup != GetPickup())
@@ -401,10 +409,10 @@ bool ASolAIController::FindClosestPickupWithLOS()
 			}
 			// Get the center of the component if possible.
 			FVector PickupLoc = CurrentPickup->GetActorLocation();
-			USkeletalMeshComponent* PickupMesh = Cast<USkeletalMeshComponent>(CurrentPickup->GetRootComponent());
+			UMeshComponent* PickupMesh = Cast<UMeshComponent>(CurrentPickup->PickupMesh);
 			if (PickupMesh)
 			{
-				PickupLoc = PickupMesh->GetCenterOfMass();
+				//PickupLoc = PickupMesh->GetCenterOfMass();
 			}
 			const float Dist = (PickupLoc - MyLoc).SizeSquared();
 			// Line of sight check is failing miserably right now, probably because the pickup origin is outside the mesh.
@@ -412,17 +420,13 @@ bool ASolAIController::FindClosestPickupWithLOS()
 			if (Dist <= FMath::Square(100.f)) //(LineOfSightTo(CurrentPickup, MyViewLoc) && Dist <= FMath::Square(125.f))
 			{
 				MyBot->Crouch();
-				bool bLOSToWeapon = CanSee(CurrentPickup);
 				bool bUseSuccessful = false;
-				if (GetPickup() == MyBot->GetUsableObject())
+				if (GetPickup() == Cast<APickup>(MyBot->GetUsableObject()))
 				{
-					bUseSuccessful = MyBot->OnStartUse();
+					StopMovement();
+					MyBot->OnStartUse();
 				}
-				if (bUseSuccessful)
-				{
-					ClearPickup();
-					//StopMovement();
-				}
+				ClearPickup();
 				MyBot->UnCrouch();
 			}
 		}
@@ -494,7 +498,7 @@ bool ASolAIController::IsEnemy(APawn* InPawn)
 	ASolPlayerState* TestPlayerState = nullptr;
 	if (InPawn->GetController() && InPawn->GetController()->PlayerState)
 	{
-		TestPlayerState = Cast<ASolPlayerState>(InPawn->GetController()->PlayerState);
+		TestPlayerState = InPawn->GetController()->GetPlayerState<ASolPlayerState>();
 	}
 
 	bool bIsEnemy = true;
@@ -636,7 +640,7 @@ FVector ASolAIController::RoamMap()
 	bool bGotLocation = false;
 	FVector Destination = FVector::ZeroVector;
 	APawn* MyBot = GetPawn();
-	if (MyBot != NULL)
+	if (MyBot)
 	{
 		const FVector MyLoc = MyBot->GetActorLocation();
 		float BestDistSq = 0;
@@ -671,6 +675,7 @@ FVector ASolAIController::RoamMap()
 			}
 		}
 	}
+	GEngine->AddOnScreenDebugMessage(-1, 15.f, FColor::Red, FString::Printf(TEXT("Roaming Map")));
 
 	return Destination;
 }
@@ -717,27 +722,31 @@ void ASolAIController::ClearPickup()
 
 void ASolAIController::ShootEnemy()
 {
-	AFirearm* MyFirearm = Cast<AFirearm>(GetSolPawn()->GetEquippedWeapon());
-	if (GetSolPawn() == NULL || MyFirearm == NULL)
+	if (GetWorldTimerManager().IsTimerActive(TimerHandle_Refire))
 	{
 		return;
 	}
-	//if (GetWorldTimerManager().IsTimerActive(TimerHandle_Refire) == true)
-	//{
-		//return;
-	//}
+	if (!GetPawn<ASolCharacter>())
+	{
+		return;
+	}
+	AFirearm* MyFirearm = Cast<AFirearm>(GetPawn<ASolCharacter>()->GetEquippedItem());
+	if (!MyFirearm)
+	{
+		return;
+	}
 
 	bool bCanShoot = false;
 	if (GetEnemy())
 	{
-		ASolCharacter* Enemy = Cast<ASolCharacter>(GetEnemy());
+		ASolCharacter* Enemy = GetEnemy< ASolCharacter>();
 		float Distance = 0.0f;
 		if (Enemy && (Enemy->IsAlive()) && (MyFirearm->GetAmmo() > 0) && (MyFirearm->CanFire() == true))
 		{
 			if (HasWeaponLOSToEnemy(Enemy, true))
 			{
 				bCanShoot = true;
-				Distance = FMath::Sqrt((Enemy->GetActorLocation() - GetSolPawn()->GetActorLocation()).SizeSquared());
+				Distance = FMath::Sqrt((Enemy->GetActorLocation() - GetPawn<ASolCharacter>()->GetActorLocation()).SizeSquared());
 			}
 		}
 		// Clear the enemy if they're dead.
@@ -750,25 +759,25 @@ void ASolAIController::ShootEnemy()
 		{
 			if (Distance > 2500.f)
 			{
-				GetSolPawn()->StartAim();
+				GetPawn<ASolCharacter>()->StartAim();
 				////GEngine->AddOnScreenDebugMessage(-1, 15.f, FColor::Red, FString::Printf(TEXT("Starting Aim")));
 			}
 
-			GetSolPawn()->StartFire();
+			GetPawn<ASolCharacter>()->StartFire();
 			// If semi-automatic, release trigger.
 			// For future reference, 0.18 seconds would be a fairly good clicking speed.
 			if (!MyFirearm->IsFullAuto())
 			{
-				GetSolPawn()->StopFire();
-				//GetWorldTimerManager().SetTimer(TimerHandle_Refire, this, &ASolAIController::ShootEnemy, FMath::FRandRange(0.25f, 0.5f), false);
+				GetPawn<ASolCharacter>()->StopFire();
+				GetWorldTimerManager().SetTimer(TimerHandle_Refire, this, &ASolAIController::ShootEnemy, FMath::FRandRange(0.25f, 0.5f), false);
 			}
 			// Ideally the pawn stops moving to fire, but currently they end up firing into wall corners.
 			//StopMovement();
 		}
 		else
 		{
-			GetSolPawn()->StopFire();
-			GetSolPawn()->StopAim();
+			GetPawn<ASolCharacter>()->StopFire();
+			GetPawn<ASolCharacter>()->StopAim();
 		}
 	}
 }
@@ -783,10 +792,10 @@ void ASolAIController::UpdateAimError(float DeltaSeconds)
 		TargetPredictionError = MaxTargetPredictionError * FMath::FRandRange(-1.0f, 1.0f);
 
 		/* Standard error. */
-		AimOffsetVector = FVector2D::FVector2D(FMath::FRand() - .5f, FMath::FRand() - .5f).GetSafeNormal();
+		AimOffsetVector = FVector2D(FMath::FRand() - .5f, FMath::FRand() - .5f).GetSafeNormal();
 		AimOffsetError = 5 * MaxAimOffsetError * FMath::FRandRange(-1.0f, 1.0f);
 		/* Better accuracy if we're standing still. */
-		if (GetSolPawn() && GetSolPawn()->GetVelocity().IsNearlyZero())
+		if (GetPawn<ASolCharacter>() && GetPawn<ASolCharacter>()->GetVelocity().IsNearlyZero())
 		{
 			AimOffsetError *= 0.75f;
 		}
@@ -798,9 +807,9 @@ void ASolAIController::UpdateAimError(float DeltaSeconds)
 
 void ASolAIController::AdjustWeaponAim(FVector& FocalPoint)
 {
-	if (GetSolPawn())
+	if (GetPawn<ASolCharacter>())
 	{
-		AFirearm* MyFirearm = Cast<AFirearm>(GetSolPawn()->GetEquippedWeapon());
+		AFirearm* MyFirearm = Cast<AFirearm>(GetPawn<ASolCharacter>()->GetEquippedItem());
 		if (MyFirearm != NULL && MyFirearm->ProjectileClass.IsValidIndex(MyFirearm->GetCurrentFireMode()))
 		{
 			
@@ -808,7 +817,7 @@ void ASolAIController::AdjustWeaponAim(FVector& FocalPoint)
 			if (Proj)
 			{
 				/* Lead shots to hit target. */
-				FVector StartLoc = GetSolPawn()->GetWeaponAimLoc();
+				FVector StartLoc = GetPawn<ASolCharacter>()->GetWeaponAimLoc();
 				FVector EndLoc = FocalPoint;
 				float TravelTime = Proj->GetTimeToLocation(StartLoc, EndLoc);
 				FVector FinalAimLeadOffset = (TargetVelocity * TravelTime) + (TargetVelocity * TravelTime * TargetPredictionError);
@@ -818,14 +827,14 @@ void ASolAIController::AdjustWeaponAim(FVector& FocalPoint)
 				}
 
 				/* Account for gravity when firing. */
-				float GravityZ = Proj->ProjectileMovement->ProjectileGravityScale * (GetSolPawn() ? GetSolPawn()->GetMovementComponent()->GetGravityZ() : GetWorld()->GetGravityZ());
+				float GravityZ = Proj->ProjectileMovement->ProjectileGravityScale * (GetPawn<ASolCharacter>() ? GetPawn<ASolCharacter>()->GetMovementComponent()->GetGravityZ() : GetWorld()->GetGravityZ());
 				float ProjSpeed = Proj->ProjectileMovement->InitialSpeed;
 				float CollisionRadius = 1.0f; // FIX ME LATER
 				bool bHighArc = false;
 				FVector TossVel;
 
 				TArray<AActor*> ActorsToIgnore;
-				ActorsToIgnore.Add(GetSolPawn());
+				ActorsToIgnore.Add(GetPawn<ASolCharacter>());
 				if (GetEnemy())
 				{
 					ActorsToIgnore.Add(GetEnemy());
@@ -833,15 +842,15 @@ void ASolAIController::AdjustWeaponAim(FVector& FocalPoint)
 
 				if (GravityZ != 0.0f)
 				{
-					if (UGameplayStatics::SuggestProjectileVelocity(this, TossVel, GetSolPawn()->GetWeaponAimLoc(), FocalPoint, ProjSpeed, bHighArc, CollisionRadius,
+					if (UGameplayStatics::SuggestProjectileVelocity(this, TossVel, GetPawn<ASolCharacter>()->GetWeaponAimLoc(), FocalPoint, ProjSpeed, bHighArc, CollisionRadius,
 						GravityZ, ESuggestProjVelocityTraceOption::TraceFullPath, FCollisionResponseParams::DefaultResponseParam, ActorsToIgnore, true))
 					{
-						FocalPoint = GetSolPawn()->GetWeaponAimLoc() + TossVel.GetSafeNormal() * 2000.0f;
+						FocalPoint = GetPawn<ASolCharacter>()->GetWeaponAimLoc() + TossVel.GetSafeNormal() * 2000.0f;
 					}
-					else if (UGameplayStatics::SuggestProjectileVelocity(this, TossVel, GetSolPawn()->GetWeaponAimLoc(), FocalPoint, ProjSpeed, true, CollisionRadius,
+					else if (UGameplayStatics::SuggestProjectileVelocity(this, TossVel, GetPawn<ASolCharacter>()->GetWeaponAimLoc(), FocalPoint, ProjSpeed, true, CollisionRadius,
 						GravityZ, ESuggestProjVelocityTraceOption::TraceFullPath, FCollisionResponseParams::DefaultResponseParam, ActorsToIgnore, true))
 					{
-						FocalPoint = GetSolPawn()->GetWeaponAimLoc() + TossVel.GetSafeNormal() * 2000.0f;
+						FocalPoint = GetPawn<ASolCharacter>()->GetWeaponAimLoc() + TossVel.GetSafeNormal() * 2000.0f;
 					}
 				}
 			}
@@ -854,7 +863,7 @@ void ASolAIController::UpdateControlRotation(float DeltaTime, bool bUpdatePawn)
 	// Look toward focus
 	FVector FocalPoint = GetFocalPoint();
 	float AimErrorDistScale = 0.f;
-	if (GetEnemy() && GetSolPawn())
+	if (GetEnemy() && GetPawn<ASolCharacter>())
 	{
 		ASolCharacter* EnemySoldier = Cast<ASolCharacter>(GetEnemy());
 		if (EnemySoldier != nullptr) //|| GetFocalPoint() == EnemyLastKnownLocation)
@@ -862,16 +871,16 @@ void ASolAIController::UpdateControlRotation(float DeltaTime, bool bUpdatePawn)
 			// Better aim position; also, uncomment for headshot testing.
 			FocalPoint = EnemySoldier->GetTorsoLocation(); //GetHeadLocation();
 
-			AimErrorDistScale = 5000.f / 2500.f + (0.5f * (EnemySoldier->GetActorLocation() - GetSolPawn()->GetActorLocation()).Size());
+			AimErrorDistScale = 5000.f / 2500.f + (0.5f * (EnemySoldier->GetActorLocation() - GetPawn<ASolCharacter>()->GetActorLocation()).Size());
 		}
 		AdjustWeaponAim(FocalPoint);
 	}
 	IdealAimPoint = FocalPoint;
-	if (!FocalPoint.IsZero() && GetSolPawn())
+	if (!FocalPoint.IsZero() && GetPawn<ASolCharacter>())
 	{
-		FVector Direction = FocalPoint - GetSolPawn()->GetWeaponAimLoc();
+		FVector Direction = FocalPoint - GetPawn<ASolCharacter>()->GetWeaponAimLoc();
 		FRotator DesiredRotation = Direction.Rotation();
-		DesiredRotation -= GetSolPawn()->GetWeaponRotationOffset() + (GetSolPawn()->GetWeaponRotationOffset() * RecoilCompensationError);
+		DesiredRotation -= GetPawn<ASolCharacter>()->GetWeaponRotationOffset() + (GetPawn<ASolCharacter>()->GetWeaponRotationOffset() * RecoilCompensationError);
 		DesiredRotation += FRotator(AimOffsetVector.X, AimOffsetVector.Y, 0) * AimOffsetError;
 		IdealAimRotation = DesiredRotation;
 
@@ -904,12 +913,13 @@ class APawn* ASolAIController::GetEnemy() const
 	return CurrentEnemy;
 }
 
+template<class T>
+T* ASolAIController::GetEnemy() const
+{
+	return Cast<T>(CurrentEnemy);
+}
+
 class APickup* ASolAIController::GetPickup() const
 {
 	return CurrentPickup;
-}
-
-ASolCharacter* ASolAIController::GetSolPawn()
-{
-	return Cast<ASolCharacter>(GetPawn());
 }

@@ -16,11 +16,4 @@ class LASTIM_API AInventoryBag : public AInventoryItem
 public:
 	// List of held items.
 	TArray<AInventoryItem*> ContainedItems;
-
-	virtual UMeshComponent* GetPickupMesh() override;
-
-protected:
-
-	UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
-	class USkeletalMeshComponent* Mesh3P;
 };

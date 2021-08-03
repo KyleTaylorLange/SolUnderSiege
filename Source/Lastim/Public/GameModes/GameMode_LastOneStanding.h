@@ -23,10 +23,18 @@ class LASTIM_API AGameMode_LastOneStanding : public ASolGameMode
 
 	virtual void InitBot(ASolAIController* AIC, FBotProfile* InBotProfile) override;
 
+	/* Determines the player's starting lives.
+		This will generally be the score limit, but will be less for late joiners. */
+	virtual void InitStartingLives(ASolPlayerState* NewPlayer);
+
 public:
 
 	AGameMode_LastOneStanding(const FObjectInitializer& ObjectInitializer);
-	
+
+	virtual void GetGameOptions(TArray<struct FGameOption>& OptionsList) override;
+
+	virtual void InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage) override;
+
 protected:
 
 	/** Override to always force respawn. */
@@ -39,4 +47,11 @@ protected:
 	virtual void DetermineMatchWinner() override;
 
 	virtual void CheckForMatchWinner() override;
+
+	// Class of the battle royale shield each player spawns with.
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<class ABattleRoyaleShield> BattleRoyaleShieldClass;
+
+	// Should we spawn with a battle royale shield?
+	bool bUseBattleRoyaleShield;
 };

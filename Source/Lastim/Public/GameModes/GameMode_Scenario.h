@@ -11,7 +11,7 @@
 UCLASS()
 class LASTIM_API AGameMode_Scenario : public ATeamGameMode
 {
-	GENERATED_BODY()
+	GENERATED_UCLASS_BODY()
 	
 	
 	

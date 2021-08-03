@@ -8,15 +8,16 @@ AWeap_BattleRifle::AWeap_BattleRifle(const FObjectInitializer& ObjectInitializer
 {
 	DisplayName = NSLOCTEXT("Weap_BattleRifle", "WeaponName", "Battle Rifle");
 	
-	DefaultAmmoClass = AAmmo_Rifle::StaticClass();
+	DefaultAmmoClass.SetNum(1);
+	DefaultAmmoClass[0] = AAmmo_Rifle::StaticClass();
 
 	MaxFireModes = 2;
 	FireMode.SetNum(2);
 	FireMode[0].ShotDamage = 60.f;
 	FireMode[0].TimeBetweenShots = 0.2f;
 	FireMode[0].ShotsPerBurst = 1;
-	FireMode[0].BulletProps = FBulletProperties::FBulletProperties(FLinearColor(0.80f, 0.15f, 0.95f), 10, 1000);
-	FireMode[0].AmmoPerShot = 200;
+	FireMode[0].BulletProps = FBulletProperties(FLinearColor(0.80f, 0.15f, 0.95f), 10, 1000);
+	FireMode[0].AmmoPerShot = 2;
 
 	// TODO: Make me launch a grenade instead.
 	FireMode[1].ShotDamage = 0.f;
@@ -30,7 +31,7 @@ AWeap_BattleRifle::AWeap_BattleRifle(const FObjectInitializer& ObjectInitializer
 
 	RecoilPerShot = 18.f;
 	SpreadRange = 200.f;
-	WeaponOffset = FVector(10.f, 10.f, -10.f);
+	MeshOffset = FVector(10.f, 10.f, -10.f);
 	BaseAIRating = 0.52f;
 	bCanAttachGrenade = true;
 }

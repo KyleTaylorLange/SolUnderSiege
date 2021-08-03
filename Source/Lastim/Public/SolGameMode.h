@@ -1,12 +1,53 @@
 // Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
 #pragma once
 #include "GameFramework/GameMode.h"
-//#include "SolAIController.h" //Maybe transfer this to the AI controller itself?
+#include "ObjectivePoint.h"
 #include "SolPlayerState.h"
-#include "SolAIController.h"
+#include "SolBot.h"
 #include "SolGameMode.generated.h"
 
-UCLASS(minimalapi)
+// Contains data to control different game option variables.
+struct FGameOption
+{
+	/* Name of the option in the menu. */
+	FText OptionName;
+
+	/* String added to the URL. */
+	FString URLString;
+
+	/* Default value to print in this option's box. */
+	FText DefaultValue;
+
+public:
+	/* Widget connected to this option.
+	   TEST: Changed from SEditableTextBox */
+	TSharedPtr<class SCompoundWidget> OptionWidget;
+
+	FGameOption(const FText& InOptionName)
+	{
+		OptionName = InOptionName;
+	}
+
+	FGameOption(const FText& InOptionName, const FString& InURLString, const FText& InDefaultValue)
+	{
+		OptionName = InOptionName;
+		SetURLString(InURLString);
+		SetDefaultValue(InDefaultValue);
+	}
+
+	void SetURLString(const FString& InURLString)
+	{
+		URLString = InURLString;
+	}
+
+	void SetDefaultValue(const FText& InDefaultValue)
+	{
+		DefaultValue = InDefaultValue;
+	}
+};
+
+
+UCLASS(minimalapi, Abstract)
 class ASolGameMode : public AGameMode
 {
 	GENERATED_BODY()
@@ -27,6 +68,8 @@ class ASolGameMode : public AGameMode
 
 	/** Creates a bot. **/
 	class ASolAIController* CreateBot(struct FBotProfile InBotProfile);
+
+	virtual void RestartGame() override;
 
 protected:
 	/** Ticks every second. */
@@ -65,9 +108,14 @@ public:
 	void BroadcastDeath_Implementation(class ASolPlayerState* KillerPlayerState, const UDamageType* KillerDamageType, class ASolPlayerState* KilledPlayerState);
 
 	virtual void InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage) override;
+
 	virtual void SetPlayerDefaults(APawn* PlayerPawn) override;
 
-	virtual void SpawnInventoryForPawn(APawn* InPawn);
+	virtual void InitPickupSpawner(class APickupSpawner* PickupSpawner);
+
+	virtual TSubclassOf<class AInventoryItem> ModifyPickupToSpawn(TSubclassOf<class AInventoryItem> DesiredPickup);
+
+	bool GetBoolOption(const FString& Options, const FString& Key, bool DefaultValue);
 
 	/** Returns true if the player should consider the target an enemy. */
 	virtual bool PlayersAreEnemies(ASolPlayerState* AskingPlayer, ASolPlayerState* TargetPlayer) const;
@@ -78,8 +126,14 @@ public:
 	UFUNCTION(exec)
 	class ASolAIController* AddBot();
 
+	/* Sends messages to players. */
+	void Broadcast(AActor* Sender, const FString& Msg, FName Type) override;
+
 	/** @return GameSession class to use for this game  */
 	virtual TSubclassOf<class AGameSession> GetGameSessionClass() const;
+
+	// Adds this game type's options into the input OptionsList.
+	virtual void GetGameOptions(TArray<struct FGameOption> &OptionsList);
 
 protected:
 
@@ -121,6 +175,13 @@ protected:
 
 	/** Scores a death according to the game's rules. **/
 	virtual void ScoreDeath(AController* Killer, AController* KilledPlayer, APawn* KilledPawn, const UDamageType* DamageType);
+
+	// Select the classes of inventory items the pawn will spawn with.
+	virtual TArray<TSubclassOf<class AInventoryItem>> SelectPawnStartingInventory(APawn* InPawn);
+
+	// The list of default inventory to add to every player's inventory.
+	UPROPERTY(EditDefaultsOnly)
+	TArray<TSubclassOf<class AInventoryItem>> StartingInventory;
 
 	/** Score required to win the match. **/
 	UPROPERTY(config)
@@ -181,7 +242,6 @@ protected:
 	UPROPERTY(config)
 	bool bSpawnWithPrimary;
 };
-
 
 
 

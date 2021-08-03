@@ -3,10 +3,13 @@
 #pragma once
 
 #include "GameFramework/Actor.h"
+#include "UsableObjectInterface.h"
 #include "DominationControlPoint.generated.h"
 
+DECLARE_DELEGATE_OneParam(FOnScoreCP, ADominationControlPoint*)
+
 UCLASS()
-class LASTIM_API ADominationControlPoint : public AActor
+class LASTIM_API ADominationControlPoint : public AActor, public IUsableObjectInterface
 {
 	GENERATED_UCLASS_BODY()
 	
@@ -17,12 +20,25 @@ public:
 	// Called every frame
 	virtual void Tick( float DeltaSeconds ) override;
 
+	// Gets owning player.
+	class ASolPlayerState* GetOwningPlayer();
+
+	// Gets owning team.
+	class ATeamState* GetOwningTeam();
+
+	virtual bool CanBeUsedBy(AActor* User) override;
+
+	virtual bool OnStartUseBy(AActor* User) override;
+
+	virtual FString GetUseActionName(AActor* User) override;
+
 	UFUNCTION()
 	virtual void OnOverlapBegin(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepHitResult);
 
 	UFUNCTION()
 	virtual void OnOverlapEnd(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
+	FOnScoreCP OnScoreCPDelegate;
 
 private:
 
@@ -40,6 +56,9 @@ private:
 
 	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
 	FLinearColor LightColor;
+
+	UPROPERTY(EditAnywhere, Category = Gameplay)
+	bool bCaptureOnTouch;
 
 	virtual void OnTeamChange(class ASolPlayerState* NewOwner);
 

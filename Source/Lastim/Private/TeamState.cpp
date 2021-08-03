@@ -4,6 +4,18 @@
 #include "UnrealNetwork.h"
 #include "TeamState.h"
 
+ATeamState::ATeamState(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
+{
+	TeamName = FText::FromString(FString("Team"));
+	Score = 0;
+	Kills = 0;
+	Deaths = 0;
+	Suicides = 0;
+	Teamkills = 0;
+	TeamIndex = -1;
+	TeamColor = FLinearColor::White;
+}
+
 void ATeamState::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);

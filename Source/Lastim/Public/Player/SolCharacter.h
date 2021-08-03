@@ -3,6 +3,7 @@
 
 #pragma once
 #include "GameFramework/Character.h"
+#include "UsableObjectInterface.h"
 #include "InventoryItem.h"
 #include "SolCharacter.generated.h"
 
@@ -71,21 +72,21 @@ public:
 		case FPointDamageEvent::ClassID:
 			if (PointDamageEvent.DamageTypeClass == NULL)
 			{
-				PointDamageEvent.DamageTypeClass = DamageTypeClass ? DamageTypeClass : UDamageType::StaticClass();
+				PointDamageEvent.DamageTypeClass = DamageTypeClass ? DamageTypeClass : (TSubclassOf<UDamageType>)UDamageType::StaticClass();
 			}
 			return PointDamageEvent;
 
 		case FRadialDamageEvent::ClassID:
 			if (RadialDamageEvent.DamageTypeClass == NULL)
 			{
-				RadialDamageEvent.DamageTypeClass = DamageTypeClass ? DamageTypeClass : UDamageType::StaticClass();
+				RadialDamageEvent.DamageTypeClass = DamageTypeClass ? DamageTypeClass : (TSubclassOf<UDamageType>)UDamageType::StaticClass();
 			}
 			return RadialDamageEvent;
 
 		default:
 			if (GeneralDamageEvent.DamageTypeClass == NULL)
 			{
-				GeneralDamageEvent.DamageTypeClass = DamageTypeClass ? DamageTypeClass : UDamageType::StaticClass();
+				GeneralDamageEvent.DamageTypeClass = DamageTypeClass ? DamageTypeClass : (TSubclassOf<UDamageType>)UDamageType::StaticClass();
 			}
 			return GeneralDamageEvent;
 		}
@@ -115,10 +116,38 @@ public:
 	}
 };
 
-UCLASS(config=Game)
-class ASolCharacter : public ACharacter
+/** The different sections of the body in human-readable form. */
+UENUM()
+enum EBodySection
+{
+	Head,
+	UpperTorso,
+	LowerTorso,
+	LeftLeg,
+	RightLeg,
+	LeftArm,
+	RightArm,
+	LeftTorso,
+	RightTorso,
+};
+
+/** A struct representing info about a section of the player's body. */
+USTRUCT()
+struct FBodySectionInfo
 {
 	GENERATED_BODY()
+
+	/** Names of the mesh bones belonging to this section. */
+	UPROPERTY(EditDefaultsOnly, Category = Mesh)
+	TArray<FName> Bones;
+};
+
+UCLASS(config=Game)
+class ASolCharacter : public ACharacter, public IUsableObjectInterface
+{
+	GENERATED_UCLASS_BODY()
+
+private:
 
 	virtual void PostInitializeComponents() override;
 
@@ -149,6 +178,18 @@ class ASolCharacter : public ACharacter
 	UPROPERTY(EditDefaultsOnly, Category = Mesh)
 	FName HelmetAttachPoint;
 
+	// Sockets to attach weapon meshes.
+	UPROPERTY(EditDefaultsOnly, Category = Mesh)
+	FName RightThighAttachPoint;
+	UPROPERTY(EditDefaultsOnly, Category = Mesh)
+	FName LeftThighAttachPoint;
+	UPROPERTY(EditDefaultsOnly, Category = Mesh)
+	FName BackAttachPoint;
+
+	/** The different sections of the player's body. */
+	UPROPERTY(EditDefaultsOnly, Category = Mesh)
+	TArray<FBodySectionInfo> BodySections;
+
 	/** First person camera */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class UCameraComponent* FirstPersonCameraComponent;
@@ -160,16 +201,15 @@ class ASolCharacter : public ACharacter
 	virtual void SetSprinting(bool bNewSprinting);
 
 	// Equip a specific weapon.
-	void EquipWeapon(class AWeapon* Weapon);
+	void EquipItem(class AInventoryItem* Item);
 
 	// Drop a specific inventory item.
 	void DropInventory(class AInventoryItem* Inv);
 
 	// Run through possible USE actions, then executes the best one.
-	bool HandleUse();
+	void HandleUse();
 
 public:
-	ASolCharacter(const FObjectInitializer& ObjectInitializer);
 
 	// Returns either the first or third person mesh.
 	USkeletalMeshComponent* GetSpecificPawnMesh(bool WantFirstPerson) const;
@@ -215,7 +255,7 @@ public:
 
 	// Player has pressed the USE key; figure out what action to do (if any).
 	UFUNCTION(BlueprintCallable, Category = Input)
-	bool OnStartUse();
+	void OnStartUse();
 
 	// Player has depressed the USE key; figure out what action to do (if any).
 	UFUNCTION(BlueprintCallable, Category = Input)
@@ -228,6 +268,19 @@ public:
 	/** Stops sprinting. */
 	UFUNCTION(BlueprintCallable, Category = Input)
 	void StopSprint();
+
+
+	/** Handles moving forward/backward */
+	UFUNCTION(BlueprintCallable, Category = Input)
+	void MoveForward(float Val);
+
+	/** Handles strafing movement, left and right */
+	UFUNCTION(BlueprintCallable, Category = Input)
+	void MoveRight(float Val);
+
+	/** Handles moving up and down. */
+	UFUNCTION(BlueprintCallable, Category = Input)
+	void MoveUp(float Val);
 
 	/** Returns bIsAiming. **/
 	UFUNCTION(BlueprintCallable, Category = Gameplay)
@@ -247,12 +300,8 @@ public:
 	// Destroys all inventory items.
 	virtual void DestroyInventory();
 
-	// AnimMontage to play each time we fire.
-	// We probably want to get this from the weapon instead.
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
-	class UAnimMontage* FireAnimation;
-
 	// Get item we can use at the moment.
+    // NOTE: Returns AActor since returning the interface causes a compilation error.
 	UFUNCTION(BlueprintCallable, Category = Gameplay)
 	AActor* GetUsableObject();
 	
@@ -260,26 +309,71 @@ public:
 	UFUNCTION(BlueprintCallable, Category = Gameplay)
 	float GetHealth() const;
 
-	/** Get player's maximum possible health. */
-	UFUNCTION(BlueprintCallable, Category = Gameplay)
-	float GetMaxHealth() const;
-
 	/** Get player's maximum health that will regenerate. */
 	UFUNCTION(BlueprintCallable, Category = Gameplay)
 	float GetCappedHealth() const;
+
+	/** Get player's maximum possible health. */
+	UFUNCTION(BlueprintCallable, Category = Gameplay)
+	float GetFullHealth() const;
+
+	UFUNCTION(BlueprintCallable, Category = Gameplay)
+	float GetMaxHealth() const;
+
+	/** Get player's current leg health. */
+	UFUNCTION(BlueprintCallable, Category = Gameplay)
+	float GetLegHealth() const;
+
+	/** Set's the players health to a new value. 
+	  * This is not to be used for damage or healing.
+	  * @param Health The new health value. 
+	  */
+	UFUNCTION(BlueprintCallable, Category = Gameplay)
+	virtual void SetHealth(float Health);
+
+	/** Set's the players max health to a new value.
+	  * @param FullHealth The new full health value.
+	  */
+	UFUNCTION(BlueprintCallable, Category = Gameplay)
+	virtual void SetFullHealth(float FullHealth);
+
+	/** Set's the players full health to a new value.
+	  * This is not to be used for damage or healing.
+	  * @param MaxHealth The new max health value.
+	  */
+	UFUNCTION(BlueprintCallable, Category = Gameplay)
+	virtual void SetMaxHealth(float MaxHealth);
+
+
+	/** Get player's full leg health. */
+	UFUNCTION(BlueprintCallable, Category = Gameplay)
+	float GetFullLegHealth() const;
+
+	UFUNCTION(BlueprintCallable, Category = Gameplay)
+	float GetEnergy() const;
+
+	UFUNCTION(BlueprintCallable, Category = Gameplay)
+	float GetFullEnergy() const;
+
+	UFUNCTION(BlueprintCallable, Category = Gameplay)
+	float GetMaxEnergy() const;
+
+	float IncreaseEnergy(float Amount, bool bCanGoToMax = false);
+
+	float DecreaseEnergy(float Amount);
 
 	/** Player's stamina, which determines how much they can run (for now). */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
 	float Stamina;
 
 	UFUNCTION(BlueprintCallable, Category = Gameplay)
-	AWeapon* GetEquippedWeapon() const;
+	AInventoryItem* GetEquippedItem() const;
 
 	UFUNCTION(BlueprintCallable, Category = Gameplay)
-	AWeapon* GetPendingWeapon();
+	AInventoryItem* GetPendingItem();
 
 	UFUNCTION(BlueprintCallable, Category = Gameplay)
-	AWeapon* GetSpecificWeapon(int32 WeapNum);
+	AInventoryItem* GetInventoryItem(int32 WeapNum);
 
 	UFUNCTION(BlueprintCallable, Category = Gameplay)
 	virtual void EquipSpecificWeapon(int32 WeapNum);
@@ -290,6 +384,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = Effects)
 	FName GetWeaponAttachPoint() const;
+
+	UFUNCTION(BlueprintCallable, Category = Effects)
+	virtual FName DetermineItemAttachPoint(class AInventoryItem *Inv);
 
 	/* Gets the head's location. For bot AI. */
 	UFUNCTION(BlueprintCallable, Category = AI)
@@ -304,32 +401,43 @@ public:
 	virtual void SetWeaponFiringAllowed(bool bInWeaponFiringAllowed);
 
 	/** Adds the player's starting inventory. **/
-	virtual void SpawnInitialInventory(TArray<TSubclassOf<AInventoryItem>> InventoryFromGameMode, bool bUsePawnDefaultInventory = false);
+	virtual void SpawnInitialInventory(TArray<TSubclassOf<class AInventoryItem>> InventoryFromGameMode, bool bUsePawnDefaultInventory = false);
 
 	// Creates and returns new item of class NewItemClass and adds it to the inventory.
 	AInventoryItem* CreateNewInventoryItem(TSubclassOf<class AInventoryItem> NewItemClass);
 
 	// Adds item to the inventory.
-	void AddToInventory(AInventoryItem* NewItem);
+	void AddToInventory(class AInventoryItem* NewItem, class AInventoryItem* OldItem = nullptr);
 
-	// Adds item to the inventory.
-	void RemoveFromInventory(AInventoryItem* ItemToRemove);
-
-	// Remake the array of the player's weapons (and their positions in the inventory, e.g. sidearm, primary, etc.)
-	void RemakeWeaponList();
+	/** Removes item from inventory. */
+	bool RemoveFromInventory(class AInventoryItem* ItemToRemove);
 
 	/* Called by the player's previous weapon once it has finished being unequipped. */
-	void OnWeaponUnequipFinish(class AWeapon* OldWeapon);
+	void OnWeaponUnequipFinish(class AInventoryItem* OldWeapon);
+
+	// TEST: Anim sequence when idle.
+	UPROPERTY(EditDefaultsOnly, Category = Animation)
+	UAnimSequence* IdleAnimSeq;
+
+	// TEST: Default idle anim (i.e. when no weapon is equipped).
+	UPROPERTY(EditDefaultsOnly, Category = Animation)
+	UAnimSequence* DefaultIdleAnimSeq;
+
+	UFUNCTION(BlueprintCallable, Category = Animation)
+	UAnimSequence* GetIdleAnimSequence() const;
+
+	// Checks if the player can hold an inventory item (not including swapping for one).
+	bool CanHoldItem(class AInventoryItem* Item) const;
+
+	// Checks if the player can pick up this item by swapping for it.
+	// Returns a pointer to the item they would swap for.
+	AInventoryItem* CanSwapForItem(class AInventoryItem* Item) const;
 
 	// Checks if the player can grab the pickup.
 	// TODO: Maybe split to see if player:
 	//    1. Can add item to inventory (current design), and:
 	//    2. Can physically grab the item (too far, has no arms, etc.) 
-	bool CanPickupItem(AInventoryItem* Item) const;
-
-	// Checks if the player can pickup an inventory item by dropping another one.
-	// Returns the item (if any) that can be swapped.
-	AInventoryItem* CanSwapForItem(AInventoryItem* Item) const;
+	bool CanPickUpItem(class AInventoryItem* Item) const;
 
 	virtual void FaceRotation(FRotator NewControlRotation, float DeltaTime) override;
 
@@ -345,6 +453,15 @@ public:
 
 	/** Reduce recoil after every tick. */
 	void ProcessRecoil(float DeltaSeconds);
+
+	/* Offset the weapon from the view direction based on breathing, movement, etc. */
+	void AddWeaponSway(float DeltaSeconds);
+
+	// Float to track the weapon sway offset time.
+	float WeaponSwayTime;
+
+	// Float to track the weapon sway offset time due to breathing.
+	float BreathingTime;
 
 	/** Following almost ripped verbatim from ShooterGame. **/
 
@@ -401,6 +518,10 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated, Category = Gameplay)
 	float Health;
 
+	/** Player's normal health amount, generally 100. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated, Category = Gameplay)
+	float FullHealth;
+
 	/** Player's maximum health, generally 100. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated, Category = Gameplay)
 	float MaxHealth;
@@ -421,56 +542,62 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated, Category = Gameplay)
 	float HealthTicksPerSec;
 
+	/** Player's energy. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated, Category = Gameplay)
+	float Energy;
+
+	/** Value where player's energy is considered full. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated, Category = Gameplay)
+	float FullEnergy;
+
+	/** Absolute ceiling where player's energy cannot go higher. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated, Category = Gameplay)
+	float MaxEnergy;
+
 	// Timer and function to regenerate health when damaged.
 	FTimerHandle TimerHandle_RegenHealth;
 
 	// Renerate some health up to max health (minus severe damage).
 	virtual void RegenHealth();
 
+	/** Health of the player's legs. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated, Category = Gameplay)
+	float LegHealth;
+
+	/** Player's maximum health, generally 100. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated, Category = Gameplay)
+	float FullLegHealth;
+
 	/** Currently equipped weapon. */
-	UPROPERTY(Transient, ReplicatedUsing = OnRep_EquippedWeapon)
-	class AWeapon* EquippedWeapon;
+	UPROPERTY(Transient, ReplicatedUsing = OnRep_EquippedItem)
+	class AInventoryItem* EquippedItem;
 
 	/** Weapon we want to equip. */
-	class AWeapon* PendingWeapon;
+	class AInventoryItem* PendingItem;
 
 	UFUNCTION()
-	void OnRep_EquippedWeapon(class AWeapon* LastWeapon);
+	void OnRep_EquippedItem(class AInventoryItem* LastItem);
 
 public:
+
 	/** List of inventory items carried by this character. */
-	//UPROPERTY(Transient, Replicated)
+	UPROPERTY(Transient, Replicated)
 	TArray<class AInventoryItem*> ItemInventory;
 
 protected:
-	/** Roster of weaponry. */
-	UPROPERTY(Transient, Replicated)
-	TArray<class AWeapon*> WeaponInventory;
 
-	/* The player's sidearm.
-	   Only handgun-sized weapons fit in this slot. */
-	UPROPERTY(Transient, Replicated)
-	AWeapon* SidearmWeapon;
+	/** The mass the player can hold in their inventory. */
+	UPROPERTY(EditDefaultsOnly, Category = Gameplay)
+	float DefaultInventoryMassCapacity;
 
-	/* The player's primary weapon. */
-	UPROPERTY(Transient, Replicated)
-	AWeapon* PrimaryWeapon;
+	/** The current amount of mass held by the player. */
+	UPROPERTY(EditDefaultsOnly, Category = Gameplay)
+	float CurrentInventoryMass;
 
-	/* The player's secondary weapon. */
-	UPROPERTY(Transient, Replicated)
-	AWeapon* SecondaryWeapon;
-
-	/* Other weapons the player can equip, such as grenades. */
-	UPROPERTY(Transient, Replicated)
-	TArray<class AWeapon*> Equipment;
-
-	/* Max amount of equipment slots. */
-	int32 MaxEquipment;
-
-	void SetEquippedWeapon(class AWeapon* NewWeapon, class AWeapon* LastWeapon = NULL);
+	void SetEquippedWeapon(class AInventoryItem* NewWeapon, class AInventoryItem* LastWeapon = nullptr);
 
 	/* Sets which weapon the player desires to equip. */
-	void SetPendingWeapon(class AWeapon* NewWeapon);
+	void SetPendingWeapon(class AInventoryItem* NewWeapon);
 
 	/** Mesh material instances. Created so we can manipulate colour, cloaking, etc. **/
 	UPROPERTY(Transient)
@@ -480,23 +607,11 @@ protected:
 	UPROPERTY(Transient)
 	TArray<UMaterialInstanceDynamic*> Mesh1PMIDs;
 
-	/** Switches to a specific weapon. TODO: choose specific weapon. */
-	void OnSwitchWeapon(); //(int8 WeapNum)
-
 	/** Switches to the previous weapon in the inventory. */
 	void OnPrevWeapon();
 
 	/** Switches to the next weapon in the inventory. */
 	void OnNextWeapon();
-
-	/** Switches to the sidearm. */
-	void OnEquipSidearm();
-
-	/** Switches to the primary weapon. */
-	void OnEquipPrimary();
-
-	/** Switches to the secondary weapon. */
-	void OnEquipSecondary();
 
 	/** Starts aiming weapon. */
 	void OnStartAim();
@@ -514,12 +629,6 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = Input)
 	void OnDropWeapon();
 
-	/** Handles moving forward/backward */
-	void MoveForward(float Val);
-
-	/** Handles strafing movement, left and right */
-	void MoveRight(float Val);
-
 	/**
 	 * Called via input to turn at a given rate.
 	 * @param Rate	This is a normalized rate, i.e. 1.0 means 100% of desired turn rate
@@ -534,7 +643,7 @@ protected:
 
 	// The default weapon classes to spawn. Empty for most multiplayer pawns.
 	UPROPERTY(EditDefaultsOnly, Category = Inventory)
-	TArray<TSubclassOf<class AWeapon>> DefaultWeaponClasses;
+	TArray<TSubclassOf<class AInventoryItem>> DefaultInventoryClasses;
 
 	/** Recolour a specific Material Instance. */
 	void UpdateMaterialColors(UMaterialInstanceDynamic* UseMID);
@@ -554,9 +663,6 @@ protected:
 	/** Sound played when dying. */
 	UPROPERTY(EditDefaultsOnly, Category = Pawn)
 	class USoundCue* DyingSound;
-
-	// Modifies damage and does other effects when hitting a specific body part.
-	virtual float LocalizeDamage(float Damage, FName HitBone); // All we need for now.
 
 	/** =============== **/
 	/** HIT REPLICATION **/
@@ -578,28 +684,18 @@ protected:
 	/** ================ **/
 	UFUNCTION(reliable, server, WithValidation)
 	void ServerSetAiming(bool bNewAiming);
-	bool ServerSetAiming_Validate(bool bNewAiming);
-	void ServerSetAiming_Implementation(bool bNewAiming);
 
 	UFUNCTION(reliable, server, WithValidation)
 	void ServerSetSprinting(bool bNewSprinting);
-	bool ServerSetSprinting_Validate(bool bNewSprinting);
-	void ServerSetSprinting_Implementation(bool bNewSprinting);
 
 	UFUNCTION(reliable, server, WithValidation)
-	void ServerEquipWeapon(class AWeapon* Weapon);
-	bool ServerEquipWeapon_Validate(class AWeapon* Weapon);
-	void ServerEquipWeapon_Implementation(class AWeapon* Weapon);
+	void ServerEquipWeapon(class AInventoryItem* Weapon);
 
 	UFUNCTION(reliable, server, WithValidation)
 	void ServerDropInventory(class AInventoryItem* Inv);
-	bool ServerDropInventory_Validate(class AInventoryItem* Inv);
-	void ServerDropInventory_Implementation(class AInventoryItem* Inv);
 
 	UFUNCTION(reliable, server, WithValidation)
 	void ServerHandleUse();
-	bool ServerHandleUse_Validate();
-	void ServerHandleUse_Implementation();
 
 	// APawn interface
 	virtual void SetupPlayerInputComponent(class UInputComponent* InputComponent) override;
@@ -641,7 +737,7 @@ private:
 	bool bWeaponFiringAllowed;
 
 	/** The current position of the pawn's weapon, from fully aimed (1) to fully unaimed (0). **/
-	//UPROPERTY(Transient, Replicated)
+	UPROPERTY(Transient, Replicated)
 	float CurrentAimPct;
 
 	/** Is the character sprinting? **/
@@ -671,6 +767,9 @@ private:
 
 	/** The weapon's offset relative to the character's view direction. */
 	FRotator HeldWeaponOffset;
+
+	// The weapon's aim offset due to the player's breathing.
+	FRotator AimBreathingOffset;
 
 	/* Last control rotation when we processed free aim.
 		Needed to properly apply free aim. */

@@ -19,6 +19,10 @@ USolCharacterMovementComponent::USolCharacterMovementComponent(const FObjectInit
 	MaxAcceleration = 2500.f;
 	BrakingDecelerationWalking = 300.f;
 	BrakingDecelerationWalking = 2500.f;
+	MinDamagedSpeedPct = 0.625f;
+
+	// Note to self: this allows the character to fly.
+	//   SetMovementMode(MOVE_Flying);
 }
 
 
@@ -28,7 +32,7 @@ float USolCharacterMovementComponent::GetMaxSpeed() const
 
 	// TODO: Better handling if player is aiming and crouching.
 	const ASolCharacter* SolCharacterOwner = Cast<ASolCharacter>(PawnOwner);
-	if (SolCharacterOwner)
+	if (SolCharacterOwner && MovementMode == MOVE_Walking)
 	{
 		if (SolCharacterOwner->IsAiming())
 		{
@@ -37,6 +41,12 @@ float USolCharacterMovementComponent::GetMaxSpeed() const
 		if (SolCharacterOwner->IsSprinting())
 		{
 			MaxSpeed *= MaxSprintSpeed / MaxWalkSpeed;
+		}
+		// Lower speed if legs are wounded.
+		const float LegHealthPct = FMath::Clamp(SolCharacterOwner->GetLegHealth() / SolCharacterOwner->GetFullLegHealth(), 0.0f, 1.f);
+		if (LegHealthPct < 1.f)
+		{
+			MaxSpeed *= FMath::Clamp(MinDamagedSpeedPct + ((1 - MinDamagedSpeedPct) * LegHealthPct), MinDamagedSpeedPct, 1.f);
 		}
 		/**
 		if (IsCrouching())
@@ -55,13 +65,11 @@ bool USolCharacterMovementComponent::DoJump(bool bReplayingMoves)
 		// Don't jump if we can't move up/down.
 		if (!bConstrainToPlane || FMath::Abs(PlaneConstraintNormal.Z) != 1.f)
 		{
-			//Velocity.Z = JumpZVelocity;
 			Velocity.Z = CalculateJumpVelocity();
 			SetMovementMode(MOVE_Falling);
 			return true;
 		}
 	}
-
 	return false;
 }
 

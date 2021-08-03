@@ -8,7 +8,7 @@
 // Class for noting important points on the map for game modes.
 // These can be items like flag bases for CTF, control points for domination, etc.
 UCLASS()
-class LASTIM_API AObjectivePoint : public AInfo //AActor
+class LASTIM_API AObjectivePoint : public AInfo
 {
 	GENERATED_BODY()
 	

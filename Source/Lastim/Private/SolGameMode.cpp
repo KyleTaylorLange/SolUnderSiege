@@ -96,60 +96,103 @@ void ASolGameMode::CheckGameTime()
 	}
 }
 
+void ASolGameMode::RestartGame()
+{
+	UE_LOG(LogOnlineGame, Log, TEXT("OptionList: %s"), *OptionsString);
+
+	ASolGameState* SolGS = Cast<ASolGameState>(GameState);
+	if (SolGS && SolGS->TempMapNames.Num() > 0)
+	{
+		if (GameSession->CanRestartGame())
+		{
+			if (GetMatchState() == MatchState::LeavingMap)
+			{
+				return;
+			}
+			FString MapName = SolGS->TempMapNames[FMath::Rand() % SolGS->TempMapNames.Num()];
+			if (MapName.Len() > 0)
+			{
+				GetWorld()->ServerTravel(MapName + OptionsString, GetTravelType());
+			}
+			else
+			{
+				GetWorld()->ServerTravel("?Restart", GetTravelType());
+			}
+		}
+	}
+	else
+	{
+		Super::RestartGame();
+	}
+}
+
 void ASolGameMode::InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage)
 {
-	const int32 MaxBotsOptionValue = UGameplayStatics::GetIntOption(Options, "MaxBots", MaxBots);
-	MaxBots = MaxBotsOptionValue;
-	const int32 ScoreLimitOptionValue = UGameplayStatics::GetIntOption(Options, "ScoreLimit", ScoreLimit);
-	ScoreLimit = ScoreLimitOptionValue;
-	const int32 TimeLimitOptionValue = UGameplayStatics::GetIntOption(Options, "TimeLimit", TimeLimit);
-	TimeLimit = TimeLimitOptionValue;
+	MaxBots = UGameplayStatics::GetIntOption(Options, "MaxBots", MaxBots);
+	ScoreLimit = UGameplayStatics::GetIntOption(Options, "ScoreLimit", ScoreLimit);
+	TimeLimit = UGameplayStatics::GetIntOption(Options, "TimeLimit", TimeLimit);
+	bSpawnWithPrimary = GetBoolOption(Options, "bSpawnWithPrimary", bSpawnWithPrimary);
+	bForceRespawn = GetBoolOption(Options, "bForceRespawn", bForceRespawn);
 	Super::InitGame(MapName, Options, ErrorMessage);
 }
 
 void ASolGameMode::SetPlayerDefaults(APawn* PlayerPawn)
 {
 	Super::SetPlayerDefaults(PlayerPawn);
-
-	SpawnInventoryForPawn(PlayerPawn);
+	// Select and spawn default inventory.
+	ASolCharacter* SolChar = Cast<ASolCharacter>(PlayerPawn);
+	if (SolChar)
+	{
+		SolChar->SpawnInitialInventory(SelectPawnStartingInventory(SolChar));
+	}
 }
 
-void ASolGameMode::SpawnInventoryForPawn(APawn* InPawn)
+void ASolGameMode::InitPickupSpawner(APickupSpawner* PickupSpawner)
 {
-	/* Spawn starting inventory. */
-	ASolCharacter* LCharacter = Cast<ASolCharacter>(InPawn);
-	if (LCharacter != NULL)
-	{
-		TArray<TSubclassOf<class AInventoryItem>> InventoryList;
+	// Do nothing for now.
+}
 
-		// Always spawn a starting sidearm.
-		if (InitialSidearms.Num() >= 1)
-		{
-			const int32 RandIndex = FMath::RandRange(0, InitialSidearms.Num() - 1);
-			if (InitialSidearms[RandIndex])
-			{
-				InventoryList.Add(InitialSidearms[RandIndex]);
-			}
-			else
-			{
-				InitialSidearms.RemoveAt(RandIndex);
-			}
-		}
-		// Only spawn with a random primary weapon if the options allow it.
-		if (bSpawnWithPrimary && InitialPrimaryWeapons.Num() >= 1)
-		{
-			const int32 RandIndex = FMath::RandRange(0, InitialPrimaryWeapons.Num() - 1);
-			if (InitialPrimaryWeapons[RandIndex])
-			{
-				InventoryList.Add(InitialPrimaryWeapons[RandIndex]);
-			}
-			else
-			{
-				InitialPrimaryWeapons.RemoveAt(RandIndex);
-			}
-		}
-		LCharacter->SpawnInitialInventory(InventoryList);
+TSubclassOf<class AInventoryItem> ASolGameMode::ModifyPickupToSpawn(TSubclassOf<class AInventoryItem> DesiredPickup)
+{
+	// By default, just accept what the spawner has chosen.
+	return DesiredPickup;
+}
+
+TArray<TSubclassOf<class AInventoryItem>> ASolGameMode::SelectPawnStartingInventory(APawn* InPawn)
+{
+	TArray<TSubclassOf<class AInventoryItem>> InventoryList;
+	// Add any game mode starting inventory.
+	for (int i = 0; i < StartingInventory.Num(); i++)
+	{
+		InventoryList.Add(StartingInventory[i]);
 	}
+	// Always spawn a starting sidearm.
+	if (InitialSidearms.Num() > 0)
+	{
+		const int32 RandIndex = FMath::RandRange(0, InitialSidearms.Num() - 1);
+		if (InitialSidearms[RandIndex])
+		{
+			InventoryList.Add(InitialSidearms[RandIndex]);
+		}
+		else
+		{
+			InitialSidearms.RemoveAt(RandIndex);
+		}
+	}
+	// Only spawn with a random primary weapon if the options allow it.
+	if (bSpawnWithPrimary && InitialPrimaryWeapons.Num() > 0)
+	{
+		const int32 RandIndex = FMath::RandRange(0, InitialPrimaryWeapons.Num() - 1);
+		if (InitialPrimaryWeapons[RandIndex])
+		{
+			InventoryList.Add(InitialPrimaryWeapons[RandIndex]);
+		}
+		else
+		{
+			InitialPrimaryWeapons.RemoveAt(RandIndex);
+		}
+	}
+	return InventoryList;
 }
 
 bool ASolGameMode::ShouldSpawnAtStartSpot(AController* Player)
@@ -414,7 +457,6 @@ ASolAIController* ASolGameMode::CreateBot(FBotProfile InBotProfile)
 	UWorld* World = GetWorld();
 	const TSubclassOf<ASolAIController> BotControllerClass = BotAIControllerClass;
 	ASolAIController* AIC = World->SpawnActor<ASolAIController>(BotControllerClass, SpawnInfo);
-	AIC->SetBotProfile(InBotProfile);
 	InitBot(AIC, &InBotProfile);
 
 	return AIC;
@@ -434,6 +476,11 @@ void ASolGameMode::InitBot(ASolAIController* AIC, FBotProfile* InBotProfile)
 				SolPS->SetPrimaryColor(InBotProfile->PrimaryColor);
 				SolPS->SetSecondaryColor(InBotProfile->SecondaryColor);
 			}
+		}
+		ASolBot* BotAI = Cast<ASolBot>(AIC);
+		if (InBotProfile && BotAI)
+		{
+			BotAI->SetBotProfile(*InBotProfile);
 		}
 	}
 }
@@ -571,10 +618,42 @@ void ASolGameMode::BroadcastDeath_Implementation(class ASolPlayerState* KillerPl
 	{
 		// All local players get death messages so they can update their huds.
 		ASolPlayerController* TestPC = Cast<ASolPlayerController>(*It);
-		if (TestPC && TestPC->IsLocalController())
+		if (TestPC) //&& TestPC->IsLocalController())
 		{
 			TestPC->OnDeathMessage(KillerPlayerState, KilledPlayerState, KillerDamageType);
-			//GEngine->AddOnScreenDebugMessage(-1, 15.f, FColor::Purple, FString::Printf(TEXT("BroadcastDeath_Implementation")));
+		}
+	}
+}
+
+void ASolGameMode::Broadcast(AActor* Sender, const FString& Msg, FName Type)
+{
+	// Do superclass version if we're not a regular say or team say message.
+	if (Type != TEXT("Say") && Type != TEXT("TeamSay"))
+	{
+		Super::Broadcast(Sender, Msg, Type);
+		return;
+	}
+	
+	ASolPlayerState* SenderPlayerState = nullptr;
+	if (Cast<APawn>(Sender) != nullptr)
+	{
+		SenderPlayerState = Cast<APawn>(Sender)->GetPlayerState<ASolPlayerState>();
+	}
+	else if (Cast<AController>(Sender) != nullptr)
+	{
+		SenderPlayerState = Cast<ASolPlayerState>(Cast<AController>(Sender)->PlayerState);
+	}
+
+	bool bTeamSay = Type == TEXT("TeamSay");
+	for (FConstPlayerControllerIterator Iterator = GetWorld()->GetPlayerControllerIterator(); Iterator; ++Iterator)
+	{
+		if (ASolPlayerController* PC = Cast<ASolPlayerController>(Iterator->Get()))
+		{
+			ASolPlayerState* ReceiverPlayerState = Cast<ASolPlayerState>(PC->PlayerState);
+			if (!bTeamSay || (ReceiverPlayerState && SenderPlayerState && ReceiverPlayerState->GetTeam() == SenderPlayerState->GetTeam()))
+			{
+				PC->ClientSendMessage(SenderPlayerState, Msg, Type);
+			}
 		}
 	}
 }
@@ -600,4 +679,39 @@ float ASolGameMode::GetRespawnTime(ASolPlayerState* Player) const
 TSubclassOf<AGameSession> ASolGameMode::GetGameSessionClass() const
 {
 	return ASolGameSession::StaticClass();
+}
+
+void ASolGameMode::GetGameOptions(TArray<FGameOption> &OptionsList)
+{
+	OptionsList.Add(FGameOption(NSLOCTEXT("Lastim.HUD.Menu", "ScoreLimit", "Score Limit"), FString("ScoreLimit"), FText::FromString(FString::FromInt(ScoreLimit))));
+	OptionsList.Add(FGameOption(NSLOCTEXT("Lastim.HUD.Menu", "TimeLimit", "Time Limit (seconds)"), FString("TimeLimit"), FText::FromString(FString::FromInt(TimeLimit))));
+	OptionsList.Add(FGameOption(NSLOCTEXT("Lastim.HUD.Menu", "BotCount", "Bots"), FString("MaxBots"), FText::FromString(FString::FromInt(MaxBots))));
+	OptionsList.Add(FGameOption(NSLOCTEXT("Lastim.HUD.Menu", "SpawnWithPrimary", "Spawn With Primary Weapon"), FString("bSpawnWithPrimary"), FText::FromString(FString::FromInt(bSpawnWithPrimary ? 1 : 0))));
+	OptionsList.Add(FGameOption(NSLOCTEXT("Lastim.HUD.Menu", "ForceRespawn", "Force Respawn"), FString("bForceRespawn"), FText::FromString(FString::FromInt(bForceRespawn ? 1 : 0))));
+}
+
+bool ASolGameMode::GetBoolOption(const FString& Options, const FString& Key, bool DefaultValue)
+{
+	const int32 IntVal = UGameplayStatics::GetIntOption(Options, Key, -1);
+	if (IntVal == 0)
+	{
+		return false;
+	}
+	else if (IntVal > 0)
+	{
+		return true;
+	}
+	else
+	{
+		const FString StrVal = UGameplayStatics::ParseOption(Options, Key);
+		if (StrVal == "false")
+		{
+			return false;
+		}
+		else if (StrVal == "true")
+		{
+			return true;
+		}
+	}
+	return DefaultValue;
 }

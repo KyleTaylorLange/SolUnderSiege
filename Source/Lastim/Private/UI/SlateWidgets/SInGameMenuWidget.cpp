@@ -4,6 +4,7 @@
 #include "SComboBox.h"
 #include "SolHUD.h"
 #include "SolGameInstance.h"
+#include "SOptionsScreenWidget.h"
 #include "SInGameMenuWidget.h"
 #include "SlateOptMacros.h"
 
@@ -16,7 +17,8 @@ void SInGameMenuWidget::Construct(const FArguments& InArgs)
 {
 	OwnerHUD = InArgs._OwnerHUD;
 	PlayerOwner = InArgs._PlayerOwner;
-
+	OptionsWidget = nullptr;
+	OptionsWindow = nullptr;
 
 	
 	FSlateColor ScoreboardTint = FLinearColor(0.0f, 0.0f, 0.0f, 0.25f);
@@ -75,6 +77,24 @@ void SInGameMenuWidget::Construct(const FArguments& InArgs)
 					SNew(SButton)
 					.VAlign(VAlign_Center)
 					.HAlign(HAlign_Center)
+					.OnClicked(this, &SInGameMenuWidget::OpenOptions)
+					//.BorderBackgroundColor(FLinearColor(0.0f, 0.0f, 0.0f, 0.0f))
+					[
+						SNew(STextBlock)
+						.ColorAndOpacity(FLinearColor::White)
+						.ShadowColorAndOpacity(FLinearColor::Black)
+						.ShadowOffset(FIntPoint(-1, 1))
+						.Font(LargeText)
+						.Text(LOCTEXT("Options", "Options"))
+					]
+				]
+				+ SVerticalBox::Slot()
+				.VAlign(VAlign_Center)
+				.AutoHeight()
+				[
+					SNew(SButton)
+					.VAlign(VAlign_Center)
+					.HAlign(HAlign_Center)
 					.OnClicked(this, &SInGameMenuWidget::Quit)
 					//.BorderBackgroundColor(FLinearColor(0.0f, 0.0f, 0.0f, 0.0f))
 					[
@@ -100,6 +120,17 @@ FReply SInGameMenuWidget::GoToMainMenu()
 		GameInstance->GoToState(SolGameInstanceState::MainMenu);
 	}
 
+	return FReply::Handled();
+}
+
+FReply SInGameMenuWidget::OpenOptions()
+{
+	SAssignNew(OptionsWidget, SOptionsScreenWidget).Cursor(EMouseCursor::Default).PlayerOwner(PlayerOwner);
+	if (OptionsWidget.IsValid())
+	{
+		GEngine->GameViewport->AddViewportWidgetContent(OptionsWidget.ToSharedRef());
+		OptionsWidget->SetVisibility(EVisibility::Visible);
+	}
 	return FReply::Handled();
 }
 

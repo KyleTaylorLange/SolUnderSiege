@@ -8,6 +8,7 @@
 #include "SWindow.h"
 #include "SOptionsScreenWidget.h"
 #include "SlateOptMacros.h"
+#include "UI/Styles/SolSlateStyle.h"
 #include "SKeyBind.h"
 
 #include "UserWidget.h"
@@ -149,7 +150,7 @@ void SOptionsScreenWidget::WindowSetup()
 		->AddMapping("Sprint")
 		->AddDefaults(EKeys::LeftShift)));
 	Binds.Add(MakeShareable((new FControlBind(NSLOCTEXT("Lastim.HUD.Menu", "PrevWeaponBind", "Select Previous Weapon")))
-		->AddMapping("PrevWeapon")
+		->AddMapping("PreviousWeapon")
 		->AddDefaults(EKeys::One)));
 	Binds.Add(MakeShareable((new FControlBind(NSLOCTEXT("Lastim.HUD.Menu", "NextWeaponBind", "Select Next Weapon")))
 		->AddMapping("NextWeapon")
@@ -157,6 +158,25 @@ void SOptionsScreenWidget::WindowSetup()
 	Binds.Add(MakeShareable((new FControlBind(NSLOCTEXT("Lastim.HUD.Menu", "ShowScoreboardBind", "Show Scoreboard")))
 		->AddMapping("ShowScoreboard")
 		->AddDefaults(EKeys::Tab)));
+
+	// List of premade colours for player to choose.
+	// TODO: Add one more unique colour to make sixteen distinct colours.
+	ColorOptions.Add(MakeShareable(new FLinearColor(SOL_COLOR_SILVER)));
+	ColorOptions.Add(MakeShareable(new FLinearColor(SOL_COLOR_RED)));
+	ColorOptions.Add(MakeShareable(new FLinearColor(SOL_COLOR_BLUE)));
+	ColorOptions.Add(MakeShareable(new FLinearColor(SOL_COLOR_GREEN)));
+	ColorOptions.Add(MakeShareable(new FLinearColor(SOL_COLOR_GOLD)));
+	ColorOptions.Add(MakeShareable(new FLinearColor(SOL_COLOR_PURPLE)));
+	ColorOptions.Add(MakeShareable(new FLinearColor(SOL_COLOR_ORANGE)));
+	ColorOptions.Add(MakeShareable(new FLinearColor(SOL_COLOR_CYAN)));
+	ColorOptions.Add(MakeShareable(new FLinearColor(SOL_COLOR_WHITE)));
+	ColorOptions.Add(MakeShareable(new FLinearColor(SOL_COLOR_GREY)));
+	ColorOptions.Add(MakeShareable(new FLinearColor(SOL_COLOR_BLACK)));
+	ColorOptions.Add(MakeShareable(new FLinearColor(SOL_COLOR_LIME)));
+	ColorOptions.Add(MakeShareable(new FLinearColor(SOL_COLOR_TEAL)));
+	ColorOptions.Add(MakeShareable(new FLinearColor(SOL_COLOR_PINK)));
+	ColorOptions.Add(MakeShareable(new FLinearColor(SOL_COLOR_BROWN)));
+
 }
 
 TSharedRef<SWidget> SOptionsScreenWidget::ConstructWindow()
@@ -168,6 +188,7 @@ TSharedRef<SWidget> SOptionsScreenWidget::MakeOptionsWindow()
 {
 	TSharedPtr<SVerticalBox> OptionsWindowWidget = SNew(SVerticalBox);
 
+	// Player Name Box.
 	OptionsWindowWidget->AddSlot().AutoHeight()
 	[
 		SNew(SHorizontalBox)
@@ -188,10 +209,130 @@ TSharedRef<SWidget> SOptionsScreenWidget::MakeOptionsWindow()
 		]
 	];
 
+	// Draw control binds.
 	OptionsWindowWidget->AddSlot().AutoHeight()
 	[
 		MakeControlBinds()
 	];
+
+	// Calculate mouse sensivity, then draw its slider.
+	float MouseSensitivity = 0.07f;
+	UInputSettings* InputSettings = UInputSettings::StaticClass()->GetDefaultObject<UInputSettings>();
+	if (InputSettings)
+	{
+		for (FInputAxisConfigEntry& Entry : InputSettings->AxisConfig)
+		{
+			if (Entry.AxisKeyName == EKeys::MouseX || Entry.AxisKeyName == EKeys::MouseY)
+			{
+				MouseSensitivity = Entry.AxisProperties.Sensitivity;
+				break;
+			}
+		}
+	}
+
+	OptionsWindowWidget->AddSlot().AutoHeight()
+	[
+		SNew(SHorizontalBox)
+		+ SHorizontalBox::Slot()
+		[
+			SNew(SBox)
+			.WidthOverride(250.f)
+			[
+				SNew(STextBlock)
+				.Text(NSLOCTEXT("Lastim.HUD.Menu", "MouseSensitivity", "Mouse Sensitivity"))
+			]
+		]
+		+ SHorizontalBox::Slot()
+		[
+			SAssignNew(MouseSensitivitySlider, SSlider)
+			.MinValue(0.001f)
+			.MaxValue(1.0f)
+			.Value(MouseSensitivity)
+			.OnValueChanged(this, &SOptionsScreenWidget::OnMouseSensitivityChanged)
+		]
+		+ SHorizontalBox::Slot()
+		[
+			SNew(SBox)
+			[
+				SAssignNew(MouseSensitivityTextBlock, STextBlock)
+				.Text(FText::FromString(FString::SanitizeFloat(MouseSensitivity)))
+			]
+		]
+	];
+
+	FLinearColor PrimaryColor = FLinearColor::White;
+	FLinearColor SecondaryColor = FLinearColor::White;
+	
+	USolLocalPlayer* SolLP = Cast<USolLocalPlayer>(PlayerOwner.Get());
+	if (SolLP)
+	{
+		PrimaryColor = SolLP->GetPrimaryColor();
+		SecondaryColor = SolLP->GetSecondaryColor();
+	}
+
+	OptionsWindowWidget->AddSlot().AutoHeight()
+	[
+		SNew(SHorizontalBox)
+		+ SHorizontalBox::Slot()
+		[
+			SNew(SBox)
+			.WidthOverride(250.f)
+			[
+				SNew(STextBlock)
+				.Text(NSLOCTEXT("Lastim.HUD.Menu", "PrimaryColor", "<Enhanced>Primary</> Color"))
+				.TextStyle(&FSolSlateStyle::Get(), "MediumFont")
+			]
+		]
+		+ SHorizontalBox::Slot()
+		[
+			SAssignNew(PrimaryColorPicker, SComboBox<TSharedPtr<FLinearColor>>)
+			.OptionsSource(&ColorOptions)
+			.InitiallySelectedItem(ColorOptions[0])
+			.OnGenerateWidget(this, &SOptionsScreenWidget::GenerateColorBox)
+			.OnSelectionChanged(this, &SOptionsScreenWidget::OnPrimaryColorSelected)
+			.Content()
+			[
+				SNew(SBox).WidthOverride(80.f).HeightOverride(45.f)
+				[
+					SAssignNew(SelectedPrimaryColorImage, SImage)
+					.ColorAndOpacity(PrimaryColor)
+				]
+			]
+		]
+	];
+
+	OptionsWindowWidget->AddSlot().AutoHeight()
+	[
+		SNew(SHorizontalBox)
+		+ SHorizontalBox::Slot()
+		[
+			SNew(SBox)
+			.WidthOverride(250.f)
+			[
+				SNew(STextBlock)
+				.Text(NSLOCTEXT("Lastim.HUD.Menu", "SecondaryColor", "Secon<Enhanced>dary Col</>or"))
+				.TextStyle(&FSolSlateStyle::Get(), "BlackFont")
+			]
+		]
+		+ SHorizontalBox::Slot()
+		[
+			SAssignNew(SecondaryColorPicker, SComboBox<TSharedPtr<FLinearColor>>)
+			.OptionsSource(&ColorOptions)
+			.InitiallySelectedItem(ColorOptions[0])
+			.OnGenerateWidget(this, &SOptionsScreenWidget::GenerateColorBox)
+			.OnSelectionChanged(this, &SOptionsScreenWidget::OnSecondaryColorSelected)
+			.Content()
+			[
+				SNew(SBox).WidthOverride(80.f).HeightOverride(45.f)
+				[
+					SAssignNew(SelectedSecondaryColorImage, SImage)
+					.ColorAndOpacity(SecondaryColor)
+				]
+			]
+		]
+	];
+
+
 
 	return OptionsWindowWidget.ToSharedRef();
 }
@@ -255,9 +396,58 @@ void SOptionsScreenWidget::OnCommitBind(FKey OldKey, FKey NewKey, TSharedPtr<FCo
 void SOptionsScreenWidget::OnPlayerNameTextCommited(const FText& NewText, ETextCommit::Type CommitType)
 {
 	// if (CommitType == ETextCommit::OnEnter || CommitType == ETextCommit::OnUserMovedFocus || CommitType == ETextCommit::Default || CommitType == ETextCommit::OnCleared)
-	USolLocalPlayer* LLP = Cast<USolLocalPlayer>(PlayerOwner.Get());
-	if (LLP && !PlayerNameTextBox->GetText().ToString().IsEmpty())
+	USolLocalPlayer* SolLP = Cast<USolLocalPlayer>(PlayerOwner.Get());
+	if (SolLP && !PlayerNameTextBox->GetText().ToString().IsEmpty())
 	{
-		LLP->SetPlayerName(PlayerNameTextBox->GetText().ToString());
+		SolLP->SetPlayerName(PlayerNameTextBox->GetText().ToString());
+	}
+}
+
+void SOptionsScreenWidget::OnMouseSensitivityChanged(float NewSensitivity)
+{
+	UInputSettings* InputSettings = UInputSettings::StaticClass()->GetDefaultObject<UInputSettings>();
+	// Change both X and Y values to the new value.
+	if (InputSettings)
+	{
+		for (FInputAxisConfigEntry& Entry : InputSettings->AxisConfig)
+		{
+			if (Entry.AxisKeyName == EKeys::MouseX || Entry.AxisKeyName == EKeys::MouseY)
+			{
+				Entry.AxisProperties.Sensitivity = NewSensitivity;
+			}
+		}
+	}
+	MouseSensitivityTextBlock->SetText(FText::FromString(FString::SanitizeFloat(NewSensitivity)));
+	InputSettings->SaveConfig();
+}
+
+TSharedRef<SWidget> SOptionsScreenWidget::GenerateColorBox(TSharedPtr<FLinearColor> InColor)
+{
+	return SNew(SBox).WidthOverride(80.f).HeightOverride(45.f)
+	[
+		SNew(SImage)
+		.ColorAndOpacity(*InColor.Get())
+	];
+}
+
+void SOptionsScreenWidget::OnPrimaryColorSelected(TSharedPtr<FLinearColor> NewSelection, ESelectInfo::Type SelectInfo)
+{
+	SelectedPrimaryColorImage.Get()->SetColorAndOpacity(*NewSelection.Get());
+	
+	USolLocalPlayer* SolLP = Cast<USolLocalPlayer>(PlayerOwner.Get());
+	if (SolLP)
+	{
+		SolLP->SetPrimaryColor(*NewSelection.Get());
+	}
+}
+
+void SOptionsScreenWidget::OnSecondaryColorSelected(TSharedPtr<FLinearColor> NewSelection, ESelectInfo::Type SelectInfo)
+{
+	SelectedSecondaryColorImage.Get()->SetColorAndOpacity(*NewSelection.Get());
+
+	USolLocalPlayer* SolLP = Cast<USolLocalPlayer>(PlayerOwner.Get());
+	if (SolLP)
+	{
+		SolLP->SetSecondaryColor(*NewSelection.Get());
 	}
 }

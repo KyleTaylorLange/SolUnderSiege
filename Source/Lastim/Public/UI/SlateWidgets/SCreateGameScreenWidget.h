@@ -4,58 +4,7 @@
 #include "SlateBasics.h"
 #include "AssetData.h"
 #include "SLastimWindow.h"
-
-struct FGameMode
-{
-	FString DisplayName;
-
-	FString ClassName;
-
-	FGameMode(FString DisplayName, FString ClassName)
-	{
-		this->DisplayName = DisplayName;
-		this->ClassName = ClassName;
-	}
-};
-
-struct FGameOption
-{
-	/* Name of the option in the menu. */
-	FText OptionName;
-	
-	/* String added to the URL. */
-	FString URLString;
-
-	/* Default value to print in this option's box. */
-	FText DefaultValue;
-
-	/* Widget connected to this option. 
-	   TEST: Changed from SCompoundWidget */
-public:
-	TSharedPtr<class SEditableTextBox> OptionWidget;
-
-	FGameOption(const FText& InOptionName)
-	{
-		OptionName = InOptionName;
-	}
-
-	FGameOption(const FText& InOptionName, const FString& InURLString, const FText& InDefaultValue)
-	{
-		OptionName = InOptionName;
-		SetURLString(InURLString);
-		SetDefaultValue(InDefaultValue);
-	}
-
-	void SetURLString(const FString& InURLString)
-	{
-		URLString = InURLString;
-	}
-
-	void SetDefaultValue(const FText& InDefaultValue)
-	{
-		DefaultValue = InDefaultValue;
-	}
-};
+#include "SolGameMode.h"
 
 /**
  * Menu for setting options and creating new games.
@@ -72,18 +21,19 @@ public:
 	We currently have to manually add these in the .cpp file. */
 	TArray<TSharedPtr<FString>> MapListArray;
 	// TextBlock to update when option is changed.
-	TSharedPtr<STextBlock> SelectedMap;
+	TSharedPtr<STextBlock> SelectedMapBox;
 
 	/* Drop-down box to select the game mode. */
-	TSharedPtr< SComboBox< TSharedPtr<FGameMode> > > GameModeListBox;
-	/* Display names of the game modes. These are manually keyed in temporarily. Ideally, we get the name from the game mode class itself. */
-	TArray<TSharedPtr<FString>> GameModeListArray;
-	/* List of text strings for the actual game mode classes. */
-	TArray<TSharedPtr<FString>> GameModeClassNameArray;
-	/* List of text strings for the actual game mode classes. */
-	TArray<TSharedPtr<FGameMode>> GameModes;
+	TSharedPtr<SComboBox<UClass*>> GameModeListBox;
+	/* List of game mode classes found. */
+	TArray<UClass*> GameModesList;
 	// TextBlock to update when option is changed.
-	TSharedPtr<STextBlock> SelectedGameMode;
+	TSharedPtr<STextBlock> SelectedGameModeBox;
+
+	/* Drop-down box to select the game mode. */
+	TSharedPtr<SVerticalBox> GameOptionsBox;
+
+	void RefreshGameOptionsList();
 
 	/* Makes the list of options. */
 	void CreateGameOptions();
@@ -107,7 +57,7 @@ public:
 protected:
 
 	// Draw list of game modes.
-	TSharedRef<SWidget> GenerateGameModesList(TSharedPtr<FGameMode> InItem);
+	TSharedRef<SWidget> GenerateGameModesList(UClass* InItem);
 
 	TSharedRef<SWidget> GenerateStringListWidget(TSharedPtr<FString> InItem);
 
@@ -115,6 +65,6 @@ protected:
 	void OnMapSelected(TSharedPtr<FString> NewSelection, ESelectInfo::Type SelectInfo);
 
 	/* Updates game mode drop-down box. */
-	void OnGameModeSelected(TSharedPtr<FGameMode> NewSelection, ESelectInfo::Type SelectInfo);
+	void OnGameModeSelected(UClass* NewSelection, ESelectInfo::Type SelectInfo);
 	
 };

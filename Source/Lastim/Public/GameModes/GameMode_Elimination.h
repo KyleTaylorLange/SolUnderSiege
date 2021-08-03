@@ -40,8 +40,12 @@ protected:
 	virtual void StartMatch() override;
 
 	bool bPlayersCanRestart;
+
+	virtual void GetGameOptions(TArray<struct FGameOption> &OptionsList) override;
 	
 public:
+
+	virtual void InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage) override;
 
 	/* Time round lasts. */
 	int32 RoundTime;
@@ -55,5 +59,4 @@ public:
 	virtual void OnPlayerDeath(AController* Killer, AController* KilledPlayer, APawn* KilledPawn, const UDamageType* DamageType) override;
 
 	virtual void RestartPlayer(AController* NewPlayer) override;
-	
 };

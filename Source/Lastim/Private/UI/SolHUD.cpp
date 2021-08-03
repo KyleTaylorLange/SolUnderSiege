@@ -5,6 +5,7 @@
 #include "SolGameState.h"
 #include "SolGameMode.h"
 #include "SolPlayerController.h"
+#include "SolWorldSettings.h"
 #include "UserWidget.h"
 #include "SScoreboardWidget.h"
 #include "SInGameMenuWidget.h"
@@ -12,6 +13,8 @@
 #include "TeamState.h"
 #include "Firearm.h"
 #include "Ammo.h"
+#include "UsableObjectInterface.h"
+#include "Math/UnitConversion.h"
 #include "SolHUD.h"
 #include "Engine/Canvas.h"
 #include "TextureResource.h"
@@ -21,6 +24,15 @@ ASolHUD::ASolHUD(const FObjectInitializer& ObjectInitializer) : Super(ObjectInit
 {
 	static ConstructorHelpers::FObjectFinder<UTexture2D> LowHealthOverlayTextureObj(TEXT("/Game/UI/HUD/LowHealthOverlay"));
 	LowHealthOverlayTexture = LowHealthOverlayTextureObj.Object;
+
+	static ConstructorHelpers::FObjectFinder<UTexture2D> HUDAssetsTextureObj(TEXT("/Game/UI/HUD/T_HUDAssets"));
+	UTexture2D* HUDAssetsTexture = HUDAssetsTextureObj.Object;
+
+	Crosshair = UCanvas::MakeIcon(HUDAssetsTexture, 2, 2, 12, 12);
+
+	// Icon taken from Wikipedia's Star of Life article; slightly modified to be recolourable.
+	static ConstructorHelpers::FObjectFinder<UTexture2D> HealthIconTextureObj(TEXT("/Game/UI/HUD/WikipediaStarOfLifeMono"));
+	HealthIconTexture = HealthIconTextureObj.Object;
 
 	static ConstructorHelpers::FObjectFinder<UFont> LargeFontObj(TEXT("/Game/UI/HUD/Roboto51"));
 	LargeFont = LargeFontObj.Object;
@@ -102,7 +114,7 @@ void ASolHUD::PostInitializeComponents()
 					SNew(SWeakWidget)
 					.PossiblyNullContent(InGameMenuWidget.ToSharedRef())
 					);
-
+				ShowInGameMenu(false);
 				//MyHUDMenuWidget->ActionButtonsWidget->SetVisibility(EVisibility::Visible);
 				//MyHUDMenuWidget->ActionWidgetPosition.BindUObject(this, &AStrategyHUD::GetActionsWidgetPos);
 			}
@@ -128,7 +140,31 @@ void ASolHUD::PostInitializeComponents()
 void ASolHUD::DrawHUD()
 {
 	Super::DrawHUD();
-	HUDDrawScale = FMath::Max(Canvas->ClipY / 1024.f, 0.5f);
+	HUDDrawScale = FMath::Max(Canvas->ClipY / 1080.f, 0.5f);
+
+	// Temporary way to show network players that the game is loading.
+	// Not sure if this will display anything.
+	if (GetMatchState() == MatchState::EnteringMap || GetMatchState() == MatchState::LeavingMap || GetMatchState() == MatchState::Aborted)
+	{
+		FCanvasTextItem TextItem = GetDefaultTextItem();
+		TextItem.Text = NSLOCTEXT("HUD", "EnteringMap", "Entering Map");
+		if (GetMatchState() == MatchState::LeavingMap)
+		{
+			TextItem.Text = NSLOCTEXT("HUD", "LeavingMap", "Leaving Map");
+		}
+		else if (GetMatchState() == MatchState::Aborted)
+		{
+			TextItem.Text = NSLOCTEXT("HUD", "ConnectionAborted", "Connection Aborted");
+		}
+		TextItem.Font = LargeFont;
+		TextItem.bCentreX = true;
+		TextItem.bCentreY = true;
+		TextItem.Scale = FVector2D(HUDDrawScale, HUDDrawScale) * 2;
+		TextItem.SetColor(FColor::White);
+		TextItem.Position = FVector2D((Canvas->ClipX / 2), (Canvas->ClipY / 2));
+		Canvas->DrawItem(TextItem);
+		return;
+	}
 
 	ASolCharacter* MyPawn = Cast<ASolCharacter>(GetOwningPawn());
 	ASolGameState* MyGameState = Cast<ASolGameState>(GetWorld()->GetGameState());
@@ -155,35 +191,21 @@ void ASolHUD::DrawHUD()
 			ScoreboardWidget->SetVisibility(EVisibility::Hidden);
 		}
 	}
-
-	if (bShowInGameMenu)
-	{
-		if (InGameMenuWidget.IsValid())
-		{
-			InGameMenuWidget->SetVisibility(EVisibility::Visible);
-		}
-	}
-	else
-	{
-		if (InGameMenuWidget.IsValid())
-		{
-			InGameMenuWidget->SetVisibility(EVisibility::Hidden);
-		}
-	}
 	// Most HUD stuff is still in canvas for now.
 	UpdateHUDMessages();
 	if (MyPawn)
 	{
+		DrawObjectLabels();
 		// Low health overlay.
-		if (MyPawn->GetHealth() < MyPawn->GetMaxHealth() ) //if (MyPawn && MyPawn->IsAlive() && MyPawn->Health < MyPawn->GetMaxHealth() * MyPawn->GetLowHealthPercentage())
+		if (MyPawn->GetHealth() < MyPawn->GetFullHealth() ) //if (MyPawn && MyPawn->IsAlive() && MyPawn->Health < MyPawn->GetFullHealth() * MyPawn->GetLowHealthPercentage())
 		{
 			//Was 1.0f + 5.0f *
-			const float AnimSpeedModifier = 3.14f + 9.42f * FMath::Square((1.0f - MyPawn->GetHealth() / (100 * 1.0))); // (1.0f - MyPawn->Health / (MyPawn->GetMaxHealth() * MyPawn->GetLowHealthPercentage()));
+			const float AnimSpeedModifier = 3.14f + 9.42f * FMath::Square((1.0f - MyPawn->GetHealth() / (100 * 1.0))); // (1.0f - MyPawn->Health / (MyPawn->GetFullHealth() * MyPawn->GetLowHealthPercentage()));
 			// Was 32 + 72 *
-			int32 EffectValue = 127 * (1.0f - MyPawn->GetHealth() / (MyPawn->GetMaxHealth() * 1.0)); // (1.0f - MyPawn->Health / (MyPawn->GetMaxHealth() * MyPawn->GetLowHealthPercentage()));
+			int32 EffectValue = 127 * (1.0f - MyPawn->GetHealth() / (MyPawn->GetFullHealth() * 1.0)); // (1.0f - MyPawn->Health / (MyPawn->GetFullHealth() * MyPawn->GetLowHealthPercentage()));
 			LowHealthPulseValue += GetWorld()->GetDeltaSeconds() * AnimSpeedModifier;
 			float EffectAlpha = 0.25f + 0.75f * FMath::Abs(FMath::Sin(LowHealthPulseValue));
-			float HitNotifyValue = 127 * (NotifyHitDamage / MyPawn->GetMaxHealth());
+			float HitNotifyValue = 127 * (NotifyHitDamage / MyPawn->GetFullHealth());
 			NotifyHitDamage -= GetWorld()->GetDeltaSeconds() * LastNotifyHitDamage;
 			if (NotifyHitDamage < 0)
 			{
@@ -199,24 +221,17 @@ void ASolHUD::DrawHUD()
 			Canvas->DrawItem(TileItem);
 			Canvas->ApplySafeZoneTransform();
 		}
-		// Draw pickup message if necessary.
-		APickup* UsablePickup = Cast<APickup>(MyPawn->GetUsableObject());
-		if (UsablePickup)
+		// Draw use object message if necessary.
+		IUsableObjectInterface* UseableObj = Cast<IUsableObjectInterface>(MyPawn->GetUsableObject());
+		if (UseableObj)
 		{
-			FString ItemName = "No Held Item!";
-			if (UsablePickup->GetHeldItem())
-			{
-				ItemName = UsablePickup->GetHeldItem()->GetDisplayName();
-			}
-			FString TextString = FString::Printf(TEXT("[USE] Pick up %s"), *ItemName);
+			FString TextString = FString::Printf(TEXT("[USE] %s"), *UseableObj->GetUseActionName(MyPawn));
 			FCanvasTextItem TextItem = GetDefaultTextItem();
+			TextItem.bCentreX = true;
+			TextItem.bCentreY = true;
 			TextItem.Text = FText::FromString(TextString);
 			TextItem.Scale = FVector2D(HUDDrawScale, HUDDrawScale);
-			float SizeX, SizeY;
-			Canvas->StrLen(TextItem.Font, TextItem.Text.ToString(), SizeX, SizeY);
-			SizeX *= TextItem.Scale.X;
-			SizeY *= TextItem.Scale.Y;
-			FVector2D DrawPosition = FVector2D((Canvas->ClipX * 0.5) - (SizeX * 0.5), (Canvas->ClipY * 0.625) - (SizeY * 0.5));
+			FVector2D DrawPosition = FVector2D((Canvas->ClipX * 0.5), (Canvas->ClipY * 0.625));
 			TextItem.SetColor(FColor::Green);
 			TextItem.Position = DrawPosition;
 			Canvas->DrawItem(TextItem);
@@ -226,39 +241,43 @@ void ASolHUD::DrawHUD()
 	//  In addition, the text should change if the player cannot respawn.
 	else if (!bShowScoreboard && MyGameState && GetMatchState() == "InProgress")
 	{
-		FCanvasTextItem TextItem = GetDefaultTextItem();
-		FText DeathText = NSLOCTEXT("HUD", "DeathText", "Press [FIRE] to respawn.");
 		ASolPlayerState* MyPlayerState = PlayerOwner ? Cast<ASolPlayerState>(PlayerOwner->PlayerState) : NULL;
-		if (MyPlayerState && MyPlayerState->RespawnTime > 0.0f)
+		FText DeathText;
+		if (PlayerOwner->CanRestartPlayer())
+		{
+			DeathText = NSLOCTEXT("HUD", "DeathText", "Press [FIRE] to respawn.");
+		}
+		else if (MyPlayerState && MyPlayerState->RespawnTime > 0.0f)
 		{
 			DeathText = FText::FromString(FString::Printf(TEXT("Can respawn in: %d"), FMath::CeilToInt(MyPlayerState->RespawnTime)));
 		}
-		TextItem.Text = DeathText;
-		TextItem.Font = LargeFont;
-		TextItem.Scale = FVector2D(HUDDrawScale, HUDDrawScale);
-		float SizeX, SizeY;
-		Canvas->StrLen(LargeFont, TextItem.Text.ToString(), SizeX, SizeY);
-		SizeX *= TextItem.Scale.X;
-		SizeY *= TextItem.Scale.Y;
-		FVector2D DrawPosition = FVector2D((Canvas->ClipX * 0.5) - (SizeX * 0.5), (Canvas->ClipY * 0.75) - (SizeY * 0.5));
-		TextItem.SetColor(FColor::White);
-		TextItem.Position = DrawPosition;
-		Canvas->DrawItem(TextItem);
-	}
-	if (!bShowScoreboard)
-	{
-		DrawDeathMessages();
-		DrawHeaderMessages();
-		if (MyGameState)
+		if (!DeathText.IsEmpty())
 		{
-			DrawObjectiveInfo(MyGameState);
+			FCanvasTextItem TextItem = GetDefaultTextItem();
+			TextItem.Text = DeathText;
+			TextItem.Font = LargeFont;
+			TextItem.bCentreX = true;
+			TextItem.bCentreY = true;
+			TextItem.Scale = FVector2D(HUDDrawScale, HUDDrawScale);
+			FVector2D DrawPosition = FVector2D((Canvas->ClipX * 0.5), (Canvas->ClipY * 0.75));
+			TextItem.SetColor(FColor::White);
+			TextItem.Position = DrawPosition;
+			Canvas->DrawItem(TextItem);
 		}
+	}
+	if (!bShowScoreboard && GetMatchState() != MatchState::EnteringMap && GetMatchState() != MatchState::WaitingToStart)
+	{
+		FVector2D DrawPosition = FVector2D(5.f, 5.f);
+		DrawDeathMessages(DrawPosition);
+		DrawGameData(DrawPosition, MyGameState);
+		DrawHeaderMessages();
 		if (MyPawn)
 		{
 			DrawPlayerInfo(MyPawn);
-			AWeapon* MyWeapon = MyPawn->GetEquippedWeapon();
+			AWeapon* MyWeapon = Cast<AWeapon>(MyPawn->GetEquippedItem());
 			if (MyWeapon)
 			{
+				DrawCrosshair(MyPawn, MyWeapon);
 				DrawWeaponInfo(MyPawn, MyWeapon);
 			}
 			if (bShowWeaponList)
@@ -275,42 +294,119 @@ void ASolHUD::DrawHUD()
 
 void ASolHUD::DrawPlayerInfo(ASolCharacter* InPlayer)
 {
-	/* Just health for now. */
 	if (InPlayer)
 	{
-		FVector2D Size(0.0f, 0.0f);
-		FVector2D DrawPosition(Canvas->ClipX * 0.5f, Canvas->ClipY * 0.9f);
-		FCanvasTextItem TextItem = GetDefaultTextItem();
-		TextItem.Font = MediumFont;
-		FString TextString = FString::Printf(TEXT("Health: %d/%d | Max: %d"), FMath::CeilToInt(InPlayer->GetHealth()), FMath::CeilToInt(InPlayer->GetCappedHealth()), 
-			FMath::CeilToInt(InPlayer->GetMaxHealth()));
-		TextItem.Text = FText::FromString(TextString);
-		GetTextSize(TextString, Size.X, Size.Y, MediumFont);
-		DrawPosition = FVector2D((Canvas->ClipX - Size.X) * 0.5f, Canvas->ClipY - Size.Y);
-		Canvas->DrawItem(TextItem, DrawPosition);
-
-		// Test health bar.
-		FVector2D Corner(0.f, Canvas->ClipY * 0.9375f);
-		FVector2D Edge(Canvas->ClipX * 0.125f, Canvas->ClipY);
-		FCanvasTileItem TileItem(Corner, Edge, FLinearColor(0.0f, 0.0f, 0.0f, 0.5f));
+		/*FLinearColor HealthColor = FLinearColor(0.05f,0.05f, 0.75f, 1.f);
+		FLinearColor HealableColor = HealthColor.Desaturate(0.5f);
+		HealableColor.A = 0.25f + 0.5f * FMath::Abs(FMath::Sin(GetWorld()->GetTimeSeconds() * 10.f));
+		FLinearColor UnhealableColor = HealthColor.Desaturate(1.f);
+		UnhealableColor.A = 0.75f;
+		const float Health = InPlayer->GetHealth();
+		const float Healable = InPlayer->GetCappedHealth();
+		const float FullHealth = InPlayer->GetFullHealth();
+		
+		// Draw greyed-out health icon for max health.
+		const float IconSize = FMath::Min(Canvas->ClipY, Canvas->ClipX) * 0.125f;
+		FVector2D Corner(0.f, Canvas->ClipY - IconSize);
+		FVector2D Edge(IconSize, Canvas->ClipY);
+		FCanvasTileItem TileItem(Corner, HealthIconTexture->Resource, FVector2D(IconSize, IconSize), FVector2D(0.f, 0.f), FVector2D(1.f, 1.f), UnhealableColor);
 		TileItem.BlendMode = SE_BLEND_Translucent;
 		Canvas->DrawItem(TileItem);
 
-		TileItem.SetColor(FLinearColor(0.25f, 0.25f, 0.25f, 1.f));
-		Corner.X += 1.f;
-		Corner.Y += 1.f;
-		Edge.X -= 1.f;
-		Edge.Y -= 1.f;
+		// Draw lighter icon for health that can regenerate.
+		TileItem.SetColor(HealableColor);
+		Corner.Y = Canvas->ClipY - (IconSize * Healable / FullHealth);
 		TileItem.Position = Corner;
-		TileItem.Size = Edge;
+		TileItem.Size = FVector2D(IconSize, IconSize * (Healable - Health) / FullHealth);
+		TileItem.UV0 = FVector2D(0.f, FMath::Clamp(1.f - (Healable / FullHealth), 0.f, 1.f));
+		TileItem.UV1 = FVector2D(1.f, FMath::Clamp(1.f - (Health / FullHealth), 0.f, 1.f));
 		Canvas->DrawItem(TileItem);
 
-		TileItem.SetColor(FLinearColor(0.125f, 1.0f, 0.125f, 1.f));
-		Edge.X = (Edge.X - Corner.X) * InPlayer->GetHealth() / InPlayer->GetMaxHealth() - Corner.X;
-		Edge.X += Corner.X;
+		// Draw full-colour health icon for current health.
+		TileItem.SetColor(HealthColor);
+		Corner.Y = Canvas->ClipY - (IconSize * Health / FullHealth);
 		TileItem.Position = Corner;
-		TileItem.Size = Edge;
+		TileItem.Size = FVector2D(IconSize, IconSize * Health / FullHealth);
+		TileItem.UV0 = FVector2D(0.f, FMath::Clamp(1.f - (Health / FullHealth), 0.f, 1.f));
+		TileItem.UV1 = FVector2D(1.f, 1.f);
+		Canvas->DrawItem(TileItem);*/
+
+		FLinearColor HealthColor = FLinearColor(0.125f, 0.125f, 1.f);
+		FLinearColor EnergyColor = FLinearColor::Yellow;
+		FVector2D BarSize(Canvas->ClipY / 8.f, Canvas->ClipY / 32.f);
+		float MidPadding = Canvas->ClipY * 0.0625f / 2;
+		float EdgePadding = Canvas->ClipY * 0.0625f / 4;
+
+		// Draw health info.
+
+		FVector2D Size(0.0f, 0.0f);
+		FVector2D DrawPosition(Canvas->ClipX, Canvas->ClipY);
+		FCanvasTextItem TextItem = GetDefaultTextItem();
+		TextItem.SetColor(HealthColor);
+		TextItem.Font = MediumFont;
+		FString TextString = FString::Printf(TEXT("%d/%d"), FMath::CeilToInt(InPlayer->GetHealth()), FMath::CeilToInt(InPlayer->GetFullHealth()));
+		TextItem.Text = FText::FromString(TextString);
+		GetTextSize(TextString, Size.X, Size.Y, MediumFont);
+		DrawPosition = FVector2D(Canvas->ClipX * 0.5f - Size.X - MidPadding, Canvas->ClipY - Size.Y - BarSize.Y - EdgePadding);
+		Canvas->DrawItem(TextItem, DrawPosition);
+
+		// Draw energy info.
+		TextItem.SetColor(EnergyColor);
+		TextString = FString::Printf(TEXT("%d/%d"), FMath::CeilToInt(InPlayer->GetEnergy()), FMath::CeilToInt(InPlayer->GetFullEnergy()));
+		TextItem.Text = FText::FromString(TextString);
+		GetTextSize(TextString, Size.X, Size.Y, MediumFont);
+		DrawPosition = FVector2D(Canvas->ClipX * 0.5f + MidPadding, Canvas->ClipY - Size.Y - BarSize.Y - EdgePadding);
+		Canvas->DrawItem(TextItem, DrawPosition);
+
+		FVector2D HealthBarStart;
+		FVector2D EnergyBarEnd;
+		// Draw health bar background.
+		FVector2D StartPos = FVector2D((Canvas->ClipX * 0.5f) - BarSize.X - MidPadding, Canvas->ClipY - BarSize.Y - EdgePadding);
+		FCanvasTileItem TileItem(StartPos, BarSize, HealthColor * 0.5f);
+		//FCanvasTileItem TileItem(Corner, HealthIconTexture->Resource, Corner, Edge, FVector2D(1.f, 1.f), HealthColor);
+		TileItem.BlendMode = SE_BLEND_Translucent;
 		Canvas->DrawItem(TileItem);
+
+		float HealthPct = FMath::Clamp(InPlayer->GetHealth() / InPlayer->GetFullHealth(), 0.f, 1.f);
+		TileItem.Position = FVector2D(StartPos.X + (BarSize.X * (1.0f - HealthPct)), StartPos.Y);
+		TileItem.Size = FVector2D(BarSize.X * HealthPct, BarSize.Y);
+		TileItem.SetColor(HealthColor);
+		Canvas->DrawItem(TileItem);
+
+		// Draw energy bar background.
+		StartPos = FVector2D(Canvas->ClipX * 0.5f + MidPadding, Canvas->ClipY - BarSize.Y - EdgePadding);
+		TileItem.Size = BarSize;
+		TileItem.SetColor(EnergyColor * 0.25f);
+		TileItem.Position = StartPos;
+		Canvas->DrawItem(TileItem);
+
+		float EnergyPct = FMath::Clamp(InPlayer->GetEnergy() / InPlayer->GetFullEnergy(), 0.f, 1.f);
+		TileItem.Size = FVector2D(BarSize.X * EnergyPct, BarSize.Y);
+		TileItem.SetColor(EnergyColor);
+		Canvas->DrawItem(TileItem);
+	}
+}
+
+void ASolHUD::DrawCrosshair(ASolCharacter* InPlayer, AWeapon* InWeapon)
+{
+	if (InWeapon)
+	{
+		FVector AimPoint = InWeapon->GetAimPoint();
+		if (AimPoint != FVector::ZeroVector)
+		{
+			FVector2D ScreenPos = FVector2D(0.f, 0.f);
+			if (UGameplayStatics::ProjectWorldToScreen(PlayerOwner, AimPoint, ScreenPos))
+			{
+				float Distance = (AimPoint - PlayerOwner->GetPawn()->GetActorLocation()).Size();
+				const float FurthestScalingDistance = 10000.f;
+				float CrosshairScale = FMath::Min(HUDDrawScale * 0.25f, 0.25f) * FMath::Max(1.f, 1.f + 1.f * ((FurthestScalingDistance - Distance) / FurthestScalingDistance));
+				Canvas->SetDrawColor(255, 255, 255, 192);
+				Canvas->DrawIcon(Crosshair, 
+					ScreenPos.X - (Crosshair.VL * CrosshairScale / 2.f),
+					ScreenPos.Y - (Crosshair.VL * CrosshairScale / 2.f),
+					CrosshairScale);
+			}
+		}
 	}
 }
 
@@ -329,26 +425,17 @@ void ASolHUD::DrawWeaponInfo(ASolCharacter* InPlayer, AWeapon* InWeapon)
 			FString TextString = FString::Printf(TEXT("Energy: %d - Shots: %d/%d - Percent: %d%%"), InFirearm->GetAmmo(), 
 				InFirearm->GetAmmoForFireMode(InFirearm->GetCurrentFireMode()), InFirearm->GetMaxAmmoForFireMode(InFirearm->GetCurrentFireMode()),
 				FMath::CeilToInt(100 * InFirearm->GetAmmoPct()));
-			if (InFirearm->bUseInternalAmmo) {
-				TextString = FString::Printf(TEXT("Energy: %d - Shots: %d/%d (%d) - Percent: %d%%"), InFirearm->GetAmmo(),
-				InFirearm->GetAmmoForFireMode(InFirearm->GetCurrentFireMode()), InFirearm->GetMaxAmmoForFireMode(InFirearm->GetCurrentFireMode()),
-				InFirearm->GetReserveAmmoForFireMode(InFirearm->GetCurrentFireMode()),
-				FMath::CeilToInt(100 * InFirearm->GetAmmoPct()));
-			}
 			TextItem.Text = FText::FromString(TextString);
 			GetTextSize(TextString, Size.X, Size.Y, MediumFont);
 			DrawPosition = FVector2D(Canvas->ClipX - Size.X, Canvas->ClipY - Size.Y);
 			Canvas->DrawItem(TextItem, DrawPosition);
-			/* Draw "clips" string (reserve ammo or magazines). */
-			/*if (InFirearm->GetCurrentClips() > 0)
+			ASolWorldSettings* Env = Cast<ASolWorldSettings>(GetWorld()->GetWorldSettings());
+			if (Env)
 			{
-				TextString = FString::Printf(TEXT("Clips: %d"), InFirearm->GetCurrentClips());
-				TextItem.Text = FText::FromString(TextString);
-				int32 OldDrawHeight = DrawPosition.Y;
-				GetTextSize(TextString, Size.X, Size.Y, MediumFont);
-				DrawPosition = FVector2D(Canvas->ClipX - Size.X, OldDrawHeight - Size.Y);
+				TextItem.Text = FText::FromString(FString::Printf(TEXT("%d C - %2f gravity"), FMath::FloorToInt(Env->GetTemperature() - 273.15f), Env->GetGravityZ() / 1000));
+				DrawPosition = FVector2D(0, Canvas->ClipY - Size.Y);
 				Canvas->DrawItem(TextItem, DrawPosition);
-			}*/
+			}
 		}
 	}
 }
@@ -358,18 +445,18 @@ void ASolHUD::DrawWeaponList(ASolCharacter* InPlayer)
 	if (InPlayer)
 	{
 		FVector2D Size(0.0f, 0.0f);
-		FVector2D DrawPosition(Canvas->ClipX * 0.5f, Canvas->ClipX * 0.4f);
+		FVector2D DrawPosition(Canvas->ClipX * 0.5f, Canvas->ClipY * 0.625f);
 		FCanvasTextItem TextItem = GetDefaultTextItem();
 		TextItem.Font = MediumFont;
 		TextItem.bCentreX = true;
-		AWeapon* EquippedWeapon = InPlayer->GetEquippedWeapon();
-		AWeapon* TestWeapon = NULL; // MyPawn->GetSpecificWeapon(i);
+		AInventoryItem* EquippedWeapon = InPlayer->GetEquippedItem();
+		AInventoryItem* TestWeapon = nullptr; // MyPawn->GetInventoryItem(i);
 		int32 EquippedWeaponIndex = -1;
 
 		/* Roundabout way to get EquippedWeaponIndex. */
 		for (int32 i = 0; i < InPlayer->GetInventoryCount(); i++)
 		{
-			TestWeapon = InPlayer->GetSpecificWeapon(i);
+			TestWeapon = Cast<AInventoryItem>(InPlayer->GetInventoryItem(i));
 			if (TestWeapon == EquippedWeapon)
 			{
 				EquippedWeaponIndex = i;
@@ -380,10 +467,10 @@ void ASolHUD::DrawWeaponList(ASolCharacter* InPlayer)
 		/* Draw the weapon list. */
 		for (int32 i = 0; i < InPlayer->GetInventoryCount(); i++)
 		{
-			TestWeapon = InPlayer->GetSpecificWeapon(i);
+			TestWeapon = InPlayer->GetInventoryItem(i);
 			if (TestWeapon)
 			{
-				TextItem.Text = FText::FromString(InPlayer->GetSpecificWeapon(i)->GetDisplayName());
+				TextItem.Text = FText::FromString(InPlayer->GetInventoryItem(i)->GetDisplayName());
 				TextItem.SetColor(FColor(127, 127, 127));
 				// Highlight equipped weapon and selected weapon.
 				if (FMath::Abs(EquippedWeaponIndex + DeltaWeapSelectIndex) % InPlayer->GetInventoryCount() == i)
@@ -410,7 +497,6 @@ void ASolHUD::DrawInventory(ASolCharacter* InPlayer)
 		FVector2D DrawPosition(Canvas->ClipX * 0.15f, Canvas->ClipY * 0.15f);
 		FCanvasTextItem TextItem = GetDefaultTextItem();
 		TextItem.Font = MediumFont;
-		int32 EquippedWeaponIndex = -1;
 
 
 		TArray<AInventoryItem*> InvList = InPlayer->ItemInventory;
@@ -461,11 +547,11 @@ void ASolHUD::DrawInventory(ASolCharacter* InPlayer)
 	}
 }
 
-void ASolHUD::DrawDeathMessages()
+void ASolHUD::DrawDeathMessages(FVector2D &DrawPosition)
 {
+	float LeftMargin = DrawPosition.X;
 	FVector2D Size(0.0f, 0.0f);
 	FVector2D BoxSize(0.0f, 0.0f);
-	FVector2D DrawPosition(0.f, 0.f);
 	FCanvasTextItem TextItem = GetDefaultTextItem();
 	TArray<FCanvasTextItem> TextItems;
 	TextItem.Font = SmallFont;
@@ -491,7 +577,7 @@ void ASolHUD::DrawDeathMessages()
 		}
 		BoxSize.X = FMath::Max(BoxSize.X, DrawPosition.X + Size.X);
 		BoxSize.Y = FMath::Max(BoxSize.Y, DrawPosition.Y + Size.Y);
-		DrawPosition.X = 0;
+		DrawPosition.X = LeftMargin;
 		DrawPosition.Y += Size.Y;
 	}
 	FCanvasTileItem BoxItemTest(FVector2D(0.f, 0.f), BoxSize, FLinearColor(0.f, 0.f, 0.f, 0.25f));
@@ -543,9 +629,37 @@ void ASolHUD::DrawHeaderMessages()
 	}
 }
 
-void ASolHUD::DrawObjectiveInfo(ASolGameState* InGameState)
+void ASolHUD::DrawObjectLabels()
 {
 	// Nothing here by default.
+}
+
+void ASolHUD::DrawGameData(FVector2D &DrawPosition, ASolGameState* InGameState)
+{
+	bool bDrawTeamData = InGameState && InGameState->TeamArray.Num() != 0;
+	// Draw team scores if it's a team game by default.
+	if (bDrawTeamData)
+	{
+		ASolPlayerState* MyPlayerState = PlayerOwner ? Cast<ASolPlayerState>(PlayerOwner->PlayerState) : NULL;
+		int32 TeamNum = MyPlayerState->GetTeamNum();
+
+		FCanvasTextItem TextItem = GetDefaultTextItem();
+		Canvas->DrawItem(TextItem, DrawPosition);
+		DrawPosition.Y += 15.f;
+		// Draw list of team scores - starting with our team.
+		for (int32 i = 0; i < InGameState->TeamArray.Num(); i++)
+		{
+			int32 AdjTeamIdx = (i + TeamNum) % InGameState->TeamArray.Num();
+			if (InGameState->TeamArray.IsValidIndex(AdjTeamIdx))
+			{
+				TextItem.Text = FText::FromString(FString::Printf(TEXT("%s: %d"), *InGameState->TeamArray[AdjTeamIdx]->GetTeamName().ToString(),
+					FMath::FloorToInt(InGameState->TeamArray[AdjTeamIdx]->GetScore())));
+				TextItem.SetColor(InGameState->TeamArray[AdjTeamIdx]->GetTeamColor());
+				Canvas->DrawItem(TextItem, DrawPosition);
+				DrawPosition.Y += 15.f;
+			}
+		}
+	}
 }
 
 void ASolHUD::UpdateHUDMessages()
@@ -580,16 +694,39 @@ void ASolHUD::SetWeapSelectIndex(int32 NewIndex)
 	DeltaWeapSelectIndex = NewIndex;
 }
 
-void ASolHUD::AddDeathMessage(class ASolPlayerState* KillerPlayerState, class ASolPlayerState* VictimPlayerState, const UDamageType* KillerDamageType)
+void ASolHUD::AddChatMessage(const ASolPlayerState* Sender, const FString Message, FName Type)
 {
-	////GEngine->AddOnScreenDebugMessage(-1, 15.f, FColor::Purple, FString::Printf(TEXT("AddDeathMessage: 1")));
+	ASolPlayerState* MyPlayerState = PlayerOwner ? Cast<ASolPlayerState>(PlayerOwner->PlayerState) : NULL;
+	if (Sender && MyPlayerState && !Message.IsEmpty())
+	{
+		FLinearColor MessageDrawColor = FLinearColor(0.75f, 0.75f, 0.75f);
+		FComplexString NewChatMessage;
+		bool bTeamSay = Type == TEXT("TeamSay");
+		bTeamSay ? NewChatMessage.MessageText.Add(Sender->GetPlayerName() + FString(TEXT(" [TEAM]: "))) 
+				 : NewChatMessage.MessageText.Add(Sender->GetPlayerName() + FString(TEXT(": ")));
+		NewChatMessage.MessageColor.Add(GetPlayerNameDrawColor(Sender->GetTeam(), MyPlayerState == Sender));
+
+		NewChatMessage.MessageText.Add(Message);
+		NewChatMessage.MessageColor.Add(MessageDrawColor);
+
+		NewChatMessage.HideTime = GetWorld()->GetTimeSeconds() + DeathMessageDuration;
+
+		if (DeathMessages.Num() >= MaxDeathMessages)
+		{
+			DeathMessages.RemoveAt(0, 1, true);
+		}
+		DeathMessages.Add(NewChatMessage);
+		bHUDMessagesChanged = true;
+	}
+}
+
+void ASolHUD::AddDeathMessage(ASolPlayerState* KillerPlayerState, ASolPlayerState* VictimPlayerState, const UDamageType* KillerDamageType)
+{
 	if (GetWorld()->GetGameState() && GetWorld()->GetGameState()->GameModeClass)
 	{
-		const ASolGameMode* DefGame = GetWorld()->GetGameState()->GameModeClass->GetDefaultObject<ASolGameMode>();
 		ASolPlayerState* MyPlayerState = PlayerOwner ? Cast<ASolPlayerState>(PlayerOwner->PlayerState) : NULL;
 
-		////GEngine->AddOnScreenDebugMessage(-1, 15.f, FColor::Purple, FString::Printf(TEXT("AddDeathMessage: 2")));
-		if (DefGame && KillerPlayerState && VictimPlayerState && MyPlayerState)
+		if (KillerPlayerState && VictimPlayerState && MyPlayerState)
 		{
 			FString KillerName = KillerPlayerState->GetPlayerName();
 			FString VictimName = VictimPlayerState->GetPlayerName();
@@ -633,6 +770,7 @@ void ASolHUD::AddDeathMessage(class ASolPlayerState* KillerPlayerState, class AS
 			DeathMessages.Add(NewDeathMessage);
 			bHUDMessagesChanged = true;
 
+			// Draw header messages for people we kill (or people who kill us).
 			if (KillerPlayerState == MyPlayerState && !bIsSuicide)
 			{
 				FComplexString NewHeaderMessage;
@@ -643,6 +781,24 @@ void ASolHUD::AddDeathMessage(class ASolPlayerState* KillerPlayerState, class AS
 				NewHeaderMessage.MessageColor.Add(VictimColor);
 
 				NewHeaderMessage.MessageText.Add(FString(TEXT(".")));
+				NewHeaderMessage.MessageColor.Add(MessageDrawColor);
+
+				NewHeaderMessage.HideTime = GetWorld()->GetTimeSeconds() + HeaderMessageDuration;
+
+				if (HeaderMessages.Num() >= MaxHeaderMessages)
+				{
+					HeaderMessages.RemoveAt(0, 1, true);
+				}
+				HeaderMessages.Add(NewHeaderMessage);
+				bHUDMessagesChanged = true;
+			}
+			else if (VictimPlayerState == MyPlayerState && !bIsSuicide)
+			{
+				FComplexString NewHeaderMessage;
+				NewHeaderMessage.MessageText.Add(KillerName);
+				NewHeaderMessage.MessageColor.Add(KillerColor);
+
+				NewHeaderMessage.MessageText.Add(FString(TEXT(" killed you.")));
 				NewHeaderMessage.MessageColor.Add(MessageDrawColor);
 
 				NewHeaderMessage.HideTime = GetWorld()->GetTimeSeconds() + HeaderMessageDuration;
@@ -684,11 +840,28 @@ void ASolHUD::ShowInGameMenu(bool bEnable)
 	bShowInGameMenu = bEnable;
 	// Temporary: show cursor. 
 	ASolPlayerController* MyPC = Cast<ASolPlayerController>(PlayerOwner);
+	if (InGameMenuWidget.IsValid())
+	{
+		InGameMenuWidget->SetVisibility(bShowInGameMenu ? EVisibility::Visible : EVisibility::Hidden);
+	}
 	if (MyPC)
 	{
 		MyPC->bShowMouseCursor = bShowInGameMenu;
 		MyPC->bEnableMouseOverEvents = bShowInGameMenu;
 		MyPC->bEnableClickEvents = bShowInGameMenu;
+		MyPC->SetIgnoreLookInput(bShowInGameMenu);
+		MyPC->SetIgnoreMoveInput(bShowInGameMenu);
+		// This currently prevents player from closing menu (since the menu key is ignored).
+		/*if (bShowInGameMenu)
+		{
+			FInputModeUIOnly InputMode;
+			InputMode.SetWidgetToFocus(InGameMenuWidget);
+			MyPC->SetInputMode(InputMode);
+		}
+		else
+		{
+			MyPC->SetInputMode(FInputModeGameOnly());
+		}*/
 	}
 }
 

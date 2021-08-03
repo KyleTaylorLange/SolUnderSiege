@@ -11,13 +11,11 @@
 UCLASS()
 class LASTIM_API ASolPlayerState : public APlayerState
 {
-	GENERATED_BODY()
+	GENERATED_UCLASS_BODY()
 
 	virtual void ClientInitialize(class AController* InController) override;
 
 public:
-
-	ASolPlayerState(const FObjectInitializer& ObjectInitializer);
 
 	virtual void Tick(float DeltaTime) override;
 
@@ -32,10 +30,6 @@ public:
 	/** Get number of points. **/
 	UFUNCTION(BlueprintCallable, Category = PlayerState)
 	int32 GetSuicides() const;
-
-	/** Get number of points. **/
-	UFUNCTION(BlueprintCallable, Category = PlayerState)
-	float GetScore() const;
 
 	/** Get player's team (as number). **/
 	UFUNCTION(BlueprintCallable, Category = PlayerState)
@@ -110,10 +104,10 @@ protected:
 	virtual void UpdateTeamColors();
 
 	// Player's main draw colour. Generally changes to match team's colour in team games.
-	UPROPERTY(Transient, Replicated)
+	UPROPERTY(Replicated)
 	FLinearColor PrimaryColor;
 
 	// Player's secondary draw colour. Generally for accent pieces.
-	UPROPERTY(Transient, Replicated)
+	UPROPERTY(Replicated)
 	FLinearColor SecondaryColor;
 };

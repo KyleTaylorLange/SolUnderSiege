@@ -40,8 +40,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
 	float ExplosionRadius;
 
-	/** Sets the projectile's starting velocity. */
-	void InitVelocity(FVector& ShootDirection);
+	/** Inherits the velocity of the owner, adding their velocity to the projectile's velocity. */
+	void InheritVelocity(FVector& OwnerVelocity);
 
 	/* Gets the time the projectile requires to reach a target. */
 	virtual float GetTimeToLocation(const FVector& StartLoc, const FVector& EndLoc) const;

@@ -15,10 +15,6 @@ class LASTIM_API AAmmo : public AInventoryItem
 	
 public:
 
-	/** Weapon mesh: 3st person view (arms; seen only by others). **/
-	UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
-	class USkeletalMeshComponent* Mesh3P;
-
 	virtual FString GetDisplayName() const override;
 
 	/* Returns Ammo Count. */
@@ -31,10 +27,10 @@ public:
 	virtual void SetMaxAmmo(int32 NewMaxAmmo);
 
 	/* Consume ammo in this item. Returns amount used. */
-	virtual int32 UseAmmo(int32 InAmmo);
+	virtual float UseAmmo(float InAmmo);
 
 	// Adds ammo to this item. Returns amount successfully added.
-	virtual int32 AddAmmo(int32 InAmmo);
+	virtual float AddAmmo(float InAmmo);
 
 	// Will this Ammo recharge over time?
 	virtual bool RechargesAmmo() const;
@@ -64,10 +60,9 @@ public:
 
 	virtual void OnEnterInventory(class ASolCharacter* NewOwner) override;
 
-	// Creates a mesh for this item's pickup.
-	virtual UMeshComponent* GetPickupMesh() override;
-
 protected:
+
+	bool bLoadedInWeapon;
 	
 	/* Ammo held in this item. */
 	UPROPERTY(Transient, Replicated)

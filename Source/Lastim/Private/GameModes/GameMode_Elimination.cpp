@@ -39,6 +39,12 @@ namespace RoundState
 	const FName InOvertime = FName(TEXT("InOvertime"));
 }
 
+void AGameMode_Elimination::InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage)
+{
+	RoundTime = UGameplayStatics::GetIntOption(Options, "RoundTime", RoundTime);
+	Super::InitGame(MapName, Options, ErrorMessage);
+}
+
 void AGameMode_Elimination::CheckGameTime()
 {
 	if (GetMatchState() == MatchState::InProgress)
@@ -280,3 +286,10 @@ void AGameMode_Elimination::RestartPlayer(AController* NewPlayer)
 	}
 	Super::RestartPlayer(NewPlayer);
 }
+
+void AGameMode_Elimination::GetGameOptions(TArray<FGameOption> &OptionsList)
+{
+	Super::GetGameOptions(OptionsList);
+	OptionsList.Add(FGameOption(NSLOCTEXT("Lastim.HUD.Menu", "RoundTime", "Round Length (seconds)"), FString("RoundTime"), FText::FromString(FString::FromInt(RoundTime))));
+}
+

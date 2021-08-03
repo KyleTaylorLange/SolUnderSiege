@@ -12,7 +12,7 @@ AWeap_GrenadeLauncher::AWeap_GrenadeLauncher(const FObjectInitializer& ObjectIni
 	RecoilPerShot = 11.25;
 	SpreadRange = 100.f;
 	BaseAIRating = 0.7f;
-	WeaponOffset = FVector(10.f, 10.f, -10.f);
+	MeshOffset = FVector(10.f, 10.f, -10.f);
 }
 
 

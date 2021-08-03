@@ -168,3 +168,5 @@ void AMainMenuHUD::CloseWindow()
 	OpenOSW = nullptr;
 	OpenSBW = nullptr;
 }
+
+#undef LOCTEXT_NAMESPACE

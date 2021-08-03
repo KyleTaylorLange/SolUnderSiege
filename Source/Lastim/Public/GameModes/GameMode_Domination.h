@@ -15,7 +15,11 @@ class LASTIM_API AGameMode_Domination : public ATeamGameMode
 	
 protected:
 
+	// Called when a control point "scores".
+	UFUNCTION()
+	virtual void OnScoreCP(class ADominationControlPoint* InCP);
+
 	/* Overridden to spawn control points. */
 	virtual void ProcessObjectivePoint(class AObjectivePoint* InOP) override;
-	
+
 };

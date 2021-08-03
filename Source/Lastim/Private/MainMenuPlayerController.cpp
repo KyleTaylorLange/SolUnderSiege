@@ -9,6 +9,8 @@ AMainMenuPlayerController::AMainMenuPlayerController(const FObjectInitializer& O
 	PlayerCameraManagerClass = APlayerCameraManager::StaticClass();
 	SetHidden(false);
 	bShowMouseCursor = true;
+	bEnableMouseOverEvents = true;
+	bEnableClickEvents = true;
 }
 
 /*

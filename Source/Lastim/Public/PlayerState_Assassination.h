@@ -18,5 +18,6 @@ public:
 	//APlayerState_Assassination(const FObjectInitializer& ObjectInitializer);
 
 	/* List of other players that we can assassinate for points.*/
+	UPROPERTY(Replicated)
 	TArray<APlayerState_Assassination*> AllowedKills;
 };

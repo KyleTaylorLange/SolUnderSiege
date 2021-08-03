@@ -1,11 +1,14 @@
 // Copyright Kyle Taylor Lange
 
 #include "Lastim.h"
+#include "UnrealNetwork.h"
 #include "SolCharacter.h"
 #include "SolSpectatorPawn.h"
 #include "SolPlayerCameraManager.h"
 #include "SolPlayerState.h"
+#include "SolGameMode.h"
 #include "SolHUD.h"
+#include "SolLocalPlayer.h"
 #include "SolPlayerController.h"
 
 ASolPlayerController::ASolPlayerController(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
@@ -29,6 +32,16 @@ void ASolPlayerController::SetupInputComponent()
 	InputComponent->BindAction("Use", IE_Pressed, this, &ASolPlayerController::OnUse);
 	InputComponent->BindAction("Use", IE_Released, this, &ASolPlayerController::OnStopUse);
 
+	InputComponent->BindAction("Reload", IE_Pressed, this, &ASolPlayerController::OnReload);
+	InputComponent->BindAction("Reload", IE_Released, this, &ASolPlayerController::OnStopReload);
+
+	InputComponent->BindAction("SwitchFireMode", IE_Pressed, this, &ASolPlayerController::OnSwitchFireMode);
+	InputComponent->BindAction("SwitchFireMode", IE_Released, this, &ASolPlayerController::OnStopSwitchFireMode);
+
+	InputComponent->BindAxis("MoveForward", this, &ASolPlayerController::MoveForward);
+	InputComponent->BindAxis("MoveRight", this, &ASolPlayerController::MoveRight);
+	InputComponent->BindAxis("MoveUp", this, &ASolPlayerController::MoveUp);
+
 	InputComponent->BindAction("Jump", IE_Pressed, this, &ASolPlayerController::OnJump);
 	InputComponent->BindAction("Jump", IE_Released, this, &ASolPlayerController::OnStopJump);
 
@@ -51,6 +64,46 @@ void ASolPlayerController::SetupInputComponent()
 	InputComponent->BindAction("NextWeapon", IE_Pressed, this, &ASolPlayerController::OnNextWeapon);
 }
 
+void ASolPlayerController::ReceivedPlayer()
+{
+	Super::ReceivedPlayer();
+	USolLocalPlayer* SolLP = Cast<USolLocalPlayer>(GetLocalPlayer());
+	if (SolLP)
+	{
+		SetPlayerColors(SolLP->GetPrimaryColor(), SolLP->GetSecondaryColor());
+	}
+}
+
+void ASolPlayerController::Say(const FString& Msg)
+{
+	FName SayName = TEXT("Say");
+	ServerSay(Msg, SayName);
+}
+
+void ASolPlayerController::TeamSay(const FString& Msg)
+{
+	FName TeamSayName = TEXT("TeamSay");
+	ServerSay(Msg, TeamSayName);
+}
+
+bool ASolPlayerController::ServerSay_Validate(const FString& Msg, FName Type)
+{
+	return true;
+}
+
+void ASolPlayerController::ServerSay_Implementation(const FString& Msg, FName Type)
+{
+	GetWorld()->GetAuthGameMode<ASolGameMode>()->Broadcast(this, Msg, Type);
+}
+
+void ASolPlayerController::ClientSendMessage_Implementation(class ASolPlayerState* SenderPlayerState, const FString& S, FName Type)
+{
+	if (GetHUD<ASolHUD>())
+	{
+		GetHUD<ASolHUD>()->AddChatMessage(SenderPlayerState, S, Type);
+	}
+}
+
 ASolCharacter* ASolPlayerController::GetSolCharacter() const
 {
 	return Cast<ASolCharacter>(GetCharacter());
@@ -61,26 +114,36 @@ ASolSpectatorPawn* ASolPlayerController::GetSolSpectatorPawn() const
 	return Cast<ASolSpectatorPawn>(GetSpectatorPawn());
 }
 
-ASolHUD* ASolPlayerController::GetSolHUD() const
+void ASolPlayerController::OnDeathMessage_Implementation(class ASolPlayerState* KillerPlayerState, class ASolPlayerState* KilledPlayerState, const UDamageType* KillerDamageType)
 {
-	return Cast<ASolHUD>(GetHUD());
-}
-
-void ASolPlayerController::OnDeathMessage(class ASolPlayerState* KillerPlayerState, class ASolPlayerState* KilledPlayerState, const UDamageType* KillerDamageType)
-{
-	ASolHUD* SolHUD = GetSolHUD();
+	ASolHUD* SolHUD = GetHUD<ASolHUD>();
 	if (SolHUD)
 	{
 		SolHUD->AddDeathMessage(KillerPlayerState, KilledPlayerState, KillerDamageType);
 	}
 }
 
+void ASolPlayerController::SetColors(FLinearColor Primary, FLinearColor Secondary)
+{
+	SetPlayerColors(Primary, Secondary);
+}
+
+void ASolPlayerController::SetPlayerColors_Implementation(FLinearColor Primary, FLinearColor Secondary)
+{
+	ASolPlayerState* SolPS = Cast<ASolPlayerState>(PlayerState);
+	if (SolPS)
+	{
+		SolPS->SetPrimaryColor(Primary);
+		SolPS->SetSecondaryColor(Secondary);
+	}
+}
+
 bool ASolPlayerController::CanRestartPlayer()
 {
-	ASolPlayerState* PS = Cast<ASolPlayerState>(PlayerState);
-	if (PS)
+	ASolPlayerState* SolPS = Cast<ASolPlayerState>(PlayerState);
+	if (SolPS)
 	{
-		return Super::CanRestartPlayer() && PS->RespawnTime <= 0.0f;
+		return Super::CanRestartPlayer() && SolPS->RespawnTime <= 0.0f;
 	}
 	return false;
 }
@@ -105,9 +168,13 @@ void ASolPlayerController::UpdateRotation(float DeltaTime)
 	AActor* ViewTarget = GetViewTarget();
 	if (!PlayerCameraManager || !ViewTarget || !ViewTarget->HasActiveCameraComponent() || ViewTarget->HasActivePawnControlCameraComponent())
 	{
-		if (IsLocalPlayerController() && GEngine->HMDDevice.IsValid() && GEngine->HMDDevice->IsHeadTrackingAllowed())
+		if (IsLocalPlayerController() && GEngine->XRSystem.IsValid() && GEngine->XRSystem->IsHeadTrackingAllowed())
 		{
-			GEngine->HMDDevice->ApplyHmdRotation(this, ViewRotation);
+			auto XRCamera = GEngine->XRSystem->GetXRCamera();
+			if (XRCamera.IsValid())
+			{
+				XRCamera->ApplyHMDRotation(this, ViewRotation);
+			}
 		}
 	}
 
@@ -134,7 +201,7 @@ void ASolPlayerController::PawnPendingDestroy(APawn* P)
 	
 	Super::PawnPendingDestroy(P);
 
-	SetInitialLocationAndRotation(CameraLocation, CameraRotation);
+	ClientSetSpectatorCamera(CameraLocation, CameraRotation);
 	SetViewTarget(this);
 }
 
@@ -190,8 +257,7 @@ void ASolPlayerController::BeginWaiting()
 
 void ASolPlayerController::OnFire()
 {
-	ASolCharacter* Char = GetSolCharacter();
-	if (Char)
+	if (GetSolCharacter())
 	{
 		if (bSelectingWeapon)
 		{
@@ -199,7 +265,7 @@ void ASolPlayerController::OnFire()
 		}
 		else
 		{
-			Char->StartFire();
+			GetSolCharacter()->StartFire();
 		}
 	}
 	else
@@ -210,17 +276,15 @@ void ASolPlayerController::OnFire()
 
 void ASolPlayerController::OnStopFire()
 {
-	ASolCharacter* Char = GetSolCharacter();
-	if (Char)
+	if (GetSolCharacter())
 	{
-		Char->StopFire();
+		GetSolCharacter()->StopFire();
 	}
 }
 
 void ASolPlayerController::OnAim()
 {
-	ASolCharacter* Char = GetSolCharacter();
-	if (Char)
+	if (GetSolCharacter())
 	{
 		if (bSelectingWeapon)
 		{
@@ -228,152 +292,198 @@ void ASolPlayerController::OnAim()
 		}
 		else
 		{
-			Char->StartAim();
+			GetSolCharacter()->StartAim();
 		}
 	}
 }
 
 void ASolPlayerController::OnStopAim()
 {
-	ASolCharacter* Char = GetSolCharacter();
-	if (Char)
+	if (GetSolCharacter())
 	{
-		Char->StopAim();
+		GetSolCharacter()->StopAim();
 	}
 }
 
 void ASolPlayerController::OnUse()
 {
-	ASolCharacter* Char = GetSolCharacter();
-	if (Char)
+	if (GetSolCharacter())
 	{
-		Char->OnStartUse();
+		GetSolCharacter()->OnStartUse();
 	}
 }
 
 void ASolPlayerController::OnStopUse()
 {
-	ASolCharacter* Char = GetSolCharacter();
-	if (Char)
+	if (GetSolCharacter())
 	{
-		Char->OnStopUse();
+		GetSolCharacter()->OnStopUse();
+	}
+}
+
+void ASolPlayerController::OnReload()
+{
+	if (GetSolCharacter())
+	{
+		GetSolCharacter()->OnReload();
+	}
+}
+
+void ASolPlayerController::OnStopReload()
+{
+	// Nothing for now.
+}
+
+void ASolPlayerController::OnSwitchFireMode()
+{
+	if (GetSolCharacter())
+	{
+		GetSolCharacter()->OnSwitchFireMode();
+	}
+}
+
+void ASolPlayerController::OnStopSwitchFireMode()
+{
+	// Nothing for now.
+}
+
+void ASolPlayerController::MoveForward(float Value)
+{
+	if (Value != 0.0f && GetSolCharacter())
+	{
+		GetSolCharacter()->MoveForward(Value);
+	}
+	else if (GetSolSpectatorPawn())
+	{
+		GetSolSpectatorPawn()->MoveForward(Value);
+	}
+}
+
+void ASolPlayerController::MoveRight(float Value)
+{
+	if (Value != 0.0f && GetSolCharacter())
+	{
+		GetSolCharacter()->MoveRight(Value);
+	}
+	else if (GetSolSpectatorPawn())
+	{
+		GetSolSpectatorPawn()->MoveRight(Value);
+	}
+}
+
+void ASolPlayerController::MoveUp(float Value)
+{
+	if (Value != 0.0f && GetSolCharacter())
+	{
+		GetSolCharacter()->MoveUp(Value);
+	}
+	else if (GetSolSpectatorPawn())
+	{
+		GetSolSpectatorPawn()->MoveUp(Value);
 	}
 }
 
 void ASolPlayerController::OnJump()
 {
-	ASolCharacter* Char = GetSolCharacter();
-	if (Char)
+	if (GetSolCharacter())
 	{
-		Char->Jump();
+		GetSolCharacter()->Jump();
 	}
 	else if (GetSolSpectatorPawn())
 	{
-		// We need a proper way to make the pawn move up while this is held down.
+		// TODO: Properly implement having character move up when jump is held down. Use axes bind with crouch?
 		//GetSolSpectatorPawn()->MoveUp_World(1.0f);
 	}
 }
 
 void ASolPlayerController::OnStopJump()
 {
-	ASolCharacter* Char = GetSolCharacter();
-	if (Char)
+	if (GetSolCharacter())
 	{
-		Char->StopJumping();
+		GetSolCharacter()->StopJumping();
 	}
 }
 
 void ASolPlayerController::OnCrouch()
 {
-	ASolCharacter* Char = GetSolCharacter();
-	if (Char)
+	if (GetSolCharacter())
 	{
-		Char->Crouch();
+		GetSolCharacter()->Crouch();
 	}
 	else if (GetSolSpectatorPawn())
 	{
-		// We need a proper way to make the pawn move down while this is held down.
-		GetSolSpectatorPawn()->MoveUp_World(-1.0f);
+		// TODO: Properly implement having character move up when jump is held down. Use axes bind with jump?
+		//GetSolSpectatorPawn()->MoveUp_World(-1.0f);
 	}
 }
 
 void ASolPlayerController::OnStopCrouch()
 {
-	ASolCharacter* Char = GetSolCharacter();
-	if (Char)
+	if (GetSolCharacter())
 	{
-		Char->UnCrouch();
+		GetSolCharacter()->UnCrouch();
 	}
 }
 
 void ASolPlayerController::OnSprint()
 {
-	ASolCharacter* Char = GetSolCharacter();
-	if (Char)
+	if (GetSolCharacter())
 	{
-		Char->StartSprint();
+		GetSolCharacter()->StartSprint();
 	}
 }
 
 void ASolPlayerController::OnStopSprint()
 {
-	ASolCharacter* Char = GetSolCharacter();
-	if (Char)
+	if (GetSolCharacter())
 	{
-		Char->StopSprint();
+		GetSolCharacter()->StopSprint();
 	}
 }
 
 void ASolPlayerController::OnOpenInventory()
 {
-	ASolHUD* SolHUD = GetSolHUD();
-	if (SolHUD)
+	if (GetHUD<ASolHUD>())
 	{
-		SolHUD->ToggleInventory();
+		GetHUD<ASolHUD>()->ToggleInventory();
 	}
 }
 
 void ASolPlayerController::OnToggleInGameMenu()
 {
-	ASolHUD* SolHUD = GetSolHUD();
-	if (SolHUD)
+	if (GetHUD<ASolHUD>())
 	{
-		SolHUD->ToggleInGameMenu();
+		GetHUD<ASolHUD>()->ToggleInGameMenu();
 	}
 }
 
 void ASolPlayerController::OnToggleScoreboard()
 {
-	ASolHUD* SolHUD = GetSolHUD();
-	if (SolHUD)
+	if (GetHUD<ASolHUD>())
 	{
-		SolHUD->ToggleScoreboard();
+		GetHUD<ASolHUD>()->ToggleScoreboard();
 	}
 }
 
 void ASolPlayerController::OnShowScoreboard()
 {
-	ASolHUD* SolHUD = GetSolHUD();
-	if (SolHUD)
+	if (GetHUD<ASolHUD>())
 	{
-		SolHUD->ShowScoreboard(true);
+		GetHUD<ASolHUD>()->ShowScoreboard(true);
 	}
 }
 
 void ASolPlayerController::OnHideScoreboard()
 {
-	ASolHUD* SolHUD = GetSolHUD();
-	if (SolHUD)
+	if (GetHUD<ASolHUD>())
 	{
-		SolHUD->ShowScoreboard(false);
+		GetHUD<ASolHUD>()->ShowScoreboard(false);
 	}
 }
 
 void ASolPlayerController::OnPreviousWeapon()
 {
-	ASolHUD* SolHUD = GetSolHUD();
-	ASolCharacter* Char = GetSolCharacter();
-	if (Char && SolHUD)
+	if (GetSolCharacter() && GetHUD<ASolHUD>())
 	{
 		if (!bSelectingWeapon)
 		{
@@ -385,9 +495,7 @@ void ASolPlayerController::OnPreviousWeapon()
 
 void ASolPlayerController::OnNextWeapon()
 {
-	ASolHUD* SolHUD = GetSolHUD();
-	ASolCharacter* Char = GetSolCharacter();
-	if (Char && SolHUD)
+	if (GetSolCharacter() && GetHUD<ASolHUD>())
 	{
 		if (!bSelectingWeapon)
 		{
@@ -400,10 +508,9 @@ void ASolPlayerController::OnNextWeapon()
 void ASolPlayerController::BeginSelectWeapon()
 {
 	bSelectingWeapon = true;
-	ASolHUD* SolHUD = GetSolHUD();
-	if (SolHUD)
+	if (GetHUD<ASolHUD>())
 	{
-		SolHUD->SetShowWeaponList(true);
+		GetHUD<ASolHUD>()->SetShowWeaponList(true);
 	}
 	WeapSelectIndex = 0;
 }
@@ -411,10 +518,9 @@ void ASolPlayerController::BeginSelectWeapon()
 void ASolPlayerController::AbortSelectWeapon()
 {
 	bSelectingWeapon = false;
-	ASolHUD* SolHUD = GetSolHUD();
-	if (SolHUD)
+	if (GetHUD<ASolHUD>())
 	{
-		SolHUD->SetShowWeaponList(false);
+		GetHUD<ASolHUD>()->SetShowWeaponList(false);
 	}
 	WeapSelectIndex = 0;
 }
@@ -422,16 +528,14 @@ void ASolPlayerController::AbortSelectWeapon()
 void ASolPlayerController::FinishSelectWeapon(int32 DeltaIndex)
 {
 	bSelectingWeapon = false;
-	ASolHUD* SolHUD = GetSolHUD();
-	if (SolHUD)
+	if (GetHUD<ASolHUD>())
 	{
-		SolHUD->SetShowWeaponList(false);
+		GetHUD<ASolHUD>()->SetShowWeaponList(false);
 	}
 
-	ASolCharacter* Char = GetSolCharacter();
-	if (Char)
+	if (GetSolCharacter())
 	{
-		Char->EquipWeaponByDeltaIndex(DeltaIndex);
+		GetSolCharacter()->EquipWeaponByDeltaIndex(DeltaIndex);
 	}
 
 	WeapSelectIndex = 0;
@@ -440,7 +544,7 @@ void ASolPlayerController::FinishSelectWeapon(int32 DeltaIndex)
 void ASolPlayerController::IncrementWeapSelectIndex(int32 Amount)
 {
 	WeapSelectIndex += Amount;
-	ASolHUD* SolHUD = GetSolHUD();
+	ASolHUD* SolHUD = GetHUD<ASolHUD>();
 	if (SolHUD)
 	{
 		SolHUD->SetWeapSelectIndex(WeapSelectIndex);

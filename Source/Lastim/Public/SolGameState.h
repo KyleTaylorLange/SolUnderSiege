@@ -55,6 +55,16 @@ public:
 	UPROPERTY(Transient, Replicated, BlueprintReadWrite)
 	TArray<FLinearColor> TeamColor;
 
+	// List of map names. Done as strings until we build a map asset getter.
+	UPROPERTY(config)
+	TArray<FString> TempMapNames;
+
 	/** Gets a ranked PlayerState map for a specific team. */
 	void GetRankedMap(int32 TeamIndex, RankedPlayerMap& OutRankedMap) const;
+
+	// Gets list of game modes.
+	void GetGameModes(TArray<UClass*>& GameModes) const;
+
+	// Gets a list of maps for a specific game mode.
+	void GetMaps(TArray<FAssetData>& Maps, AGameMode* GameMode) const;
 };

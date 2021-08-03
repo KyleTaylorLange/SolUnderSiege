@@ -23,14 +23,14 @@ ATeamGameMode::ATeamGameMode(const FObjectInitializer& ObjectInitializer)
 	TeamkillScoreForTeam = -1;
 
 	// Default Team Colors
-	TeamProfiles.Add(FTeamProfile(FText::FromString(FString("Red Team")), FLinearColor(357.f, 1.0f, 0.5f).HSVToLinearRGB()));
-	TeamProfiles.Add(FTeamProfile(FText::FromString(FString("Blue Team")), FLinearColor(235.f, 1.0f, 0.4f).HSVToLinearRGB()));
-	TeamProfiles.Add(FTeamProfile(FText::FromString(FString("Green Team")), FLinearColor(110.f, 1.0f, 0.5f).HSVToLinearRGB()));
-	TeamProfiles.Add(FTeamProfile(FText::FromString(FString("Gold Team")), FLinearColor(60.f, 1.0f, 0.5f).HSVToLinearRGB()));
-	TeamProfiles.Add(FTeamProfile(FText::FromString(FString("Purple Team")), FLinearColor(290.f, 1.0f, 0.5f).HSVToLinearRGB()));
-	TeamProfiles.Add(FTeamProfile(FText::FromString(FString("Orange Team")), FLinearColor(15.f, 1.0f, 0.625f).HSVToLinearRGB()));
-	TeamProfiles.Add(FTeamProfile(FText::FromString(FString("Cyan Team")), FLinearColor(160.f, 1.0f, 0.5f).HSVToLinearRGB()));
-	TeamProfiles.Add(FTeamProfile(FText::FromString(FString("Silver Team")), FLinearColor(210.f, 0.1f, 0.8f).HSVToLinearRGB()));
+	TeamProfiles.Add(FTeamProfile(FText::FromString(FString("Red Team")), SOL_COLOR_RED));
+	TeamProfiles.Add(FTeamProfile(FText::FromString(FString("Blue Team")), SOL_COLOR_BLUE));
+	TeamProfiles.Add(FTeamProfile(FText::FromString(FString("Green Team")), SOL_COLOR_GREEN));
+	TeamProfiles.Add(FTeamProfile(FText::FromString(FString("Gold Team")), SOL_COLOR_GOLD));
+	TeamProfiles.Add(FTeamProfile(FText::FromString(FString("Purple Team")), SOL_COLOR_PURPLE));
+	TeamProfiles.Add(FTeamProfile(FText::FromString(FString("Orange Team")), SOL_COLOR_ORANGE));
+	TeamProfiles.Add(FTeamProfile(FText::FromString(FString("Cyan Team")), SOL_COLOR_CYAN));
+	TeamProfiles.Add(FTeamProfile(FText::FromString(FString("Silver Team")), SOL_COLOR_SILVER));
 }
 
 void ATeamGameMode::PostLogin(APlayerController* NewPlayer)
@@ -63,8 +63,7 @@ void ATeamGameMode::HandleMatchIsWaitingToStart()
 
 void ATeamGameMode::InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage)
 {
-	const int32 MaxTeamsOptionValue = UGameplayStatics::GetIntOption(Options, "MaxTeams"/*GetBotsCountOptionName()*/, MaxTeams);
-	MaxTeams = MaxTeamsOptionValue;
+	MaxTeams = UGameplayStatics::GetIntOption(Options, "MaxTeams", MaxTeams);
 	Super::InitGame(MapName, Options, ErrorMessage);
 }
 
@@ -79,58 +78,7 @@ void ATeamGameMode::InitGameState()
 		TeamCount = FMath::Clamp(MaxTeams, 2, TeamProfiles.Num() );
 		MyGameState->TeamCount = TeamCount;
 
-		// TEMP COLOR RANDOMIZATION - for fun!
-		// Swap red or blue for a similar color 1/8 of the time
-		if (TeamCount == 2 && FMath::FRand() < 0.125f)
-		{
-			if (FMath::RandBool())
-			{
-				if (FMath::RandBool())
-				{
-					TeamProfiles.Swap(0, 5); // Red for orange
-				}
-				else
-				{
-					TeamProfiles.Swap(0, 3); // Red for gold
-				}
-			}
-			else
-			{
-				if (FMath::RandBool())
-				{
-					TeamProfiles.Swap(1, 2); // Blue for green
-				}
-				else
-				{
-					TeamProfiles.Swap(1, 6); // Blue for cyan
-				}
-			}
-		}
-		// Swap green for gold 1/2 of the time
-		if (TeamCount == 3 && FMath::RandBool())
-		{
-			TeamProfiles.Swap(2, 3);
-		}
-		// Swap green or gold for purple 1/8 of the time
-		if (TeamCount == 4 && FMath::FRand() < 0.125f)
-		{
-			if (FMath::RandBool())
-			{
-				TeamProfiles.Swap(2, 3); // Gold for green
-				TeamProfiles.Swap(3, 4); // Green for purple, but make it still last.
-			}
-			else
-			{
-				TeamProfiles.Swap(3, 4); // Gold for purple
-			}
-		}
-		// Swap orange for cyan 50/50
-		if (TeamCount == 6 && FMath::RandBool())
-		{
-			TeamProfiles.Swap(5, 6);
-		}
-
-		// ACTUAL CODE HERE
+		TArray<FTeamProfile> TeamList = ChooseTeamProfiles();
 		for (int32 i = 0; i < MyGameState->TeamCount; i++)
 		{
 			FActorSpawnParameters SpawnInfo;
@@ -145,10 +93,47 @@ void ATeamGameMode::InitGameState()
 			{
 				MyGameState->TeamArray.Add(NewTeam);
 				NewTeam->SetTeamIndex(i);
-				InitTeamState(NewTeam, TeamProfiles[i]);
+				InitTeamState(NewTeam, TeamList[i]);
 			}
 		}
 	}
+}
+
+TArray<FTeamProfile> ATeamGameMode::ChooseTeamProfiles()
+{
+	TArray<FTeamProfile> TeamList = TeamProfiles;
+	// COLOR RANDOMIZATION - for fun!
+	// Do rarer changes 3/16ths of the time.
+	float PctChance = 0.1875f;
+	// Swap red or blue for a similar color
+	if (TeamCount == 2 && FMath::FRand() <= PctChance)
+	{
+		if (FMath::RandBool())
+		{
+			TeamList.Swap(0, FMath::RandBool() ? 3 : 5); // Red for gold or orange
+		}
+		else
+		{
+			TeamList.Swap(1, FMath::RandBool() ? 2 : 6); // Blue for green or cyan
+		}
+	}
+	// Swap green for gold half the time
+	if ((TeamCount == 3 || TeamCount == 4) && FMath::RandBool())
+	{
+		TeamList.Swap(2, 3);
+	}
+	// Swap green or gold for purple
+	if (TeamCount == 4 && FMath::FRand() <= PctChance)
+	{
+		TeamList.Swap(3, 4);
+	}
+	// Swap orange for cyan 50/50
+	if (TeamCount == 6 && FMath::RandBool())
+	{
+		TeamList.Swap(5, 6);
+	}
+	// TODO: Remove excess teams.
+	return TeamList;
 }
 
 void ATeamGameMode::InitTeamState(ATeamState* InTeam, FTeamProfile InProfile)
@@ -164,7 +149,6 @@ void ATeamGameMode::InitBot(ASolAIController* AIC, FBotProfile* InBotProfile)
 {
 	ASolPlayerState* BotPlayerState = CastChecked<ASolPlayerState>(AIC->PlayerState);
 	ATeamState* BestTeam = ChooseTeam(BotPlayerState);
-	//BotPlayerState->SetTeamNum(TeamNum);
 	BotPlayerState->SetTeam(BestTeam);
 
 	Super::InitBot(AIC, InBotProfile);
@@ -229,20 +213,11 @@ bool ATeamGameMode::IsSpawnpointAllowed(APlayerStart* SpawnPoint, AController* P
 			// Assume spawns aren't balanced, unless one of these below are true.
 			bool bSpawnsAreBalanced = false;
 
-			// If same number of spawn sets as teams, spawn at the team's spawns only.
-			if (NumTeamSpawnSets == TeamCount)
+			// If each team has the same number of spawn sets, spawn at the team's spawns only.
+			if (NumTeamSpawnSets % TeamCount == 0)
 			{
-				if (NumTeamSpawnSets == TeamCount && TeamStart->SpawnTeam != PlayerState->GetTeamNum() + 1)
-				{
-					return false;
-				}
-				bSpawnsAreBalanced = true;
-			}
-
-			// Use multiple team spawn sets per team if each team has an equal amount of spawn sets.
-			else if (NumTeamSpawnSets % TeamCount == 0)
-			{
-				int TeamForSpawn = (TeamStart->SpawnTeam - 1) % TeamCount;
+				int32 Divisor = NumTeamSpawnSets / TeamCount;
+				int32 TeamForSpawn = (TeamStart->SpawnTeam - 1) / Divisor;
 				if (PlayerState->GetTeamNum() != TeamForSpawn)
 				{
 					return false;
@@ -369,4 +344,10 @@ void ATeamGameMode::CheckForMatchWinner()
 			FinishMatch();
 		}
 	}
+}
+
+void ATeamGameMode::GetGameOptions(TArray<FGameOption> &OptionsList)
+{
+	Super::GetGameOptions(OptionsList);
+	OptionsList.Add(FGameOption(NSLOCTEXT("Lastim.HUD.Menu", "TeamCount", "Teams"), FString("MaxTeams"), FText::FromString(FString::FromInt(MaxTeams))));
 }

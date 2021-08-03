@@ -59,6 +59,10 @@ void AGameMode_Invasion::SetPlayerDefaults(APawn* PlayerPawn)
 		{
 			LChar->PrimaryColorOverride = FLinearColor(0.6f, 0.5f, 0.5f, 0.5f);
 			LChar->SecondaryColorOverride = FLinearColor(1.0f, 0.1f, 0.1f, 0.5f);
+			float FullHealth = 50.f + (CurrentWave * 12.5f);
+			LChar->SetMaxHealth(FullHealth * 1.5f);
+			LChar->SetFullHealth(FullHealth);
+			LChar->SetHealth(FullHealth);
 		}
 	}
 }
@@ -81,7 +85,16 @@ void AGameMode_Invasion::StartNextWave()
 	}
 	else
 	{
-		int32 InvadersToMake = CurrentWave + 2; // Temporary test.
+		int32 NumInvaderAIs = 0;
+		for (FConstControllerIterator Iterator = GetWorld()->GetControllerIterator(); Iterator; ++Iterator)
+		{
+			AAI_Invasion* Ctrlr = Cast<AAI_Invasion>(Iterator->Get());
+			if (Cast<AAI_Invasion>(Iterator->Get()))
+			{
+				NumInvaderAIs++;
+			}
+		}
+		int32 InvadersToMake = FMath::Max(0, CurrentWave + 2 + GameState->PlayerArray.Num() - NumInvaderAIs);
 		for (int32 i = 0; i < InvadersToMake; i++)
 		{
 			CreateInvader();
@@ -96,10 +109,10 @@ void AGameMode_Invasion::StartNextWave()
 				DEBUG_RestartedInvaders++;
 			}
 		}
-		//GEngine->AddOnScreenDebugMessage(-1, 30.f, FColor::Red, FString::Printf(TEXT("    ~~RESTARTED %d INVADERS~~"), DEBUG_RestartedInvaders));
+		GEngine->AddOnScreenDebugMessage(-1, 30.f, FColor::Red, FString::Printf(TEXT("    ~~RESTARTED %d INVADERS~~"), DEBUG_RestartedInvaders));
 
 		CurrentWave++;
-		//GEngine->AddOnScreenDebugMessage(-1, 30.f, FColor::Green, FString::Printf(TEXT("    ~~WAVE %d~~"), CurrentWave));
+		GEngine->AddOnScreenDebugMessage(-1, 30.f, FColor::Green, FString::Printf(TEXT("    ~~WAVE %d~~"), CurrentWave));
 		GetWorldTimerManager().SetTimer(TimerHandle_WaveTimer, this, &AGameMode_Invasion::StartNextWave, WaveLength, false);
 	}
 }

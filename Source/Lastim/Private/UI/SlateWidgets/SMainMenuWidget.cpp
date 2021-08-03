@@ -5,6 +5,7 @@
 #include "STextComboBox.h"
 #include "MainMenuHUD.h"
 #include "SolLocalPlayer.h"
+#include "UI/Styles/SolSlateStyle.h"
 #include "SMainMenuWidget.h"
 #include "SlateOptMacros.h"
 
@@ -24,12 +25,7 @@ void SMainMenuWidget::Construct(const FArguments& InArgs)
 	const FSlateFontInfo MediumText = FSlateFontInfo(FCoreStyle::GetDefaultFont(), 18);
 	const FSlateFontInfo SmallText = FSlateFontInfo(FCoreStyle::GetDefaultFont(), 12);
 
-	/** Widgets to look into:
-	 * SCheckBox - check box.
-	 * SEditableTextBox - for player name?
-	 * SSlider - slides between 0 and 1?
-	 * SComboBox - drop down box?
-	 **/
+	FSolSlateStyle::Initialize();
 
 	ChildSlot
 	.VAlign(VAlign_Center)

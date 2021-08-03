@@ -12,9 +12,11 @@ UCLASS()
 class LASTIM_API AHUD_Domination : public ASolHUD
 {
 	GENERATED_BODY()
+
+	virtual void DrawObjectLabels() override;
 	
 	/* Draws game-specific objectives. Blank in the default class. */
-	virtual void DrawObjectiveInfo(ASolGameState* InGameState) override;
+	virtual void DrawGameData(FVector2D &DrawPosition, ASolGameState* InGameState) override;
 	
 	
 };

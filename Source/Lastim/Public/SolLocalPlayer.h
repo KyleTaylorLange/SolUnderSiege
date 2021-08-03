@@ -21,10 +21,26 @@ public:
 	/* Sets player name to InName. */
 	void SetPlayerName(FString InName);
 
+	FLinearColor GetPrimaryColor() const;
+
+	void SetPrimaryColor(FLinearColor NewColor);
+
+	FLinearColor GetSecondaryColor() const;
+
+	void SetSecondaryColor(FLinearColor NewColor);
+
 protected:
 
-	// The player's name. Temporary.
+	// The player's name.
 	UPROPERTY(config)
 	FString PlayerName;
+
+	// The player's preferred primary color.
+	UPROPERTY(config)
+	FLinearColor PrimaryColor;
+
+	// The player's preferred secondary color.
+	UPROPERTY(config)
+	FLinearColor SecondaryColor;
 	
 };

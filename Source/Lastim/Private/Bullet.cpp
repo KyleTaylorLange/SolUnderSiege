@@ -11,17 +11,10 @@ ABullet::ABullet(const FObjectInitializer& ObjectInitializer)
 	static ConstructorHelpers::FObjectFinder<USoundCue> FoundDefaultIS(TEXT("/Game/Sounds/SC_BulletImpact.SC_BulletImpact"));
 	static ConstructorHelpers::FObjectFinder<USoundCue> FoundPlayerIS(TEXT("/Game/Sounds/SC_InfantryImpact.SC_InfantryImpact"));
 	static ConstructorHelpers::FObjectFinder<UParticleSystem> FoundPS(TEXT("/Game/Blueprints/PS_BulletTest.PS_BulletTest"));
-	static ConstructorHelpers::FObjectFinder<UParticleSystem> FoundTrailFX(TEXT("/Game/ShooterGameEffects/ParticleSystems/Weapons/AssaultRifle/Muzzle/P_AssaultRifle_Trail.P_AssaultRifle_Trail"));
 
-	/* Removing the regular PSC, replaced with a trail that can outlast the projectile. */
-	//ParticleSysComp = ObjectInitializer.CreateDefaultSubobject<UParticleSystemComponent>(this, TEXT("ParticleSysComp"));
-	//ParticleSysComp->SetTemplate(FoundPS.Object);
-	//ParticleSysComp->AttachTo(GetRootComponent());
-	BulletTrailFX = FoundTrailFX.Object;
-	BulletTrailPSC = ObjectInitializer.CreateDefaultSubobject<UParticleSystemComponent>(this, TEXT("BulletTrailPSC"));
-	BulletTrailPSC->SetTemplate(BulletTrailFX);
-	BulletTrailPSC->SetVectorParameter("ShockBeamEnd", this->GetActorLocation());
-	BulletTrailPSC->SetVectorParameter("ShockBeamStart", this->GetActorLocation());
+	ParticleSysComp = ObjectInitializer.CreateDefaultSubobject<UParticleSystemComponent>(this, TEXT("ParticleSysComp"));
+	ParticleSysComp->SetTemplate(FoundPS.Object);
+	ParticleSysComp->AttachTo(GetRootComponent());
 
 	// The below speeds are for testing purposes only. 
 	// Remember, 10 000 cm/s = 100 m/s, so the values are huge.
@@ -43,18 +36,6 @@ ABullet::ABullet(const FObjectInitializer& ObjectInitializer)
 	InitialLifeSpan = 5.0f;
 
 	PrimaryActorTick.bCanEverTick = true;
-}
-
-// Called every frame.
-void ABullet::Tick(float DeltaSeconds)
-{
-	Super::Tick(DeltaSeconds);
-
-	if (BulletTrailPSC)
-	{
-		BulletTrailPSC->SetVectorParameter("ShockBeamEnd", this->GetActorLocation());
-		BulletTrailPSC->SetVectorParameter("ShockBeamStart", (OriginPoint + this->GetActorLocation()) * 0.5f);
-	}
 }
 
 // Called when the game starts or when spawned.
@@ -88,10 +69,6 @@ void ABullet::CalculateBulletSize()
 	{
 		ParticleSysComp->SetWorldScale3D(FVector(LengthScale, GirthScale, GirthScale));
 	}
-	if (BulletTrailPSC)
-	{
-		BulletTrailPSC->SetWorldScale3D(FVector(LengthScale, FMath::Square(GirthScale), FMath::Square(GirthScale)));
-	}
 }
 
 void ABullet::SetBulletColor(FLinearColor InColor)
@@ -100,10 +77,7 @@ void ABullet::SetBulletColor(FLinearColor InColor)
 	if (ParticleSysComp)
 	{
 		ParticleSysComp->SetVectorParameter("BulletColour", VectorizedColor);
-	}
-	if (BulletTrailPSC)
-	{
-		BulletTrailPSC->SetVectorParameter("BulletColour", VectorizedColor);
+		//ParticleSysComp->SetVectorParameter("BulletSize", FVector(100.1f));
 	}
 }
 
@@ -117,6 +91,11 @@ void ABullet::SetBulletDiameter(float InDiameter)
 			SphereComp->InitSphereRadius(InDiameter * 0.05f);
 			CalculateBulletSize();
 		}
+		if (ParticleSysComp)
+		{
+			float GlobalScale = 0.1f;
+			ParticleSysComp->SetVectorParameter("BulletSize", FVector(InDiameter * GlobalScale));
+		}
 	}
 }
 
@@ -124,7 +103,7 @@ void ABullet::SetBulletSpeed(float InSpeedMPS)
 {
 	if (ProjectileMovement)
 	{
-		const float TempBulletSpeedScalar = 1.f; // 0.25f;
+		const float TempBulletSpeedScalar = 1.f;
 		ProjectileMovement->InitialSpeed = 100.f * InSpeedMPS * TempBulletSpeedScalar;
 		ProjectileMovement->MaxSpeed = ProjectileMovement->InitialSpeed;
 	}

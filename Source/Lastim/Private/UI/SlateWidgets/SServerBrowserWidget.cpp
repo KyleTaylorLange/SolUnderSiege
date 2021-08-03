@@ -67,7 +67,6 @@ TSharedRef<SWidget> SServerBrowserWidget::ConstructWindow()
 					.ColorAndOpacity(FLinearColor::White)
 					.ShadowColorAndOpacity(FLinearColor::Black)
 					.ShadowOffset(FIntPoint(-1, 1))
-					.Font(FSlateFontInfo("Roboto", 24))
 					.Text(this, &SServerBrowserWidget::GetStatusText)
 				]
 			]
@@ -94,7 +93,6 @@ TSharedRef<SWidget> SServerBrowserWidget::ConstructWindow()
 					.ColorAndOpacity(FLinearColor::White)
 					.ShadowColorAndOpacity(FLinearColor::Black)
 					.ShadowOffset(FIntPoint(-1, 1))
-					//.Font(LargeText)
 					.Text(FText::FromString(FString("Query LAN")))
 				]
 			]
@@ -109,8 +107,12 @@ TSharedRef<SWidget> SServerBrowserWidget::ConstructWindow()
 					.ColorAndOpacity(FLinearColor::White)
 					.ShadowColorAndOpacity(FLinearColor::Black)
 					.ShadowOffset(FIntPoint(-1, 1))
-					//.Font(LargeText)
 					.Text(FText::FromString(FString("Query Internet")))
+					.ToolTip(SNew(SToolTip)
+							[
+								SNew(STextBlock)
+								.Text(FText::FromString(FString("Test tooltip, please ignore.")))
+							])
 				]
 			]
 		]
@@ -155,6 +157,7 @@ void SServerBrowserWidget::UpdateSearchStatus()
 		case EOnlineAsyncTaskState::InProgress:
 		{
 			StatusText = LOCTEXT("Searching", "SEARCHING...");
+			StatusText = FText::FromString(FString::Printf(TEXT("SEARCHING: %d servers found."), NumSearchResults));
 
 			const TArray<FOnlineSessionSearchResult> & SearchResults = ShooterSession->GetSearchResults();
 			check(SearchResults.Num() == NumSearchResults);
@@ -194,9 +197,7 @@ void SServerBrowserWidget::UpdateSearchStatus()
 		case EOnlineAsyncTaskState::Done:
 		{
 			// Copy the results.
-			StatusText = LOCTEXT("Completed", "COMPLETED");
-			FString TestString = FString::Printf(TEXT("COMPLETED: %d servers found."), NumSearchResults);
-			StatusText = FText::FromString(TestString);
+			StatusText = FText::FromString(FString::Printf(TEXT("COMPLETED: %d servers found."), NumSearchResults));
 			if (NumSearchResults == 0)
 			{
 				StatusText = LOCTEXT("NoServersFound", "NO SERVERS FOUND");

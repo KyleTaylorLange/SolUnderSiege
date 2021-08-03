@@ -47,6 +47,7 @@ ADominationControlPoint::ADominationControlPoint(const FObjectInitializer& Objec
 	//PrimaryActorTick.bCanEverTick = true;
 
 	bReplicates = true;
+	bCaptureOnTouch = true;
 }
 
 // Called when the game starts or when spawned
@@ -68,7 +69,7 @@ void ADominationControlPoint::OnOverlapBegin(UPrimitiveComponent* HitComp, AActo
 	if (LChar)
 	{
 		ASolPlayerState* PS = Cast<ASolPlayerState>(LChar->GetPlayerState());
-		if (PS)
+		if (PS && bCaptureOnTouch)
 		{
 			OnTeamChange(PS);
 		}
@@ -78,6 +79,31 @@ void ADominationControlPoint::OnOverlapBegin(UPrimitiveComponent* HitComp, AActo
 void ADominationControlPoint::OnOverlapEnd(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
 	/* Nothing here yet. */
+}
+
+bool ADominationControlPoint::CanBeUsedBy(AActor* User)
+{
+	return !bCaptureOnTouch;
+}
+
+bool ADominationControlPoint::OnStartUseBy(AActor* User)
+{
+	ASolCharacter* SChar = Cast<ASolCharacter>(User);
+	if (SChar)
+	{
+		ASolPlayerState* PS = Cast<ASolPlayerState>(SChar->GetPlayerState());
+		if (PS)
+		{
+			OnTeamChange(PS);
+			return true;
+		}
+	}
+	return false;
+}
+
+FString ADominationControlPoint::GetUseActionName(AActor* User)
+{
+	return FString("Capture Control Point");
 }
 
 void ADominationControlPoint::OnTeamChange(ASolPlayerState* NewOwner)
@@ -117,6 +143,8 @@ void ADominationControlPoint::OnTeamChange(ASolPlayerState* NewOwner)
 
 void ADominationControlPoint::AddPointToOwner()
 {
+	OnScoreCPDelegate.Execute(this);
+	/*
 	if (GetLocalRole() == ROLE_Authority)
 	{
 		if (OwningTeam != nullptr)
@@ -128,6 +156,7 @@ void ADominationControlPoint::AddPointToOwner()
 			}
 		}
 	}
+	*/
 }
 
 void ADominationControlPoint::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & OutLifetimeProps) const
@@ -157,4 +186,14 @@ void ADominationControlPoint::OnRep_OwningTeam()
 	{
 		SymbolPSComp->SetVectorParameter("LightColour", FVector(LightColor.R, LightColor.G, LightColor.B));
 	}
+}
+
+ASolPlayerState* ADominationControlPoint::GetOwningPlayer()
+{
+	return OwningPlayer;
+}
+
+ATeamState* ADominationControlPoint::GetOwningTeam()
+{
+	return OwningTeam;
 }

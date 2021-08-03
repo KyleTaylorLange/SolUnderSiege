@@ -6,6 +6,8 @@
 #include "MainMenuHUD.h"
 #include "SolLocalPlayer.h"
 #include "SolGameInstance.h"
+#include "SolGameState.h"
+#include "SolGameMode.h"
 #include "SCreateGameScreenWidget.h"
 #include "SlateOptMacros.h"
 
@@ -18,36 +20,15 @@ void SCreateGameScreenWidget::WindowSetup()
 
 void SCreateGameScreenWidget::CreateGameOptions()
 {
-	MapListArray.Add(MakeShareable(new FString(TEXT("Athena"))));
-	MapListArray.Add(MakeShareable(new FString(TEXT("DualArena"))));
-	MapListArray.Add(MakeShareable(new FString(TEXT("ParkHaus"))));
-	MapListArray.Add(MakeShareable(new FString(TEXT("Urbania"))));
-
-	// List of game modes; first line is friendly name, second line is the actual class name.
-	// These have to be in pairs.
-	GameModeListArray.Add(MakeShareable(new FString("Anarchy")));
-	GameModeClassNameArray.Add(MakeShareable(new FString("Lastim.GameMode_Anarchy")));
-	GameModeListArray.Add(MakeShareable(new FString("Team Anarchy")));
-	GameModeClassNameArray.Add(MakeShareable(new FString("Lastim.GameMode_TeamAnarchy")));
-	GameModeListArray.Add(MakeShareable(new FString("Last One Standing")));
-	GameModeClassNameArray.Add(MakeShareable(new FString("Lastim.GameMode_LastOneStanding")));
-	GameModeListArray.Add(MakeShareable(new FString("Last Team Standing")));
-	GameModeClassNameArray.Add(MakeShareable(new FString("Lastim.GameMode_LastTeamStanding")));
-	GameModeListArray.Add(MakeShareable(new FString("Elimination")));
-	GameModeClassNameArray.Add(MakeShareable(new FString("Lastim.GameMode_Elimination")));
-	GameModeListArray.Add(MakeShareable(new FString("Domination")));
-	GameModeClassNameArray.Add(MakeShareable(new FString("Lastim.GameMode_Domination")));
-	GameModes.Add(MakeShareable(new FGameMode("Anarchy", "Lastim.GameMode_Anarchy")));
-	GameModes.Add(MakeShareable(new FGameMode("Team Anarchy", "Lastim.GameMode_TeamAnarchy")));
-	GameModes.Add(MakeShareable(new FGameMode("Last One Standing", "Lastim.GameMode_LastOneStanding")));
-	GameModes.Add(MakeShareable(new FGameMode("Last Team Standing", "Lastim.GameMode_LastTeamStanding")));
-	GameModes.Add(MakeShareable(new FGameMode("Domination", "Lastim.GameMode_Domination")));
-	
-	GameOptions.Empty();
-	GameOptions.Add(FGameOption(NSLOCTEXT("Lastim.HUD.Menu", "ScoreLimit", "Score Limit"), FString("ScoreLimit"), FText::FromString("50")));
-	GameOptions.Add(FGameOption(NSLOCTEXT("Lastim.HUD.Menu", "TimeLimit", "Time Limit (seconds)"), FString("TimeLimit"), FText::FromString("900")));
-	GameOptions.Add(FGameOption(NSLOCTEXT("Lastim.HUD.Menu", "BotCount", "Bots"), FString("MaxBots"), FText::FromString("6")));
-	GameOptions.Add(FGameOption(NSLOCTEXT("Lastim.HUD.Menu", "TeamCount", "Teams"), FString("MaxTeams"), FText::FromString("2")));
+	ASolGameState* GameState = Cast<ASolGameState>(PlayerOwner->GetWorld()->GetGameState());
+	if (GameState)
+	{
+		GameState->GetGameModes(GameModesList);
+		for (int32 i = 0; i < GameState->TempMapNames.Num(); i++)
+		{
+			MapListArray.Add(MakeShareable(new FString(GameState->TempMapNames[i])));
+		}
+	}
 }
 
 TSharedRef<SWidget> SCreateGameScreenWidget::MakeGameOptionsList()
@@ -59,9 +40,10 @@ TSharedRef<SWidget> SCreateGameScreenWidget::MakeGameOptionsList()
 
 TSharedRef<SWidget> SCreateGameScreenWidget::ConstructWindow()
 {
-	TSharedPtr<SVerticalBox> GameOptionsList = SNew(SVerticalBox);
+	TSharedPtr<SVerticalBox> GameOptionsWindow = SNew(SVerticalBox);
+	TSubclassOf<ASolGameMode> InitiallySelectedGameMode = GameModesList[0];
 
-	GameOptionsList->AddSlot().AutoHeight()
+	GameOptionsWindow->AddSlot().AutoHeight()
 	[
 		SNew(SHorizontalBox)
 		+ SHorizontalBox::Slot()
@@ -78,28 +60,26 @@ TSharedRef<SWidget> SCreateGameScreenWidget::ConstructWindow()
 			SNew(SBox)
 			.WidthOverride(250.f)
 			[
-				SAssignNew(GameModeListBox, SComboBox< TSharedPtr<FGameMode> >)
-				//SNew(SComboBox<TSharedPtr<FString>>)
-				.OptionsSource(&GameModes)
-				.InitiallySelectedItem(GameModes[0])
+				SAssignNew(GameModeListBox, SComboBox<UClass*>)
+				.OptionsSource(&GameModesList)
+				.InitiallySelectedItem(InitiallySelectedGameMode)
 				.OnGenerateWidget(this, &SCreateGameScreenWidget::GenerateGameModesList)
 				.OnSelectionChanged(this, &SCreateGameScreenWidget::OnGameModeSelected)
 				.Content()
 				[
 					SNew(SHorizontalBox)
 					+ SHorizontalBox::Slot()
-					.Padding(10.0f, 0.0f, 10.0f, 0.0f)
+					.Padding(5.0f, 0.0f, 5.0f, 0.0f)
 					[
-						SAssignNew(SelectedGameMode, STextBlock)
-						//SNew(STextBlock)
-						.Text(FText::FromString(*GameModes[0].Get()->DisplayName))
+						SAssignNew(SelectedGameModeBox, STextBlock)
+						.Text(FText::FromString(*InitiallySelectedGameMode->GetDefaultObject<ASolGameMode>()->DisplayName.ToString()))
 					]
 				]
 			]
 		]
 	];
 
-	GameOptionsList->AddSlot().AutoHeight()
+	GameOptionsWindow->AddSlot().AutoHeight()
 	[
 		SNew(SHorizontalBox)
 		+ SHorizontalBox::Slot()
@@ -117,7 +97,6 @@ TSharedRef<SWidget> SCreateGameScreenWidget::ConstructWindow()
 			.WidthOverride(250.f)
 			[
 				SAssignNew(MapListBox, SComboBox< TSharedPtr<FString> >)
-				//SNew(SComboBox<TSharedPtr<FString>>)
 				.OptionsSource(&MapListArray)
 				.InitiallySelectedItem(MapListArray[0])
 				.OnGenerateWidget(this, &SCreateGameScreenWidget::GenerateStringListWidget)
@@ -128,8 +107,7 @@ TSharedRef<SWidget> SCreateGameScreenWidget::ConstructWindow()
 					+ SHorizontalBox::Slot()
 					.Padding(5.0f, 0.0f, 10.0f, 0.0f)
 					[
-						SAssignNew(SelectedMap, STextBlock)
-						//SNew(STextBlock)
+						SAssignNew(SelectedMapBox, STextBlock)
 						.Text(FText::FromString(*MapListArray[0].Get()))
 					]
 				]
@@ -137,21 +115,13 @@ TSharedRef<SWidget> SCreateGameScreenWidget::ConstructWindow()
 		]
 	];
 	
-	for (int32 i = 0; i < GameOptions.Num(); i++)
-	{
-		GameOptionsList->AddSlot().AutoHeight()
-		[
-			SNew(SBorder)
-
-			.Padding(1)
-			[
-				MakeGameOptionWidget(GameOptions[i])
-			]
-		];
-	}
+	GameOptionsWindow->AddSlot().AutoHeight()
+	[
+		SAssignNew(GameOptionsBox, SVerticalBox)
+	];
 
 	// Make start game button.
-	GameOptionsList->AddSlot().AutoHeight()
+	GameOptionsWindow->AddSlot().AutoHeight()
 	[
 		SNew(SHorizontalBox)
 		+ SHorizontalBox::Slot()
@@ -188,7 +158,29 @@ TSharedRef<SWidget> SCreateGameScreenWidget::ConstructWindow()
 		]
 	];
 
-	return GameOptionsList.ToSharedRef();
+	RefreshGameOptionsList();
+
+	return GameOptionsWindow.ToSharedRef();
+}
+
+void SCreateGameScreenWidget::RefreshGameOptionsList()
+{
+	GameOptions.Empty();
+	GameModeListBox->GetSelectedItem()->GetDefaultObject<ASolGameMode>()->GetGameOptions(GameOptions);
+	
+	GameOptionsBox->ClearChildren();
+	for (int32 i = 0; i < GameOptions.Num(); i++)
+	{
+		GameOptionsBox->AddSlot().AutoHeight()
+			[
+				SNew(SBorder)
+
+				.Padding(1)
+			[
+				MakeGameOptionWidget(GameOptions[i])
+			]
+			];
+	}
 }
 
 TSharedRef<SWidget> SCreateGameScreenWidget::MakeGameOptionWidget(FGameOption& InOption)
@@ -204,15 +196,31 @@ TSharedRef<SWidget> SCreateGameScreenWidget::MakeGameOptionWidget(FGameOption& I
 			.Text(InOption.OptionName)
 		]
 	];
-	GameOptionWidget->AddSlot()
-	[
-		SNew(SBox)
-		.WidthOverride(150.f)
+	// Hacky way to implement checkboxes: assume any variable starting with "b" is a boolean.
+	if (InOption.URLString.StartsWith("b"))
+	{
+		GameOptionWidget->AddSlot()
 		[
-			SAssignNew(InOption.OptionWidget, SEditableTextBox)
-			.Text(InOption.DefaultValue)
-		]
-	];
+			SNew(SBox)
+			.WidthOverride(150.f)
+			[
+				SAssignNew(InOption.OptionWidget, SCheckBox)
+				.IsChecked(InOption.DefaultValue.EqualTo(FText::FromString("1")) || InOption.DefaultValue.EqualTo(FText::FromString("true")) ? ECheckBoxState::Checked : ECheckBoxState::Unchecked)
+			]
+		];
+	}
+	else 
+	{
+		GameOptionWidget->AddSlot()
+		[
+			SNew(SBox)
+			.WidthOverride(150.f)
+			[
+				SAssignNew(InOption.OptionWidget, SEditableTextBox)
+				.Text(InOption.DefaultValue)
+			]
+		];
+	}
 
 	return GameOptionWidget.ToSharedRef();
 }
@@ -231,7 +239,6 @@ FReply SCreateGameScreenWidget::StartLANGame()
 	return FReply::Handled();
 }
 
-
 void SCreateGameScreenWidget::HostGame(bool bIsLAN)
 {
 	if (MainMenuHUD.IsValid())
@@ -242,7 +249,7 @@ void SCreateGameScreenWidget::HostGame(bool bIsLAN)
 			FString StartStr = FString("/Game/Maps/");
 			FString MapName = *MapListBox->GetSelectedItem().Get();
 			StartStr += MapName;
-			FString GameModeClassName = *GameModeListBox->GetSelectedItem().Get()->ClassName;
+			FString GameModeClassName = *GameModeListBox->GetSelectedItem()->GetPathName();
 			StartStr += FString("?game=") + GameModeClassName;
 			// Add LAN option if LAN game.
 			if (bIsLAN)
@@ -252,11 +259,23 @@ void SCreateGameScreenWidget::HostGame(bool bIsLAN)
 			// Add URL details for each option.
 			for (int32 i = 0; i < GameOptions.Num(); i++)
 			{
-				if (GameOptions[i].OptionWidget.IsValid() && !GameOptions[i].OptionWidget->GetText().ToString().IsEmpty())
+				if (GameOptions[i].OptionWidget.IsValid())
 				{
-					FString OptionName = GameOptions[i].URLString;
-					FString Value = FString("=") + GameOptions[i].OptionWidget->GetText().ToString();
-					StartStr += FString("?") + OptionName + Value;
+					TSharedPtr<SEditableTextBox> TextBox = StaticCastSharedPtr<SEditableTextBox>(GameOptions[i].OptionWidget);
+					TSharedPtr<SCheckBox> CheckBox = StaticCastSharedPtr<SCheckBox>(GameOptions[i].OptionWidget);
+					// Temp hack: assume any variable starting with "b" is a boolean. The casting is not working.
+					if (GameOptions[i].URLString.StartsWith("b") && CheckBox.IsValid())
+					{
+						FString OptionName = GameOptions[i].URLString;
+						FString Value = CheckBox->IsChecked() ? "1" : "0";
+						StartStr += FString("?") + OptionName + FString("=") + Value;
+					}
+					else if (TextBox.IsValid() && !TextBox->GetText().ToString().IsEmpty())
+					{
+						FString OptionName = GameOptions[i].URLString;
+						FString Value = TextBox->GetText().ToString();
+						StartStr += FString("?") + OptionName + FString("=") + Value;
+					}
 				}
 			}
 			StartStr += FString("?listen"); //ESSENTIAL FOR PLAYER TO CONNECT TO SERVER!
@@ -265,10 +284,6 @@ void SCreateGameScreenWidget::HostGame(bool bIsLAN)
 			if (GI)
 			{
 				GI->HostGame(PlayerOwner.Get(), GameModeClassName, StartStr);
-			}
-			else
-			{
-				//GEngine->AddOnScreenDebugMessage(-1, 15.f, FColor::Red, FString::Printf(TEXT("No Game Instance!")));
 			}
 		}
 	}
@@ -284,22 +299,23 @@ TSharedRef<SWidget> SCreateGameScreenWidget::GenerateStringListWidget(TSharedPtr
 		];
 }
 
-TSharedRef<SWidget> SCreateGameScreenWidget::GenerateGameModesList(TSharedPtr<FGameMode> InItem)
+TSharedRef<SWidget> SCreateGameScreenWidget::GenerateGameModesList(UClass* InItem)
 {
 	return SNew(SBox)
 		.Padding(5)
 		[
 			SNew(STextBlock)
-			.Text(FText::FromString(*InItem.Get()->DisplayName))
+			.Text(FText::FromString(*InItem->GetDefaultObject<ASolGameMode>()->DisplayName.ToString()))
 		];
 }
 
 void SCreateGameScreenWidget::OnMapSelected(TSharedPtr<FString> NewSelection, ESelectInfo::Type SelectInfo)
 {
-	SelectedMap->SetText(FText::FromString(*NewSelection.Get()));
+	SelectedMapBox->SetText(FText::FromString(*NewSelection.Get()));
 }
 
-void SCreateGameScreenWidget::OnGameModeSelected(TSharedPtr<FGameMode> NewSelection, ESelectInfo::Type SelectInfo)
+void SCreateGameScreenWidget::OnGameModeSelected(UClass* NewSelection, ESelectInfo::Type SelectInfo)
 {
-	SelectedGameMode->SetText(FText::FromString(*NewSelection.Get()->DisplayName));
+	SelectedGameModeBox->SetText(FText::FromString(*NewSelection->GetDefaultObject<ASolGameMode>()->DisplayName.ToString()));
+	RefreshGameOptionsList();
 }

@@ -51,9 +51,6 @@ class LASTIM_API ABullet : public AKineticProjectile
 public:
 
 	ABullet(const FObjectInitializer& ObjectInitializer);
-
-	// Called every frame.
-	virtual void Tick(float DeltaSeconds) override;
 	
 	/* Called when the game starts or when spawned. */
 	virtual void BeginPlay() override;
@@ -87,8 +84,4 @@ private:
 	/* Particle system for the bullet trail. */
 	UPROPERTY(EditDefaultsOnly, Category = Effects)
 	UParticleSystem* BulletTrailFX;
-
-	/* The specific spawned bullet trail. */
-	//UPROPERTY()
-	class UParticleSystemComponent* BulletTrailPSC;
 };

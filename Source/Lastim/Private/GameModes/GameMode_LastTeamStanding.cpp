@@ -6,6 +6,7 @@
 #include "SolPlayerController.h"
 #include "TeamState.h"
 #include "HUD_LastTeamStanding.h"
+#include "BattleRoyaleShield.h"
 #include "GameMode_LastTeamStanding.h"
 
 AGameMode_LastTeamStanding::AGameMode_LastTeamStanding(const FObjectInitializer& ObjectInitializer)
@@ -13,6 +14,7 @@ AGameMode_LastTeamStanding::AGameMode_LastTeamStanding(const FObjectInitializer&
 {
 	DisplayName = NSLOCTEXT("GameMode_LastTeamStanding", "LastTeamStanding", "Last Team Standing");
 	HUDClass = AHUD_LastTeamStanding::StaticClass();
+	BattleRoyaleShieldClass = ABattleRoyaleShield::StaticClass();
 
 	KillScore = 1;
 	KillScoreForTeam = 0;
@@ -22,13 +24,14 @@ AGameMode_LastTeamStanding::AGameMode_LastTeamStanding(const FObjectInitializer&
 	DeathScoreForTeam = -1;
 	SuicideScore = -1;
 	SuicideScoreForTeam = -1;
+	bUseBattleRoyaleShield = true;
 
 	bDelayedStart = true;
 }
 
 void AGameMode_LastTeamStanding::HandleMatchHasStarted()
 {
-	// Always force respawn, despite server option.
+	// Always force respawn despite server option.
 	ASolGameState* const MyGameState = Cast<ASolGameState>(GameState);
 	if (MyGameState)
 	{
@@ -139,6 +142,11 @@ void AGameMode_LastTeamStanding::CheckForMatchWinner()
 		if (TeamLives > 0)
 		{
 			AliveTeams++;
+			// No point in checking if multiple players are alive.
+			if (AliveTeams > 1)
+			{
+				return;
+			}
 		}
 	}
 	// Finish the game if all but one team is out of lives.
@@ -148,4 +156,34 @@ void AGameMode_LastTeamStanding::CheckForMatchWinner()
 	}
 }
 
+void AGameMode_LastTeamStanding::GetGameOptions(TArray<FGameOption> &OptionsList)
+{
+	Super::GetGameOptions(OptionsList);
+	// Rename score to lives.
+	for (int32 i = 0; i < OptionsList.Num(); i++)
+	{
+		if (OptionsList[i].URLString.Equals(FString("ScoreLimit")))
+		{
+			OptionsList[i].OptionName = NSLOCTEXT("Lastim.HUD.Menu", "Lives", "Lives");
+			break;
+		}
+	}
+	// Remove bForceRespawn option.
+	for (int32 i = 0; i < OptionsList.Num(); i++)
+	{
+		if (OptionsList[i].URLString.Equals(FString("bForceRespawn")))
+		{
+			OptionsList.RemoveAt(i);
+			break;
+		}
+	}
+}
 
+void AGameMode_LastTeamStanding::InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage)
+{
+	Super::InitGame(MapName, Options, ErrorMessage);
+	if (bUseBattleRoyaleShield && BattleRoyaleShieldClass)
+	{
+		StartingInventory.Add(BattleRoyaleShieldClass);
+	}
+}

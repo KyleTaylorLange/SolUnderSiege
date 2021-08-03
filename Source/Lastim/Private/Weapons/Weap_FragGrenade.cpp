@@ -7,7 +7,7 @@ AWeap_FragGrenade::AWeap_FragGrenade(const FObjectInitializer& ObjectInitializer
 {
 	DisplayName = NSLOCTEXT("Weap_FragGrenade", "WeaponName", "Frag Grenade");
 
-	WeaponOffset = FVector(10.f, 10.f, -10.f);
+	MeshOffset = FVector(10.f, 10.f, -10.f);
 	BaseAIRating = 0.25f;
 }
 

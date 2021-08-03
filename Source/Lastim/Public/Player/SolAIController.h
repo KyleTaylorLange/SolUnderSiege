@@ -5,64 +5,8 @@
 #include "AIController.h"
 #include "SolAIController.generated.h"
 
-
-// This should eventually be moved to SolBot.
-USTRUCT()
-struct FBotProfile
-{
-	GENERATED_USTRUCT_BODY()
-	
-	/* Bot's name. */
-	UPROPERTY()
-	FString BotName;
-
-	/* Bot's gender: false for male, true for female. */
-	UPROPERTY()
-	bool bIsFemale;
-
-	/* Accuracy rating. */
-	UPROPERTY()
-	float Accuracy;
-
-	/* Alertness rating. */
-	UPROPERTY()
-	float Alertness;
-
-	UPROPERTY()
-	FLinearColor PrimaryColor;
-
-	UPROPERTY()
-	FLinearColor SecondaryColor;
-
-	FBotProfile()
-	{
-		BotName = FString("Bot");
-		bIsFemale = false;
-		Accuracy = 0.0f;
-		Alertness = 0.0f;
-		PrimaryColor = FLinearColor(0.35f, 0.35f, 0.4f);
-		SecondaryColor = FLinearColor(0.65f, 0.65f, 0.65f);
-	}
-
-	FBotProfile(const FString InName, const bool bInIsFemale)
-	{
-		BotName = InName;
-		bIsFemale = bInIsFemale;
-		Accuracy = 0.0f;
-		Alertness = 0.0f;
-		PrimaryColor = FLinearColor(0.35f, 0.35f, 0.4f);
-		SecondaryColor = FLinearColor(0.65f, 0.65f, 0.65f);
-		// Sexist Test: make women pink by default just so everyone doesn't have the same colours.
-		if (bIsFemale)
-		{
-			PrimaryColor = FLinearColor(0.45f, 0.4f, 0.4f);
-			SecondaryColor = FLinearColor(1.0f, 0.41f, 0.7f);
-		}
-	}
-};
-
 /**
- * LASTIM AI CONTROLLER
+ * SOL AI CONTROLLER
  *  The controller for the AI.
  *  Instead of using Unreal's behaviour trees, the AI will be totally controlled by C++ code.
  *  TODO: branch bot-specific functions to the SolBot class so that this can be more generic.
@@ -70,7 +14,7 @@ struct FBotProfile
 UCLASS()
 class LASTIM_API ASolAIController : public AAIController
 {
-	GENERATED_BODY()
+	GENERATED_UCLASS_BODY()
 
 protected:
 
@@ -105,6 +49,9 @@ protected:
 
 	float RecoilCompensationError;
 
+	/** Can this AI pick up items? */
+	bool bCanPickUpItems;
+
 	// Have we lost the enemy?
 	bool bHasLostEnemy;
 
@@ -130,13 +77,11 @@ protected:
 	FTimerHandle TimerHandle_Respawn;
 
 	FTimerHandle TimerHandle_Refire;
-
-	/* The bot's profile. */
-	struct FBotProfile BotProfile;
 	
 public:
 
-	ASolAIController(const FObjectInitializer& ObjectInitializer);
+	// Temp variable to turn off most functions but roaming the map.
+	bool bTEMPDebugPathfinding;
 
 	//virtual void GameHasEnded(class AActor* EndGameFocus = NULL, bool bIsWinner = false) override;
 	virtual void OnPossess(class APawn* InPawn) override;
@@ -199,6 +144,10 @@ public:
 	/* Get enemy from Blackboard. */
 	class APawn* GetEnemy() const;
 
+	/** Template version of GetEnemy(). */
+	template <class T>
+	T* GetEnemy() const;
+
 	// Set the current enemy.
 	void SetPickup(class APickup* InPickup);
 
@@ -222,10 +171,4 @@ public:
 	virtual void ShootEnemy();
 
 	void Respawn();
-
-	/* Returns the SolCharacter. */
-	virtual ASolCharacter* GetSolPawn();
-
-	/* Sets the bot's profile and adjusts bot's properties to match. */
-	virtual void SetBotProfile(struct FBotProfile InProfile);
 };

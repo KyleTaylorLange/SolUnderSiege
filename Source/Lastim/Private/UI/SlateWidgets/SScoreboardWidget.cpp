@@ -464,7 +464,7 @@ FText SScoreboardWidget::GetPlayerScore(ASolPlayerState* PlayerState) const
 
 int32 SScoreboardWidget::GetAttributeValue_Score(ASolPlayerState* PlayerState) const
 {
-	return FMath::TruncToInt(PlayerState->Score);
+	return FMath::TruncToInt(PlayerState->GetScore());
 }
 
 int32 SScoreboardWidget::GetAttributeValue_Kills(ASolPlayerState* PlayerState) const
@@ -481,7 +481,7 @@ FText SScoreboardWidget::GetAttributeText_Score(ASolPlayerState* PlayerState) co
 {
 	if (PlayerState)
 	{
-		return FText::AsNumber(PlayerState->Score);
+		return FText::AsNumber(PlayerState->GetScore());
 	}
 
 	return FText::GetEmpty();

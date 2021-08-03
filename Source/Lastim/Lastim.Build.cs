@@ -7,7 +7,6 @@ public class Lastim : ModuleRules
 	public Lastim(ReadOnlyTargetRules Target) : base(Target)
 	{
         PrivatePCHHeaderFile = "Public/Lastim.h";
-
         PublicDependencyModuleNames.AddRange(
             new string[] { 
                 "Core", 
@@ -16,7 +15,8 @@ public class Lastim : ModuleRules
                 "OnlineSubsystem",
                 "OnlineSubsystemUtils",
                 "InputCore",
-                "AIModule" 
+                "AIModule",
+                "NavigationSystem"
             }
         );
         PrivateDependencyModuleNames.AddRange(

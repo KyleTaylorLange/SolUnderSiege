@@ -28,13 +28,17 @@ protected:
 
 	int32 InnocentKillScore;
 
+	virtual void DefaultTimer();
+
 	/* Overridden to score kills against designated targets, hunters, and innocents differently. */
 	virtual void ScoreKill(AController* Killer, AController* KilledPlayer, APawn* KilledPawn, const UDamageType* DamageType) override;
 
 	virtual void ScoreDeath(AController* Killer, AController* KilledPlayer, APawn* KilledPawn, const UDamageType* DamageType) override;
 
+	virtual bool PlayerWantsTarget(class APlayerState_Assassination* InPlayer);
+
 	/* Assign targets to a specific player. */
-	virtual void ChooseNewTargetForPlayer(class APlayerState_Assassination* InPlayer);
+	virtual void ChooseNewTargetForPlayer(class APlayerState_Assassination* InPlayer, class APlayerState_Assassination* LastTarget);
 
 	/* Overridden to choose an initial target. */
 	virtual void HandleMatchHasStarted() override;

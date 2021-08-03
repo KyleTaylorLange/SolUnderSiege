@@ -100,6 +100,9 @@ private:
 	/** Called after all the local players are registered in a session we're joining */
 	void FinishJoinSession(EOnJoinSessionCompleteResult::Type Result);
 
+	// Called when there is a failure to connect.
+	void HandleSessionFailure(const FUniqueNetId& NetId, ESessionFailure::Type FailureType);
+
 	/** Travel directly to the named session */
 	void InternalTravelToSession(const FName& SessionName);
 

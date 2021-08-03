@@ -4,6 +4,8 @@
 #include "UnrealNetwork.h"
 #include "InventoryItem.h"
 #include "SolCharacter.h"
+#include "DmgType_KillZ.h"
+#include "InventoryItem.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "PickupSpawner.h"
 #include "Pickup.h"
@@ -23,7 +25,6 @@ APickup::APickup(const FObjectInitializer& ObjectInitializer) : Super(ObjectInit
 	// We need some type of component as the root for this thing to spawn anywhere but the map origin.
 	// TODO: Make an editor-only 3D mesh.
 	TempShapeComp = ObjectInitializer.CreateDefaultSubobject<UBoxComponent>(this, TEXT("TempSphereComp"));
-	TempShapeComp->InitBoxExtent(FVector(25.0f, 25.0f, 25.0f));
 	TempShapeComp->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	TempShapeComp->SetCollisionResponseToAllChannels(ECR_Block); //(ECR_Ignore);
 	TempShapeComp->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
@@ -31,34 +32,16 @@ APickup::APickup(const FObjectInitializer& ObjectInitializer) : Super(ObjectInit
 	TempShapeComp->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
 	TempShapeComp->SetCollisionResponseToChannel(ECC_PhysicsBody, ECR_Block);
 	TempShapeComp->SetSimulatePhysics(true);
+	UBoxComponent* BoxRootComp = Cast<UBoxComponent>(TempShapeComp);
+	if (BoxRootComp)
+	{
+		BoxRootComp->InitBoxExtent(FVector(12.5f, 12.5f, 12.5f));
+	}
 	//TempShapeComp->SetMassOverrideInKg(NAME_None, 20.f, true); GEngine error?
 	RootComponent = TempShapeComp;
-	//TempSphereComp->AttachToComponent(PickupMesh, FAttachmentTransformRules::KeepRelativeTransform);
 
-	PickupMesh = ObjectInitializer.CreateDefaultSubobject<USkeletalMeshComponent>(this, TEXT("MeshComp"));
-
-	PickupMesh->SetCollisionObjectType(ECC_PhysicsBody); //CollisionComp->SetCollisionObjectType(COLLISION_PICKUP);
-	PickupMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	//PickupMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-	PickupMesh->SetCollisionResponseToAllChannels(ECR_Ignore);
-	PickupMesh->AttachToComponent(TempShapeComp, FAttachmentTransformRules::KeepRelativeTransform);
-	/*
-	PickupMesh->SetCollisionResponseToAllChannels(ECR_Block);
-	PickupMesh->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
-	PickupMesh->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Block);
-	PickupMesh->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
-	PickupMesh->SetCollisionResponseToChannel(ECC_PhysicsBody, ECR_Block);
-	*/
-	//PickupMesh->SetSimulatePhysics(true);
-	PickupMesh->SetSimulatePhysics(false);
-	//PickupMesh->bChartDistanceFactor = true;
-	PickupMesh->bReceivesDecals = false;
-	PickupMesh->CastShadow = true;
-	PickupMesh->SetHiddenInGame(false);
-	//PickupMesh->SetRelativeRotation(FRotator::ZeroRotator);
-	//PickupMesh->SetRelativeLocation(FVector::ZeroVector);
-	//RootComponent = PickupMesh;
-	//PickupMesh->AttachToComponent(TempShapeComp, FAttachmentTransformRules::KeepRelativeTransform);
+	// Pickup mesh is made dynamically when an object is assigned.
+	PickupMesh = nullptr;
 
 	// Using a ProjectileMoveComp gives it the ability to fall and such without as many replication issues as just simulating physics would.
 	UProjectileMovementComponent* ProjectileMovement = ObjectInitializer.CreateDefaultSubobject<UProjectileMovementComponent>(this, TEXT("ProjectileComp"));
@@ -77,28 +60,75 @@ void APickup::CreatePickupMesh(class AInventoryItem* InItem)
 {
 	if (InItem)
 	{
-		USkeletalMeshComponent* TestSMC = Cast<USkeletalMeshComponent>(InItem->GetPickupMesh());
-		if (TestSMC)
+		UMeshComponent* InItemMesh = InItem->GetPickupMesh();
+		USkeletalMeshComponent* SkelMeshComp = Cast<USkeletalMeshComponent>(InItemMesh);
+		UStaticMeshComponent* StaticMeshComp = Cast<UStaticMeshComponent>(InItemMesh);
+		if (SkelMeshComp)
 		{
-			USkeletalMesh* TestSM = TestSMC->SkeletalMesh;
-			if (TestSM)
+			USkeletalMesh* SkelMesh = SkelMeshComp->SkeletalMesh;
+			if (SkelMesh)
 			{
-				PickupMesh->SetSkeletalMesh(TestSM);
-				FTransform Dummy;
-				FVector Bounds = PickupMesh->CalcBounds(Dummy).GetBox().GetExtent();
-				FVector Center = PickupMesh->CalcBounds(Dummy).GetBox().GetCenter();
-				PickupMesh->SetRelativeLocation(FVector(-Center.X, -Center.Y, -Center.Z));
-				TempShapeComp->SetBoxExtent(Bounds);
-				FString ItemName = InItem->GetDisplayName();
+				if (PickupMesh)
+				{
+					PickupMesh->DestroyComponent();
+					PickupMesh = nullptr;
+				}
+				USceneComponent* NewComponent = NewObject<USceneComponent>(this, USkeletalMeshComponent::StaticClass());
+				USkeletalMeshComponent* NewSkelMeshComp = Cast<USkeletalMeshComponent>(NewComponent);
+				NewSkelMeshComp->SetSkeletalMesh(SkelMesh);
+				NewSkelMeshComp->SetRelativeScale3D(SkelMeshComp->GetRelativeScale3D());
+				PickupMesh = NewSkelMeshComp;
+				PickupMesh->RegisterComponent();
 				//GEngine->AddOnScreenDebugMessage(-1, 60.f, FColor::Red, FString::Printf(TEXT("%s mesh bounds: %s, center: %s"), *ItemName, *Bounds.ToString(), *Center.ToString()));
 			}
 		}
-		/*
-		if (PickupMesh != NULL)
+		else if (StaticMeshComp)
 		{
-			PickupMesh->DestroyComponent();
-			PickupMesh = NULL;
+			UStaticMesh* StaticMesh = StaticMeshComp->GetStaticMesh();
+			if (StaticMesh)
+			{
+				if (PickupMesh)
+				{
+					PickupMesh->DestroyComponent();
+					PickupMesh = nullptr;
+				}
+				USceneComponent* NewComponent = NewObject<USceneComponent>(this, UStaticMeshComponent::StaticClass());
+				UStaticMeshComponent* NewStaticMeshComp = Cast<UStaticMeshComponent>(NewComponent);
+				NewStaticMeshComp->SetStaticMesh(StaticMesh);
+				NewStaticMeshComp->OverrideMaterials = StaticMeshComp->OverrideMaterials;
+				NewStaticMeshComp->SetRelativeScale3D(StaticMeshComp->GetRelativeScale3D());
+				PickupMesh = NewStaticMeshComp;
+				PickupMesh->RegisterComponent();
+				//GEngine->AddOnScreenDebugMessage(-1, 60.f, FColor::Red, FString::Printf(TEXT("%s mesh bounds: %s, center: %s"), *ItemName, *Bounds.ToString(), *Center.ToString()));
+			}
 		}
+
+		if (PickupMesh)
+		{
+			PickupMesh->SetCollisionObjectType(ECC_PhysicsBody); //CollisionComp->SetCollisionObjectType(COLLISION_PICKUP);
+			PickupMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+			PickupMesh->SetCollisionResponseToAllChannels(ECR_Ignore);
+			PickupMesh->AttachToComponent(TempShapeComp, FAttachmentTransformRules::KeepRelativeTransform);
+			PickupMesh->SetSimulatePhysics(false);
+			//PickupMesh->bChartDistanceFactor = true;
+			PickupMesh->bReceivesDecals = false;
+			PickupMesh->CastShadow = true;
+			PickupMesh->SetHiddenInGame(false);
+
+			FTransform Dummy;
+			FVector Bounds = PickupMesh->CalcBounds(Dummy).GetBox().GetExtent();
+			FVector Center = PickupMesh->CalcBounds(Dummy).GetBox().GetCenter();
+			FString ItemName = InItem->GetDisplayName();
+			PickupMesh->SetRelativeLocation(FVector(-Center.X, -Center.Y, -Center.Z));
+
+			UBoxComponent* BoxRootComp = Cast<UBoxComponent>(TempShapeComp);
+			if (BoxRootComp)
+			{
+				BoxRootComp->SetBoxExtent(Bounds);
+			}
+		}
+
+		/*
 		// Not sure if all of this is necessary, but it works (there was an issue where the pickups would be deleted a second after spawning.)
 		PickupMesh = ConstructObject<UMeshComponent>(InItem->GetPickupMesh()->GetClass(), this, NAME_None, RF_NoFlags, InItem->GetPickupMesh());
 		PickupMesh->SetCollisionObjectType(ECC_PhysicsBody); //CollisionComp->SetCollisionObjectType(COLLISION_PICKUP);
@@ -142,6 +172,43 @@ void APickup::GivePickupTo(class ASolCharacter* Pawn)
 	//GEngine->AddOnScreenDebugMessage(-1, 15.f, FColor::Green, FString::Printf(TEXT("%s: APickup::GivePickupTo() was called!"), *this->GetName()));
 }
 
+bool APickup::CanBeUsedBy(AActor* User)
+{
+	ASolCharacter* UsingCharacter = Cast<ASolCharacter>(User);
+	if (UsingCharacter)
+	{
+		return CanBePickedUp(UsingCharacter) && UsingCharacter->CanPickUpItem(GetHeldItem());
+	}
+	return false;
+}
+
+bool APickup::OnStartUseBy(AActor* User)
+{
+	if (Cast<ASolCharacter>(User))
+	{
+		PickupOnUse(Cast<ASolCharacter>(User));
+		return true;
+	}
+	return false;
+}
+
+FString APickup::GetUseActionName(AActor* User)
+{
+	ASolCharacter* UsingCharacter = Cast<ASolCharacter>(User);
+	if (CanBeUsedBy(UsingCharacter))
+	{
+		if (UsingCharacter->CanHoldItem(GetHeldItem()))
+		{
+			return FString::Printf(TEXT("Pick up %s"), GetHeldItem() ? *GetHeldItem()->GetDisplayName() : *FString("No Held Item"));
+		}
+		else if (UsingCharacter->CanSwapForItem(GetHeldItem()))
+		{
+			return FString::Printf(TEXT("Swap %s"), GetHeldItem() ? *GetHeldItem()->GetDisplayName() : *FString("No Held Item"));
+		}
+	}
+	return IUsableObjectInterface::GetUseActionName(User);
+}
+
 void APickup::PickupOnUse(class ASolCharacter* Pawn)
 {
 	if (Pawn && Pawn->IsAlive() && !IsPendingKill())
@@ -149,7 +216,6 @@ void APickup::PickupOnUse(class ASolCharacter* Pawn)
 		if (CanBePickedUp(Pawn))
 		{
 			GivePickupTo(Pawn);
-			//PickedUpBy = Pawn;
 
 			if (!IsPendingKill())
 			{

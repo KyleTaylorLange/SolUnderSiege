@@ -2,6 +2,7 @@
 // Most code taken from ShooterGame example project.
 
 #include "Lastim.h"
+#include "OnlineSubsystemUtils.h"
 #include "SolGameInstance.h"
 
 USolGameInstance::USolGameInstance(const FObjectInitializer& ObjectInitializer)
@@ -23,9 +24,22 @@ void USolGameInstance::Init()
 {
 	Super::Init();
 
+	// game requires the ability to ID users.
+	IOnlineSubsystem* OnlineSub = Online::GetSubsystem(GetWorld());
+	check(OnlineSub);
+	const IOnlineIdentityPtr IdentityInterface = OnlineSub->GetIdentityInterface();
+	check(IdentityInterface.IsValid());
+	const IOnlineSessionPtr SessionInterface = OnlineSub->GetSessionInterface();
+	check(SessionInterface.IsValid());
+
 	// Register delegate for ticker callback
 	TickDelegate = FTickerDelegate::CreateUObject(this, &USolGameInstance::Tick);
 	TickDelegateHandle = FTicker::GetCoreTicker().AddTicker(TickDelegate);
+
+	if (SessionInterface.IsValid())
+	{
+		SessionInterface->AddOnSessionFailureDelegate_Handle(FOnSessionFailureDelegate::CreateUObject(this, &USolGameInstance::HandleSessionFailure));
+	}
 }
 
 void USolGameInstance::StartGameInstance()
@@ -201,7 +215,6 @@ bool USolGameInstance::HostGame(ULocalPlayer* LocalPlayer, const FString& GameTy
 			}
 		}
 	}
-	////GEngine->AddOnScreenDebugMessage(-1, 15.f, FColor::Red, FString::Printf(TEXT("GameInstance->HostGame: Failed")));
 	return false;
 }
 
@@ -240,12 +253,12 @@ void USolGameInstance::FinishSessionCreation(EOnJoinSessionCompleteResult::Type 
 	if (Result == EOnJoinSessionCompleteResult::Success)
 	{
 		// Travel to the specified match URL
-		////GEngine->AddOnScreenDebugMessage(-1, 15.f, FColor::Green, FString::Printf(TEXT("GameInstance->FinishSessionCreate: ServerTravel")));
+		UE_LOG(LogOnlineGame, Log, TEXT("SolGameInstance::FinishSessionCreation: travelling to server."));
 		GetWorld()->ServerTravel(TravelURL);
 	}
 	else
 	{
-		////GEngine->AddOnScreenDebugMessage(-1, 15.f, FColor::Red, FString::Printf(TEXT("GameInstance->FinishSessionCreate: failed")));
+		UE_LOG(LogOnlineGame, Log, TEXT("SolGameInstance::FinishSessionCreation: failed to create session."));
 		/*
 		FText ReturnReason = NSLOCTEXT("NetworkErrors", "CreateSessionFailed", "Failed to create session.");
 		FText OKButton = NSLOCTEXT("DialogButtons", "OKAY", "OK");
@@ -257,8 +270,7 @@ void USolGameInstance::FinishSessionCreation(EOnJoinSessionCompleteResult::Type 
 bool USolGameInstance::JoinSession(ULocalPlayer* LocalPlayer, int32 SessionIndexInSearchResults)
 {
 	// needs to tear anything down based on current state?
-	UE_LOG(LogOnlineGame, Log, TEXT("GI->JoinSessionX: Begin"));
-	////GEngine->AddOnScreenDebugMessage(-1, 15.f, FColor::Blue, FString::Printf(TEXT("GI->JoinSessionX: Begin")));
+	UE_LOG(LogOnlineGame, Log, TEXT("SolGameInstance::JoinSessionA: Begin"));
 	ASolGameSession* const GameSession = GetGameSession();
 	if (GameSession)
 	{
@@ -274,19 +286,19 @@ bool USolGameInstance::JoinSession(ULocalPlayer* LocalPlayer, int32 SessionIndex
 				// If we fail, the delegate will handle showing the proper messaging and move to the correct state
 				//ShowLoadingScreen();
 				GoToState(SolGameInstanceState::Playing);
+				UE_LOG(LogOnlineGame, Log, TEXT("SolGameInstance::JoinSessionA: True"));
 				return true;
 			}
 		}
 	}
-	UE_LOG(LogOnlineGame, Log, TEXT("GI->JoinSessionX: False"));
-	////GEngine->AddOnScreenDebugMessage(-1, 15.f, FColor::Red, FString::Printf(TEXT("GI->JoinSessionX: False")));
+	UE_LOG(LogOnlineGame, Log, TEXT("SolGameInstance::JoinSessionA: False"));
 	return false;
 }
 
 bool USolGameInstance::JoinSession(ULocalPlayer* LocalPlayer, const FOnlineSessionSearchResult& SearchResult)
 {
 	// needs to tear anything down based on current state?
-	UE_LOG(LogOnlineGame, Log, TEXT("GI->JoinSession: Begin"));
+	UE_LOG(LogOnlineGame, Log, TEXT("SolGameInstance::JoinSessionB: Begin"));
 	ASolGameSession* const GameSession = GetGameSession();
 	if (GameSession)
 	{
@@ -302,20 +314,19 @@ bool USolGameInstance::JoinSession(ULocalPlayer* LocalPlayer, const FOnlineSessi
 				// If we fail, the delegate will handle showing the proper messaging and move to the correct state
 				//ShowLoadingScreen();
 				GoToState(SolGameInstanceState::Playing);
+				UE_LOG(LogOnlineGame, Log, TEXT("SolGameInstance::JoinSessionA: True"));
 				return true;
 			}
 		}
 	}
-	UE_LOG(LogOnlineGame, Log, TEXT("GI->JoinSession: False"));
-	////GEngine->AddOnScreenDebugMessage(-1, 15.f, FColor::Red, FString::Printf(TEXT("GI->JoinSession: False")));
+	UE_LOG(LogOnlineGame, Log, TEXT("SolGameInstance::JoinSessionB: False"));
 	return false;
 }
 
 /** Callback which is intended to be called upon finding sessions */
 void USolGameInstance::OnJoinSessionComplete(EOnJoinSessionCompleteResult::Type Result)
 {
-	UE_LOG(LogOnlineGame, Log, TEXT("GI->OnJoinSessionComplete: Begin"));
-	////GEngine->AddOnScreenDebugMessage(-1, 15.f, FColor::Blue, FString::Printf(TEXT("GI->OnJoinSessionComplete: Begin")));
+	UE_LOG(LogOnlineGame, Log, TEXT("SolGameInstance::OnJoinSessionComplete: Begin"));
 	// unhook the delegate
 	ASolGameSession* const GameSession = GetGameSession();
 	if (GameSession)
@@ -369,6 +380,11 @@ void USolGameInstance::FinishJoinSession(EOnJoinSessionCompleteResult::Type Resu
 	UE_LOG(LogOnlineGame, Log, TEXT("GI->FinishJoinSession: End"));
 	////GEngine->AddOnScreenDebugMessage(-1, 15.f, FColor::Blue, FString::Printf(TEXT("GI->FinishJoinSession: End")));
 	InternalTravelToSession(GameSessionName);
+}
+
+void USolGameInstance::HandleSessionFailure(const FUniqueNetId& NetId, ESessionFailure::Type FailureType)
+{
+	UE_LOG(LogOnlineGame, Warning, TEXT("USolGameInstance::HandleSessionFailure: %u"), (uint32)FailureType);
 }
 
 void USolGameInstance::OnRegisterJoiningLocalPlayerComplete(const FUniqueNetId& PlayerId, EOnJoinSessionCompleteResult::Type Result)

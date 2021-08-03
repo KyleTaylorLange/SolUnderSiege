@@ -13,14 +13,18 @@ AAmmo::AAmmo(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitiali
 	MaxAmmo = 25;
 	AmmoLostOnUnload = 1;
 	RechargeAmount = 0;
+	bLoadedInWeapon = false;
 
 	// Temp mesh just so it is visible.
-	static ConstructorHelpers::FObjectFinder<USkeletalMesh> SkelMesh(TEXT("/Game/Character/UE4_Mannequin/Mesh/SK_Mannequin_1PArms.SK_Mannequin_1PArms"));
+	//static ConstructorHelpers::FObjectFinder<USkeletalMesh> SkelMesh(TEXT("/Game/Character/UE4_Mannequin/Mesh/SK_Mannequin_1PArms.SK_Mannequin_1PArms"));
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> TempStaticMesh(TEXT("/Game/ShooterGameEffects/Meshes/Gameplay/Pickups/Ammo.Ammo"));
 
-	Mesh3P = ObjectInitializer.CreateDefaultSubobject<USkeletalMeshComponent>(this, TEXT("AmmoMesh"));
-	Mesh3P->SetSkeletalMesh(SkelMesh.Object);
-	Mesh3P->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered;
-	Mesh3P->SetVisibility(false); // TEMP. TODO: Properly handle mesh visibility (when to hide and show).
+	UStaticMeshComponent* StaticPickupMesh = Cast<UStaticMeshComponent>(PickupMesh);
+	//UStaticMeshComponent* Mesh3PStatic = ObjectInitializer.CreateDefaultSubobject<UStaticMeshComponent>(this, TEXT("AmmoMesh"));
+	StaticPickupMesh->SetStaticMesh(TempStaticMesh.Object);
+	//PickupMesh = Mesh3PStatic;
+	//Mesh3P->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered;
+	//PickupMesh->SetVisibility(false); // TEMP. TODO: Properly handle mesh visibility (when to hide and show).
 
 	bReplicates = true;
 }
@@ -34,7 +38,10 @@ void AAmmo::Tick(float DeltaTime)
 
 FString AAmmo::GetDisplayName() const
 {
-	// Used to do stuff here.
+	if (GetMaxAmmo() > 0)
+	{
+		return Super::GetDisplayName() + FString(" (") + FString::FromInt(100 * GetAmmoCount() / GetMaxAmmo()) + FString("%)");
+	}
 	return Super::GetDisplayName();
 }
 
@@ -53,14 +60,14 @@ void AAmmo::SetMaxAmmo(int32 NewMaxAmmo)
 	MaxAmmo = NewMaxAmmo;
 }
 
-int32 AAmmo::UseAmmo(int32 InAmmo)
+float AAmmo::UseAmmo(float InAmmo)
 {
 	if (AmmoCount > 0)
 	{
-		const int32 UsedAmmo = FMath::Min(InAmmo, AmmoCount);
+		const float UsedAmmo = FMath::Min(InAmmo, (float)AmmoCount);
 		AmmoCount -= UsedAmmo;
 		// Begin recharging ammo.
-		if (RechargesAmmo() && AmmoCount < MaxAmmo)
+		if (!bLoadedInWeapon && RechargesAmmo() && AmmoCount < MaxAmmo)
 		{
 			if (GetWorldTimerManager().IsTimerActive(TimerHandle_AmmoRecharge) == false || 
 				GetWorldTimerManager().GetTimerRemaining(TimerHandle_AmmoRecharge) > CalculateNextRechargeTime())
@@ -73,11 +80,11 @@ int32 AAmmo::UseAmmo(int32 InAmmo)
 	return 0;
 }
 
-int32 AAmmo::AddAmmo(int32 InAmmo)
+float AAmmo::AddAmmo(float InAmmo)
 {
 	if (InAmmo > 0)
 	{
-		const int32 AddedAmmo = FMath::Min(InAmmo, MaxAmmo - AmmoCount);
+		const float AddedAmmo = FMath::Min(InAmmo, (float)(MaxAmmo - AmmoCount));
 		AmmoCount += AddedAmmo;
 		return AddedAmmo;
 	}
@@ -129,15 +136,26 @@ float AAmmo::CalculateNextRechargeTime() const
 
 void AAmmo::OnLoadIntoWeapon()
 {
-
+	bLoadedInWeapon = true;
+	if (GetWorldTimerManager().IsTimerActive(TimerHandle_AmmoRecharge))
+	{
+		GetWorldTimerManager().PauseTimer(TimerHandle_AmmoRecharge);
+	}
 }
 
 void AAmmo::OnUnloadFromWeapon()
 {
-	// Lose some ammo on reload.
-	UseAmmo(AmmoLostOnUnload);
+	bLoadedInWeapon = false;
 	// Destroy if empty.
-	if (AmmoCount <= 0 && !RechargesAmmo())
+	if (RechargesAmmo() && GetAmmoCount() < GetMaxAmmo())
+	{
+		if (GetWorldTimerManager().IsTimerActive(TimerHandle_AmmoRecharge) == false ||
+			GetWorldTimerManager().GetTimerRemaining(TimerHandle_AmmoRecharge) > CalculateNextRechargeTime())
+		{
+			GetWorldTimerManager().SetTimer(TimerHandle_AmmoRecharge, this, &AAmmo::OnAmmoRecharge, CalculateNextRechargeTime());
+		}
+	}
+	else if (AmmoCount <= 0)
 	{
 		ASolCharacter* LOwner = GetOwningPawn();
 		if (LOwner)
@@ -150,21 +168,36 @@ void AAmmo::OnUnloadFromWeapon()
 
 void AAmmo::OnEnterInventory(class ASolCharacter* NewOwner)
 {
-	// We used to do stuff here.
-	Super::OnEnterInventory(NewOwner);
-}
-
-UMeshComponent* AAmmo::GetPickupMesh()
-{
-	if (Mesh3P)
+	// Temp test to consolidate ammo.
+	if (NewOwner && !RechargesAmmo())
 	{
-		USkeletalMeshComponent* OutMesh = GetClass()->GetDefaultObject<AAmmo>()->Mesh3P;
-		OutMesh->SetVisibility(true); //TEMP until we properly handle mesh visibility.
-		return OutMesh;
-	}
-	else
-	{
-		return Super::GetPickupMesh();
+		for (int32 i = 0; i < NewOwner->ItemInventory.Num(); i++)
+		{
+			AAmmo* OtherAmmo = Cast<AAmmo>(NewOwner->ItemInventory[i]);
+			if (OtherAmmo && OtherAmmo != this && OtherAmmo->GetClass() == this->GetClass())
+			{
+				AAmmo* Transferer;
+				AAmmo* Transferee;
+				if (OtherAmmo->GetAmmoCount() > this->GetAmmoCount())
+				{
+					Transferer = this;
+					Transferee = OtherAmmo;
+				}
+				else
+				{
+					Transferer = OtherAmmo;
+					Transferee = this;
+				}
+				int32 AmmoToTransfer = FMath::Min(Transferer->GetAmmoCount(), Transferee->GetMaxAmmo() - Transferee->GetAmmoCount());
+				Transferer->UseAmmo(AmmoToTransfer);
+				Transferee->AddAmmo(AmmoToTransfer);
+				if (Transferer->GetAmmoCount() <= 0)
+				{
+					NewOwner->RemoveFromInventory(Transferer);
+					Transferer->Destroy();
+				}
+			}
+		}
 	}
 }
 

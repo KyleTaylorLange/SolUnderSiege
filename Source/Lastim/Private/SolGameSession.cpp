@@ -163,6 +163,7 @@ bool ASolGameSession::JoinSession(TSharedPtr<const FUniqueNetId> UserId, FName I
 		if (Sessions.IsValid() && UserId.IsValid())
 		{
 			OnJoinSessionCompleteDelegateHandle = Sessions->AddOnJoinSessionCompleteDelegate_Handle(OnJoinSessionCompleteDelegate);
+			UE_LOG(LogOnlineGame, Log, TEXT("SolGameSession::JoinSession: Joining Session"));
 			bResult = Sessions->JoinSession(*UserId, InSessionName, SearchResult);
 		}
 	}
@@ -197,7 +198,7 @@ void ASolGameSession::OnCreateSessionComplete(FName InSessionName, bool bWasSucc
 
 void ASolGameSession::OnDestroySessionComplete(FName InSessionName, bool bWasSuccessful)
 {
-	UE_LOG(LogOnlineGame, Verbose, TEXT("OnDestroySessionComplete %s bSuccess: %d"), *InSessionName.ToString(), bWasSuccessful);
+	UE_LOG(LogOnlineGame, Verbose, TEXT("ASolGameSession::OnDestroySessionComplete %s bSuccess: %d"), *InSessionName.ToString(), bWasSuccessful);
 
 	IOnlineSubsystem* OnlineSub = IOnlineSubsystem::Get();
 	if (OnlineSub)

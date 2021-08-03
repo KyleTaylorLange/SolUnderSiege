@@ -4,6 +4,7 @@
 
 #include "Weapon.h"
 #include "Bullet.h"
+#include "Projectile.h"
 #include "Firearm.generated.h"
 
 USTRUCT()
@@ -48,13 +49,20 @@ struct FFireMode
 	UPROPERTY(EditDefaultsOnly, Category = Firearm)
 	float AmmoPerShot;
 
+	/** Slot to use ammo from. */
+	UPROPERTY(EditDefaultsOnly, Category = Firearm)
+	int32 AmmoSlot;
+
 	/* Bullet properties. */
 	UPROPERTY(EditDefaultsOnly, Category = Firearm)
 	struct FBulletProperties BulletProps;
 
-	/* Projectile to use. */
-	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Firearm)
-	TSubclassOf<class AProjectile> ProjectileClass;
+	/* Projectile to spawn when firing. If null, the weapon will be hitscan/instant hit. */
+	UPROPERTY(EditDefaultsOnly, Category = Firearm)
+	TSubclassOf<AProjectile> ProjectileClass;
+
+	/** Number of projectiles to spawn. Generally just one for all but shotgun-like weapons. */
+	int32 ProjectileCount;
 
 	/** defaults */
 	FFireMode()
@@ -62,18 +70,19 @@ struct FFireMode
 		ShotDamage = 25;
 		TimeBetweenShots = 0.25f;
 		ShotsPerBurst = 1;
-		AmmoPerShot = 1;
-		BulletProps = FBulletProperties::FBulletProperties();
+		AmmoPerShot = 1.f;
+		AmmoSlot = 0;
+		BulletProps = FBulletProperties();
 		ProjectileClass = ABullet::StaticClass();
+		ProjectileCount = 1;
 	}
 };
 
-//UCLASS()
 //class LASTIM_API AFirearm : public AWeapon
 UCLASS(Abstract, config = Game)
 class AFirearm : public AWeapon
 {
-	GENERATED_BODY()
+	GENERATED_UCLASS_BODY()
 
 	/** Override StartFire and StopFire to impliment gun-like functionality. **/
 	virtual void StartFire() override;
@@ -86,13 +95,14 @@ class AFirearm : public AWeapon
 	virtual void FinishReload();
 
 	/** Actually reloads weapon's ammo and removes clips. **/
-	virtual void ReloadFirearm();
+	UFUNCTION()
+	virtual void ReloadFirearm(int SlotIndex = 0);
 
 	/** Cancels a reload in progress, such as when the player holding it is killed. */
 	virtual void CancelReloadInProgress();
 
 	/** Actually reloads weapon's ammo and removes clips. **/
-	virtual class AAmmo* ChooseBestAmmoItem();
+	virtual class AAmmo* ChooseBestAmmoItem(int Index = 0);
 
 	/** Changes the weapon's fire mode. */
 	virtual void StartSwitchFireMode(bool bFromReplication = false) override;
@@ -107,23 +117,21 @@ class AFirearm : public AWeapon
 
 public:
 
-	AFirearm(const FObjectInitializer& ObjectInitializer);
-
 	virtual void PostInitializeComponents() override;
 
 	virtual void Tick(float DeltaSeconds) override;
 
 	/** Returns Ammo. **/
 	UFUNCTION(BlueprintCallable, Category = Weapon)
-	virtual int32 GetAmmo() const;
+	virtual int32 GetAmmo(int32 SlotNum = 0) const;
 
 	/** Returns MaxAmmo. **/
 	UFUNCTION(BlueprintCallable, Category = Weapon)
-	virtual int32 GetMaxAmmo() const;
+	virtual int32 GetMaxAmmo(int32 SlotNum = 0) const;
 
 	/** Returns the player's ammo as a percentage of max ammo. **/
 	UFUNCTION(BlueprintCallable, Category = Weapon)
-	virtual float GetAmmoPct() const;
+	virtual float GetAmmoPct(int32 SlotNum = 0) const;
 
 	/** Returns the player's ammo as a percentage of max ammo. **/
 	UFUNCTION(BlueprintCallable, Category = Weapon)
@@ -145,8 +153,8 @@ public:
 	// Action called when item enters the player's inventory.
 	virtual void OnEnterInventory(ASolCharacter* NewOwner) override;
 
-	virtual FRotator GetAdjustedAimRot() const override;
-	//virtual FVector GetAdjustedAimLoc() const override;
+	// Calculate a new spread offset in a cone. Can be a whole cone or just a subsection of the cone.
+	virtual FRotator CalculateSpread() const;
 
 	/** Can the weapon fire? **/
 	virtual bool CanFire();
@@ -161,11 +169,8 @@ public:
 	virtual void OnLeaveInventory();
 
 	// List of fire settings which control how the weapon fires (semi-auto, burst, full-auto, etc).
-	UPROPERTY(EditDefaultsOnly, Category = Config)
+	UPROPERTY(EditDefaultsOnly, Category = Firearm)
 	TArray<FFireMode> FireMode;
-
-	/* Does the player want to continue a shovel reload? */
-	bool bContinueReloading;
 
 	//////////////////////////////////////////////////////////////////////////
 	// AI
@@ -177,70 +182,51 @@ public:
 
 	virtual bool ShouldReload();
 
+	/** Temp value to determine whether to use one of two ammo systems.
+      * Simplified ammo follows the "one bullet clips" trope; your ammo is a pool which is topped off by reloading.
+      * The regular system has ammo tracked via magazines; reloading ejects the current one for a different one.
+      */
+	inline static bool UseSimplifiedAmmo() { return false;  }
+
 protected:
 
 	/** Configuration for this firearm.
 	    This is a holdover from ShooterGame and should be eliminated. */
-	UPROPERTY(EditDefaultsOnly, Category = Config)
+	UPROPERTY(EditDefaultsOnly, Category = Firearm)
 	FFirearmData FirearmConfig;
 
 	/** The current fire mode. */
+	UPROPERTY(Replicated)
 	int32 CurrentFireMode;
 
 	/** The maximum amount of fire modes the player can cycle through.
 	    Note that there could be more fire modes than these for use as special cases, such as rifle grenades. */
-	UPROPERTY(EditDefaultsOnly, Category = Config)
+	UPROPERTY(EditDefaultsOnly, Category = Firearm)
 	int32 MaxFireModes;
 
 	UPROPERTY(EditDefaultsOnly, Category = Sound)
 	class USoundBase* OutOfAmmoSound;
 
-	// Ammo per second that can transfer to this weapon from the user.
-	UPROPERTY(EditDefaultsOnly, Category = Firearm)
-	float RechargeRate;
-
-	// Amount of ammo items to spawn at start.
-	UPROPERTY(EditDefaultsOnly, Category = Firearm)
-	int32 StartingAmmoItems;
-
 
 public:
 	/* Default ammo type to use for this weapon. */
 	UPROPERTY(EditDefaultsOnly, Category = Firearm)
-	TSubclassOf<class AAmmo> DefaultAmmoClass;
+	TArray<TSubclassOf<class AAmmo>> DefaultAmmoClass;
 
-	/* Current ammo/magazine loaded in this weapon. */
+	/* Current ammo items loaded into weapon.. */
 	UPROPERTY(Transient, Replicated)
-	class AAmmo* CurrentAmmoItem;
+	TArray<class AAmmo*> CurrentAmmoItem;
 
 	/* Ammo/magazine we want to use on reload. */
 	UPROPERTY(Transient, Replicated)
-	class AAmmo* PendingAmmoItem;
+	TArray<class AAmmo*> PendingAmmoItem;
 
 public:
-	/* List of Ammo items for this weapon; temporary until ammo is moved to the Character's inventory. */
-	UPROPERTY()
-	TArray<class AAmmo*> AmmoInventory;
-
-
-	// TEMP Variables for new ammo system testing.
-	// TEST: Use internal ammo supplies instead of reloading.
-	bool bUseInternalAmmo;
-
-	// Ammo stored internally
-	int32 Ammo;
-	UPROPERTY(EditDefaultsOnly, Category = Firearm)
-	int32 MaxAmmo;
-	int32 ReserveAmmo;
-	int32 ReserveAmmoScalar;
-	/** Returns max shots for this fire mode. **/
-	UFUNCTION(BlueprintCallable, Category = Weapon)
-	virtual int32 GetReserveAmmoForFireMode(int32 Num = 0) const;
 
 	UPROPERTY(EditDefaultsOnly, Category = Firearm)
-	float RechargeTime;
-	/** Timer handle for time between shots. */
-	FTimerHandle FTimerHandle_RechargeIntAmmo;
+	float MaxHeat;
+	float Heat;
+	float CooldownDelay;
 
 protected:
 	// The spread (in cm) of shots hitting a target at SpreadRange. This should be 5 cm for most non-shotgun weapons. Zero means perfect accuracy.
@@ -250,10 +236,6 @@ protected:
 	// Range (in metres) where shots hit within SpreadRadius (generally 5 cm). Zero means perfect accuracy.
 	UPROPERTY(EditDefaultsOnly, Category = Firearm)
 	float SpreadRange;
-
-	// Amount of projectiles to spawn per shot. Generally just one for anything but shotgun-like weapons.
-	UPROPERTY(EditDefaultsOnly, Category = Firearm)
-	TArray<int32> ProjectileCount;
 
 	/** Recoil per shot fired. Currently no pitch/yaw customization. **/
 	UPROPERTY(EditDefaultsOnly, Category = Firearm)
@@ -293,7 +275,7 @@ protected:
 	virtual void FireWeapon(float DamageScalar = 1.0f); //PURE_VIRTUAL(AFirearm::FireWeapon, );
 
 	/** Reduce the weapon's ammo supply. */
-	virtual int32 UseAmmo(int32 Amount);
+	virtual float UseAmmo(float Amount, int SlotIndex = 0);
 
 	/** Add recoil to the weapon. */
 	virtual void AddRecoil();
@@ -309,6 +291,9 @@ protected:
 
 	/** Timer handle for Reload Weapon. */
 	FTimerHandle TimerHandle_ReloadFirearm;
+
+	/** Timer handle for Reload Weapon. */
+	FTimerDelegate TimerDel_ReloadFirearm;
 
 	/** Timer handle for Reload Weapon. */
 	FTimerHandle TimerHandle_FinishCharging;
@@ -351,8 +336,6 @@ protected:
 
 	UFUNCTION(reliable, server, WithValidation)
 	void ServerHandleFiring();
-	bool ServerHandleFiring_Validate();
-	void ServerHandleFiring_Implementation();
 
 	/** Weapon wants to fire (trigger is pulled). **/
 	bool bWantsToFire;
@@ -371,14 +354,14 @@ protected:
 	/** Spawn projectile on server. **/
 	UFUNCTION(reliable, server, WithValidation)
 	void ServerFireProjectile(FVector Origin, FVector_NetQuantizeNormal ShootDir, float DamageScalar = 1.f);
-	bool ServerFireProjectile_Validate(FVector Origin, FVector_NetQuantizeNormal ShootDir, float DamageScalar = 1.f);
-	void ServerFireProjectile_Implementation(FVector Origin, FVector_NetQuantizeNormal ShootDir, float DamageScapar = 1.f);
+
+	/** Spawn projectile on server. **/
+	UFUNCTION(reliable, server, WithValidation)
+	void ServerFireHitscan(FVector Origin, FVector_NetQuantizeNormal ShootDir, float TraceLength, float DamageScalar = 1.f);
 
 	/** Add recoil to the pawn holding the weapon. **/
 	UFUNCTION(reliable, server, WithValidation)
 	void ServerAddRecoilToPawn();
-	bool ServerAddRecoilToPawn_Validate();
-	void ServerAddRecoilToPawn_Implementation();
 
 	//////////////////////////////////////////////////////////////////////////
 	// Replication & effects
@@ -402,4 +385,13 @@ protected:
 	virtual void StopSimulatingWeaponFire();
 
 	virtual void UpdateStatusDisplay();
+
+	UCanvasRenderTarget2D* ScreenRenderTarget;
+
+public:
+	UFUNCTION()
+	virtual void DrawCanvasStatusDisplayElements(UCanvas* Canvas, int32 Width, int32 Height);
+
+	UPROPERTY(EditDefaultsOnly, Category = Effects)
+	UFont* ScreenDisplayFont;
 };

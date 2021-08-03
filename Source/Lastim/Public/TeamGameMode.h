@@ -30,7 +30,7 @@ struct FTeamProfile
 /**
  * 
  */
-UCLASS()
+UCLASS(Abstract)
 class LASTIM_API ATeamGameMode : public ASolGameMode
 {
 	GENERATED_BODY()
@@ -55,6 +55,8 @@ public:
 
 	/* Overridden to add teamkills. */
 	virtual void OnPlayerDeath(AController* Killer, AController* KilledPlayer, APawn* KilledPawn, const UDamageType* DamageType) override;
+
+	virtual void GetGameOptions(TArray<FGameOption> &OptionsList) override;
 
 protected:
 
@@ -81,6 +83,9 @@ protected:
 
 	/** Creates a team state. */
 	virtual void InitTeamState(class ATeamState* InTeam, struct FTeamProfile InProfile);
+
+	// Select profiles to use for each team.
+	virtual TArray<FTeamProfile> ChooseTeamProfiles();
 
 	/** Override to give bots a team. **/
 	virtual void InitBot(ASolAIController* AIC, struct FBotProfile* InBotProfile) override;

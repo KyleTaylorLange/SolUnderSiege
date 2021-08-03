@@ -4,6 +4,7 @@
 #include "UserWidget.h"
 #include "SolHUD.generated.h"
 
+// String that draws different portions with different colours.
 USTRUCT(BlueprintType)
 struct FComplexString
 {
@@ -89,6 +90,9 @@ public:
 	/* Sets the */
 	void SetWeapSelectIndex(int32 NewIndex);
 
+	/* Adds a chat message to the screen. */
+	void AddChatMessage(const class ASolPlayerState* User, const FString Message, FName Type);
+
 	/* Adds a death message to the list of death messages. */
 	void AddDeathMessage(class ASolPlayerState* KillerPlayerState, class ASolPlayerState* VictimPlayerState, const UDamageType* KillerDamageType);
 
@@ -97,6 +101,9 @@ public:
 
 	/* Draws the player's information (e.g. health). */
 	virtual void DrawPlayerInfo(class ASolCharacter* InPlayer);
+
+	/** Draws the crosshair for the selected weapon. */
+	virtual void DrawCrosshair(ASolCharacter* InPlayer, class AWeapon* InWeapon);
 
 	/* Draws information for the player's current weapon. */
 	virtual void DrawWeaponInfo(class ASolCharacter* InPlayer, class AWeapon* InWeapon);
@@ -108,13 +115,16 @@ public:
 	virtual void DrawInventory(class ASolCharacter* InPlayer);
 
 	/* Draws death messages in Canvas. */
-	virtual void DrawDeathMessages();
+	virtual void DrawDeathMessages(FVector2D &DrawPosition);
 
 	/* Draws header messages in Canvas. */
 	virtual void DrawHeaderMessages();
 
-	/* Draws game-specific objectives. Blank in the default class. */
-	virtual void DrawObjectiveInfo(class ASolGameState* InGameState);
+	/* Draws labels for objects in the world (e.g. player names, objective locations, etc). Blank in the default class. */
+	virtual void DrawObjectLabels();
+
+	/* Draws game-specific data such as objectives or player scores. Blank in the default class. */
+	virtual void DrawGameData(FVector2D &DrawPosition, class ASolGameState* InGameState);
 
 	/* Gets a FCanvasTextItem with our preferred settings. */
 	virtual FCanvasTextItem GetDefaultTextItem();
@@ -237,6 +247,13 @@ protected:
 	/** Texture used when player is injured. **/
 	UPROPERTY()
 	UTexture2D* LowHealthOverlayTexture;
+
+	/** Texture used for player's health icon. **/
+	UPROPERTY()
+	UTexture2D* HealthIconTexture;
+
+	UPROPERTY()
+	FCanvasIcon Crosshair;
 
 	/** The current point of the low health overlay's "animation." **/
 	float LowHealthPulseValue;

@@ -11,7 +11,7 @@
 UCLASS()
 class LASTIM_API ATeamState : public AInfo
 {
-	GENERATED_BODY()
+	GENERATED_UCLASS_BODY()
 	
 public:
 
@@ -81,35 +81,37 @@ public:
 
 protected:
 
+public:
 	/* The name of the team. */
-	UPROPERTY(Transient, Replicated)
+	UPROPERTY(Replicated)
 	FText TeamName;
+protected:
 
 	/* Total score for this team. */
-	UPROPERTY(Transient, Replicated)
+	UPROPERTY(Replicated)
 	int32 Score;
 
 	/* Total kills for this team. */
-	UPROPERTY(Transient, Replicated)
+	UPROPERTY(Replicated)
 	int32 Kills;
 
 	/* Total deaths for this team. */
-	UPROPERTY(Transient, Replicated)
+	UPROPERTY(Replicated)
 	int32 Deaths;
 
 	/* Total suicides for this team. */
-	UPROPERTY(Transient, Replicated)
+	UPROPERTY(Replicated)
 	int32 Suicides;
 
 	/* Total teamkills for this team. */
-	UPROPERTY(Transient, Replicated)
+	UPROPERTY(Replicated)
 	int32 Teamkills;
 
 	/* This team's index. */
-	UPROPERTY(Transient, Replicated)
+	UPROPERTY(Replicated)
 	int32 TeamIndex;
 
 	/* Primary colour for this team. */
-	UPROPERTY(Transient, Replicated)
+	UPROPERTY(Replicated)
 	FLinearColor TeamColor;
 };

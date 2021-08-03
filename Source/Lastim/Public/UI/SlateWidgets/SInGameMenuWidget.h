@@ -36,9 +36,17 @@ public:
 	/* Pointer to the local player. */
 	TWeakObjectPtr<class ULocalPlayer> PlayerOwner;
 
+	// Pointer to options menu (if opened).
+	TSharedPtr<class SOptionsScreenWidget> OptionsWidget;
+
+	// Pointer to options menu (if opened).
+	TSharedPtr<class SWindow> OptionsWindow;
+
 protected:
 
 	FReply GoToMainMenu();
+
+	FReply OpenOptions();
 
 	FReply Quit();
 

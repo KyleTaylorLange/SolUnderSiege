@@ -26,20 +26,25 @@ AGameMode_Assassination::AGameMode_Assassination(const FObjectInitializer& Objec
 
 void AGameMode_Assassination::HandleMatchHasStarted()
 {
+	Super::HandleMatchHasStarted();
+}
+
+void AGameMode_Assassination::DefaultTimer()
+{
+	Super::DefaultTimer();
 	ASolGameState const* const MyGameState = CastChecked<ASolGameState>(GameState);
-	if (MyGameState != nullptr)
+	// Give new targets to anyone who wants one.
+	if (GetMatchState() == MatchState::InProgress)
 	{
 		for (int32 i = 0; i < MyGameState->PlayerArray.Num(); i++)
 		{
-			APlayerState_Assassination* A_Player = Cast<APlayerState_Assassination>(MyGameState->PlayerArray[i]);
-			if (A_Player != nullptr)
-			{
-				ChooseNewTargetForPlayer(A_Player);
-			}
+			APlayerState_Assassination* Player = Cast<APlayerState_Assassination>(MyGameState->PlayerArray[i]);
+				if (PlayerWantsTarget(Player))
+				{
+					ChooseNewTargetForPlayer(Player, nullptr);
+				}
 		}
 	}
-	
-	Super::HandleMatchHasStarted();
 }
 
 void AGameMode_Assassination::ScoreKill(AController* Killer, AController* KilledPlayer, APawn* KilledPawn, const UDamageType* DamageType)
@@ -58,31 +63,15 @@ void AGameMode_Assassination::ScoreKill(AController* Killer, AController* Killed
 		bool bTestAssignKill = true;
 
 		/* Check to see if victim was an allowed kill for the killer. */
-		for (int32 i = 0; i < KillerPlayerState->AllowedKills.Num(); i++)
+		if (KillerPlayerState->AllowedKills.Contains(VictimPlayerState))
 		{
-			if (VictimPlayerState == KillerPlayerState->AllowedKills[i])
-			{
-				ScoreForThisKill = AssassinationScore;
-				bTestAssignKill = false;
-				KillerPlayerState->AllowedKills.Remove(VictimPlayerState);
-				break;
-			}
+			ScoreForThisKill = AssassinationScore;
 		}
 
 		/* Check to see if killer eliminated someone hunting them. */
-		for (int32 i = 0; i < VictimPlayerState->AllowedKills.Num(); i++)
+		else if (VictimPlayerState->AllowedKills.Contains(KillerPlayerState))
 		{
-			if (KillerPlayerState == VictimPlayerState->AllowedKills[i])
-			{
-				ScoreForThisKill = HunterKillScore;
-				bTestAssignKill = false;
-				break;
-			}
-		}
-
-		if (bTestAssignKill)
-		{
-			VictimPlayerState->AllowedKills.Add(KillerPlayerState);
+			ScoreForThisKill = HunterKillScore;
 		}
 
 		//KillerPlayerState->InformAboutKill(KillerPlayerState, DamageType, VictimPlayerState);
@@ -102,17 +91,17 @@ void AGameMode_Assassination::ScoreDeath(AController* Killer, AController* Kille
 	APlayerState_Assassination* VictimPlayerState = KilledPlayer ? Cast<APlayerState_Assassination>(KilledPlayer->PlayerState) : NULL;
 
 	ASolGameState const* const MyGameState = CastChecked<ASolGameState>(GameState);
-	if (VictimPlayerState != nullptr && MyGameState != nullptr)
+	if (VictimPlayerState && MyGameState)
 	{
 		for (int32 i = 0; i < MyGameState->PlayerArray.Num(); i++)
 		{
 			APlayerState_Assassination* A_PS = Cast<APlayerState_Assassination>(MyGameState->PlayerArray[i]);
-			if (A_PS != nullptr)
+			if (A_PS)
 			{
-				int32 NumRemoved = A_PS->AllowedKills.Remove(VictimPlayerState);
-				if (NumRemoved >= 1)
+				if (A_PS->AllowedKills.Contains(VictimPlayerState))
 				{
-					ChooseNewTargetForPlayer(A_PS);
+					A_PS->AllowedKills.Remove(VictimPlayerState);
+					ChooseNewTargetForPlayer(A_PS, VictimPlayerState);
 				}
 			}
 		}
@@ -143,21 +132,60 @@ bool AGameMode_Assassination::PlayersAreEnemies(ASolPlayerState* AskingPlayer, A
 	return false;
 }
 
-void AGameMode_Assassination::ChooseNewTargetForPlayer(APlayerState_Assassination* InPlayer)
+bool AGameMode_Assassination::PlayerWantsTarget(class APlayerState_Assassination* InPlayer)
+{
+	// Currently: get a new target if we have none and we are alive.
+	return InPlayer && InPlayer->AllowedKills.Num() == 0 && InPlayer->GetPawn();
+}
+
+void AGameMode_Assassination::ChooseNewTargetForPlayer(APlayerState_Assassination* InPlayer, APlayerState_Assassination* LastTarget)
 {
 	ASolGameState const* const MyGameState = CastChecked<ASolGameState>(GameState);
-	if (MyGameState != nullptr && InPlayer != nullptr)
+	FString DebugName = FString("nobody");
+	if (MyGameState && InPlayer)
 	{
+		int32 MinHunters = MAX_int32;
 		TArray<APlayerState_Assassination*> PlayerList;
 		for (int32 i = 0; i < MyGameState->PlayerArray.Num(); i++)
 		{
-			APlayerState_Assassination* TestPlayer = Cast<APlayerState_Assassination>(MyGameState->PlayerArray[i]);
-			if (TestPlayer != nullptr && TestPlayer != InPlayer && InPlayer->AllowedKills.Find(TestPlayer) == INDEX_NONE)
+			APlayerState_Assassination* TestTarget = Cast<APlayerState_Assassination>(MyGameState->PlayerArray[i]);
+			// Only look for living targets that aren't already on our kill list.
+			if (TestTarget && TestTarget != InPlayer && TestTarget->GetPawn() && !InPlayer->AllowedKills.Contains(TestTarget))
 			{
-				PlayerList.Add(TestPlayer);
+				int32 HunterCount = 0;
+				// TODO: Make something more efficient than this nasty n-squared loop-in-a-loop.
+				for (int32 j = 0; j < MyGameState->PlayerArray.Num(); j++)
+				{
+					APlayerState_Assassination* OtherPlayer = Cast<APlayerState_Assassination>(MyGameState->PlayerArray[j]);
+					if (OtherPlayer && OtherPlayer != TestTarget && OtherPlayer->AllowedKills.Contains(TestTarget))
+					{
+						HunterCount++;
+					}
+				}
+				// TEMP: Try to not pick the last target again.
+				HunterCount = TestTarget == LastTarget ? (HunterCount + 2) : HunterCount;
+				// TEMP: Try not to have players assigned to kill each other.
+				HunterCount = TestTarget->AllowedKills.Contains(InPlayer) ? (HunterCount + 3) : HunterCount;
+				if (HunterCount <= MinHunters)
+				{
+					if (HunterCount < MinHunters)
+					{
+						MinHunters = HunterCount;
+						PlayerList.Empty();
+					}
+					PlayerList.Add(TestTarget);
+				}
 			}
 		}
-		/* For now, just choose a random player. */
-		InPlayer->AllowedKills.Add(PlayerList[FMath::RandRange(0, PlayerList.Num() - 1)]);
+		// Choose a random player from our best candidates.
+		if (PlayerList.Num() > 0)
+		{
+			int32 idx = FMath::RandRange(0, PlayerList.Num() - 1);
+			InPlayer->AllowedKills.Add(PlayerList[idx]);
+			DebugName = PlayerList[idx]->GetPlayerName();
+		}
 	}
+	UE_LOG(LogGameMode, Display, TEXT("AGameMode_Assassination::ChooseNewTargetForPlayer - %s has been assigned to kill %s."),
+		*InPlayer->GetPlayerName(),
+		*DebugName);
 }

@@ -56,11 +56,6 @@ int32 ASolPlayerState::GetSuicides() const
 	return Suicides;
 }
 
-float ASolPlayerState::GetScore() const
-{
-	return Score;
-}
-
 int32 ASolPlayerState::GetTeamNum() const
 {
 	int32 TeamNum = -1;
@@ -86,8 +81,6 @@ FLinearColor ASolPlayerState::GetSecondaryColor() const
 	return SecondaryColor;
 }
 
-
-
 void ASolPlayerState::AddKill(ASolPlayerState* Victim)
 {
 	Kills++;
@@ -97,10 +90,10 @@ void ASolPlayerState::AddDeath(ASolPlayerState* KilledBy)
 {
 	Deaths++;
 	//TEST
-	ASolGameMode* LGM = Cast<ASolGameMode>(GetWorld()->GetAuthGameMode());
-	if (LGM)
+	ASolGameMode* SolGM = Cast<ASolGameMode>(GetWorld()->GetAuthGameMode());
+	if (SolGM)
 	{
-		RespawnTime = LGM->GetRespawnTime(this);
+		RespawnTime = SolGM->GetRespawnTime(this);
 	}
 }
 
@@ -123,7 +116,7 @@ void ASolPlayerState::AddTeamkill(ASolPlayerState* Victim)
 
 void ASolPlayerState::AddScore(int32 InScore)
 {
-	Score += InScore;
+	SetScore(GetScore() + InScore);
 }
 
 void ASolPlayerState::SetTeamNum(int32 NewTeamNumber)
