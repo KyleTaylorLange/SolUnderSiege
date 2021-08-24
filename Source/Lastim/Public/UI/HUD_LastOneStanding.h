@@ -12,7 +12,6 @@
 UCLASS()
 class LASTIM_API AHUD_LastOneStanding : public ASolHUD
 {
-	GENERATED_BODY()
-	
-	AHUD_LastOneStanding(const FObjectInitializer& ObjectInitializer);
+	GENERATED_UCLASS_BODY()
+
 };
