@@ -366,6 +366,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
 	float Stamina;
 
+	/** The maximum amount of stamina the character can have. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
+	float MaxStamina;
+
 	UFUNCTION(BlueprintCallable, Category = Gameplay)
 	AInventoryItem* GetEquippedItem() const;
 
@@ -629,6 +633,14 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = Input)
 	void OnDropWeapon();
 
+	/** Starts zoom. */
+	UFUNCTION(BlueprintCallable, Category = Input)
+	virtual void OnStartZoom();
+
+	/** Stops zoom. */
+	UFUNCTION(BlueprintCallable, Category = Input)
+	virtual void OnStopZoom();
+
 	/**
 	 * Called via input to turn at a given rate.
 	 * @param Rate	This is a normalized rate, i.e. 1.0 means 100% of desired turn rate
@@ -743,6 +755,24 @@ private:
 	/** Is the character sprinting? **/
 	UPROPERTY(Transient, Replicated)
 	bool bIsSprinting;
+
+	/** Is the character zooming in their camera? */
+	bool bIsZooming;
+
+	/** The time to zoom the camera in. */
+	UPROPERTY()
+	float ZoomInTime;
+
+	/** The time to zoom the camera out. */
+	UPROPERTY()
+	float ZoomOutTime;
+
+	/** The magnification level when zoomed. */
+	UPROPERTY()
+	float ZoomScale;
+
+	/** The percentage the character is zoomed in, 0 being no zoom and 1 being full zoom. */
+	float CurrentZoomPct;
 
 	FRotator WeaponRotationOffset;
 

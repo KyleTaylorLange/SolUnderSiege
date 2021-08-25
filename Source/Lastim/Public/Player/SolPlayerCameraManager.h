@@ -24,6 +24,9 @@ public:
 	/** Player's FOV when sprinting. */
 	float SprintingFOV;
 
+	/** The minimum of the player's FOV when zoomed in. */
+	float MinZoomFOV;
+
 	bool bLimitViewRotation;
 
 	/** After updating camera, inform pawn to update 1p mesh to match camera's location&rotation */
