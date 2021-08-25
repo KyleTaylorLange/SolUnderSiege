@@ -154,12 +154,22 @@ ASolCharacter::ASolCharacter(const FObjectInitializer& ObjectInitializer) //: Su
 	FullEnergy = 100.f;
 	MaxEnergy = 150.f;
 	Stamina = 10.f;
+	MaxStamina = 10.f;
 	DefaultInventoryMassCapacity = 10.f;
 	CurrentInventoryMass = 0.f;
 
 	CurrentAimPct = 0.f;
+	CurrentZoomPct = 0.f;
 	bIsDying = false;
 	bWeaponFiringAllowed = true;
+	bIsAiming = false;
+
+
+	bIsZooming = false;
+	ZoomInTime = 0.25f;
+	ZoomOutTime = 0.125f;
+	ZoomScale = 2.5f;
+
 
 	static ConstructorHelpers::FObjectFinder<USoundCue> PISoundObj(TEXT("/Game/Sounds/SC_PickupItem.SC_PickupItem"));
 	PickupItemSound = PISoundObj.Object;
@@ -222,27 +232,21 @@ void ASolCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
-	float MAX_STAMINA = 10.f;
-
 	if (!bIsDying)
 	{
 		/** Use stamina if sprinting **/
 		if (IsSprinting())
 		{
-			Stamina -= 0.9f * DeltaSeconds;
+			Stamina = FMath::Max(Stamina - (0.9f * DeltaSeconds), 0.f);
 			if (Stamina < 0.f)
 			{
 				SetSprinting(false);
 			}
 		}
 		/**Regenerate stamina if not sprinting **/
-		else if (Stamina < MAX_STAMINA && !IsSprinting())
+		else if (Stamina < MaxStamina)
 		{
-			Stamina += 1 * DeltaSeconds;
-			if (Stamina > MAX_STAMINA)
-			{
-				Stamina = MAX_STAMINA;
-			}
+			Stamina = FMath::Min(Stamina + (1 * DeltaSeconds), MaxStamina);
 		}
 
 		/** Adjust the weapon's aim percentage. **/
@@ -254,21 +258,16 @@ void ASolCharacter::Tick(float DeltaSeconds)
 			{
 				AimSpeed = EquippedFirearm->GetAimSpeed();
 			}
-			if (CurrentAimPct < 1.f && bIsAiming)
+			if (bIsAiming)
 			{
-				CurrentAimPct += DeltaSeconds / AimSpeed;
-				if (CurrentAimPct > 1.f)
+				if (CurrentAimPct < 1.f)
 				{
-					CurrentAimPct = 1.f;
+					CurrentAimPct = FMath::Min(CurrentAimPct + (DeltaSeconds / AimSpeed), 1.f);
 				}
 			}
-			else if (CurrentAimPct > 0.f && !bIsAiming)
+			else if (CurrentAimPct > 0.f)
 			{
-				CurrentAimPct -= DeltaSeconds / AimSpeed;
-				if (CurrentAimPct < 0.f)
-				{
-					CurrentAimPct = 0.f;
-				}
+				CurrentAimPct = FMath::Max(CurrentAimPct - (DeltaSeconds / AimSpeed), 0.f);
 			}
 		}
 
@@ -277,6 +276,21 @@ void ASolCharacter::Tick(float DeltaSeconds)
 		{
 			//ProcessRecoil(DeltaSeconds);
 		}
+
+		// Zoom in if we want to.
+		if (bIsZooming)
+		{
+			if (CurrentZoomPct < 1.f) 
+			{
+				CurrentZoomPct = FMath::Min(CurrentZoomPct + (DeltaSeconds / ZoomInTime), 1.f);
+			}
+		}
+		// Otherwise, zoom out.
+		else if (CurrentZoomPct > 0.f)
+		{
+			CurrentZoomPct = FMath::Max(CurrentZoomPct - (DeltaSeconds / ZoomOutTime), 0.f);
+		}
+
 		AddWeaponSway(DeltaSeconds);
 	}
 }
@@ -290,6 +304,10 @@ void ASolCharacter::SetupPlayerInputComponent(class UInputComponent* InputCompon
 	check(InputComponent);
 
 	InputComponent->BindAction("DropWeapon", IE_Pressed, this, &ASolCharacter::OnDropWeapon);
+
+	// Temporary zoom control.
+	InputComponent->BindAction("Zoom", IE_Pressed, this, &ASolCharacter::OnStartZoom);
+	InputComponent->BindAction("Zoom", IE_Released, this, &ASolCharacter::OnStopZoom);
 	
 	// We have 2 versions of the rotation bindings to handle different kinds of devices differently
 	// "turn" handles devices that provide an absolute delta, such as a mouse.
@@ -303,6 +321,17 @@ void ASolCharacter::SetupPlayerInputComponent(class UInputComponent* InputCompon
 /** Below functions currently are the input. Those listed above will eventually be relegated to the player controller.
     This will allow us to do actions while dead ("Press [Fire] To Respawn") or to relegate those
 	functions to controlled vehicles. **/
+
+void ASolCharacter::OnStartZoom()
+{
+	bIsZooming = !bIsZooming;
+	//bIsZooming = true;
+}
+
+void ASolCharacter::OnStopZoom()
+{
+	//bIsZooming = false;
+}
 
 void ASolCharacter::StartFire()
 {
@@ -1094,8 +1123,14 @@ void ASolCharacter::OnCameraUpdate(const FVector& CameraLocation, const FRotator
 	// Move to camera class in the future.
 	const float DefaultFOV = 90.f;
 	const float AimedFOV = 75.f;
-	FirstPersonCameraComponent->FieldOfView = FMath::LerpStable(DefaultFOV, AimedFOV, CurrentAimPct);
-	// END
+	const float ZoomedFOV = DefaultFOV / ZoomScale;
+
+	const float DesiredZoomFOV = FMath::LerpStable(DefaultFOV, ZoomedFOV, CurrentZoomPct);
+	const float DesiredAimFOV = FMath::LerpStable(DefaultFOV, AimedFOV, CurrentAimPct);
+	// Pick whichever has the largest zoom.
+	FirstPersonCameraComponent->FieldOfView = FMath::Min(DesiredZoomFOV, DesiredAimFOV);
+
+	// END move to camera class.
 
 	USkeletalMeshComponent* DefMesh1P = Cast<USkeletalMeshComponent>(GetClass()->GetDefaultSubobjectByName(TEXT("CharacterMesh1P")));
 
