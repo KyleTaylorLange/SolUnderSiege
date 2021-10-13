@@ -16,7 +16,8 @@ public class Lastim : ModuleRules
                 "OnlineSubsystemUtils",
                 "InputCore",
                 "AIModule",
-                "NavigationSystem"
+                "NavigationSystem",
+                "PhysicsCore"
             }
         );
         PrivateDependencyModuleNames.AddRange(

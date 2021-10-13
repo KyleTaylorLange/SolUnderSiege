@@ -2,6 +2,7 @@
 
 #include "Lastim.h"
 #include "UnrealNetwork.h"
+#include "Chaos/ChaosEngineInterface.h" // For EPhysicalSurface
 #include "SolCharacter.h"
 #include "SolDamageType.h"
 #include "Projectile.h"
