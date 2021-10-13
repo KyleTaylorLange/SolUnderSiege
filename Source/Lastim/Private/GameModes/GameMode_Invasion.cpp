@@ -99,17 +99,8 @@ void AGameMode_Invasion::StartNextWave()
 		{
 			CreateInvader();
 		}
-		int32 DEBUG_RestartedInvaders = 0;
-		for (FConstControllerIterator Iterator = GetWorld()->GetControllerIterator(); Iterator; ++Iterator)
-		{
-			AAI_Invasion* Ctrlr = Cast<AAI_Invasion>(Iterator->Get());
-			if (Ctrlr)
-			{
-				RestartPlayer(Ctrlr);
-				DEBUG_RestartedInvaders++;
-			}
-		}
-		GEngine->AddOnScreenDebugMessage(-1, 30.f, FColor::Red, FString::Printf(TEXT("    ~~RESTARTED %d INVADERS~~"), DEBUG_RestartedInvaders));
+
+		GEngine->AddOnScreenDebugMessage(-1, 30.f, FColor::Red, FString::Printf(TEXT("    ~~CREATED %d INVADERS~~"), InvadersToMake));
 
 		CurrentWave++;
 		GEngine->AddOnScreenDebugMessage(-1, 30.f, FColor::Green, FString::Printf(TEXT("    ~~WAVE %d~~"), CurrentWave));
