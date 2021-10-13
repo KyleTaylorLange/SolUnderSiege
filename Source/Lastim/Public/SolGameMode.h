@@ -46,11 +46,12 @@ public:
 	}
 };
 
-
 UCLASS(minimalapi, Abstract)
 class ASolGameMode : public AGameMode
 {
-	GENERATED_BODY()
+	GENERATED_UCLASS_BODY()
+
+public:
 
 	virtual void PreInitializeComponents() override;
 
@@ -79,7 +80,6 @@ protected:
 	virtual void CheckGameTime();
 
 public:
-	ASolGameMode(const FObjectInitializer& ObjectInitializer);
 
 	/** Name for this gametype. **/
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Game)
@@ -105,7 +105,7 @@ public:
 	/* Broadcasts death to local clients. */
 	UFUNCTION(Reliable, NetMulticast)
 	void BroadcastDeath(class ASolPlayerState* KillerPlayerState, const UDamageType* KillerDamageType, class ASolPlayerState* KilledPlayerState);
-	void BroadcastDeath_Implementation(class ASolPlayerState* KillerPlayerState, const UDamageType* KillerDamageType, class ASolPlayerState* KilledPlayerState);
+	//void BroadcastDeath_Implementation(class ASolPlayerState* KillerPlayerState, const UDamageType* KillerDamageType, class ASolPlayerState* KilledPlayerState);
 
 	virtual void InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage) override;
 
