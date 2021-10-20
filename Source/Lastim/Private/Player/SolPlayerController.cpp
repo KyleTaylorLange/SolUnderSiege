@@ -104,11 +104,6 @@ void ASolPlayerController::ClientSendMessage_Implementation(class ASolPlayerStat
 	}
 }
 
-ASolCharacter* ASolPlayerController::GetSolCharacter() const
-{
-	return Cast<ASolCharacter>(GetCharacter());
-}
-
 ASolSpectatorPawn* ASolPlayerController::GetSolSpectatorPawn() const
 {
 	return Cast<ASolSpectatorPawn>(GetSpectatorPawn());
@@ -257,7 +252,7 @@ void ASolPlayerController::BeginWaiting()
 
 void ASolPlayerController::OnFire()
 {
-	if (GetSolCharacter())
+	if (GetPawn<ASolCharacter>())
 	{
 		if (bSelectingWeapon)
 		{
@@ -265,7 +260,7 @@ void ASolPlayerController::OnFire()
 		}
 		else
 		{
-			GetSolCharacter()->StartFire();
+			GetPawn<ASolCharacter>()->StartFire();
 		}
 	}
 	else
@@ -276,15 +271,15 @@ void ASolPlayerController::OnFire()
 
 void ASolPlayerController::OnStopFire()
 {
-	if (GetSolCharacter())
+	if (GetPawn<ASolCharacter>())
 	{
-		GetSolCharacter()->StopFire();
+		GetPawn<ASolCharacter>()->StopFire();
 	}
 }
 
 void ASolPlayerController::OnAim()
 {
-	if (GetSolCharacter())
+	if (GetPawn<ASolCharacter>())
 	{
 		if (bSelectingWeapon)
 		{
@@ -292,40 +287,40 @@ void ASolPlayerController::OnAim()
 		}
 		else
 		{
-			GetSolCharacter()->StartAim();
+			GetPawn<ASolCharacter>()->StartAim();
 		}
 	}
 }
 
 void ASolPlayerController::OnStopAim()
 {
-	if (GetSolCharacter())
+	if (GetPawn<ASolCharacter>())
 	{
-		GetSolCharacter()->StopAim();
+		GetPawn<ASolCharacter>()->StopAim();
 	}
 }
 
 void ASolPlayerController::OnUse()
 {
-	if (GetSolCharacter())
+	if (GetPawn<ASolCharacter>())
 	{
-		GetSolCharacter()->OnStartUse();
+		GetPawn<ASolCharacter>()->OnStartUse();
 	}
 }
 
 void ASolPlayerController::OnStopUse()
 {
-	if (GetSolCharacter())
+	if (GetPawn<ASolCharacter>())
 	{
-		GetSolCharacter()->OnStopUse();
+		GetPawn<ASolCharacter>()->OnStopUse();
 	}
 }
 
 void ASolPlayerController::OnReload()
 {
-	if (GetSolCharacter())
+	if (GetPawn<ASolCharacter>())
 	{
-		GetSolCharacter()->OnReload();
+		GetPawn<ASolCharacter>()->OnReload();
 	}
 }
 
@@ -336,9 +331,9 @@ void ASolPlayerController::OnStopReload()
 
 void ASolPlayerController::OnSwitchFireMode()
 {
-	if (GetSolCharacter())
+	if (GetPawn<ASolCharacter>())
 	{
-		GetSolCharacter()->OnSwitchFireMode();
+		GetPawn<ASolCharacter>()->OnSwitchFireMode();
 	}
 }
 
@@ -349,9 +344,9 @@ void ASolPlayerController::OnStopSwitchFireMode()
 
 void ASolPlayerController::MoveForward(float Value)
 {
-	if (Value != 0.0f && GetSolCharacter())
+	if (Value != 0.0f && GetPawn<ASolCharacter>())
 	{
-		GetSolCharacter()->MoveForward(Value);
+		GetPawn<ASolCharacter>()->MoveForward(Value);
 	}
 	else if (GetSolSpectatorPawn())
 	{
@@ -361,9 +356,9 @@ void ASolPlayerController::MoveForward(float Value)
 
 void ASolPlayerController::MoveRight(float Value)
 {
-	if (Value != 0.0f && GetSolCharacter())
+	if (Value != 0.0f && GetPawn<ASolCharacter>())
 	{
-		GetSolCharacter()->MoveRight(Value);
+		GetPawn<ASolCharacter>()->MoveRight(Value);
 	}
 	else if (GetSolSpectatorPawn())
 	{
@@ -373,9 +368,9 @@ void ASolPlayerController::MoveRight(float Value)
 
 void ASolPlayerController::MoveUp(float Value)
 {
-	if (Value != 0.0f && GetSolCharacter())
+	if (Value != 0.0f && GetPawn<ASolCharacter>())
 	{
-		GetSolCharacter()->MoveUp(Value);
+		GetPawn<ASolCharacter>()->MoveUp(Value);
 	}
 	else if (GetSolSpectatorPawn())
 	{
@@ -385,9 +380,9 @@ void ASolPlayerController::MoveUp(float Value)
 
 void ASolPlayerController::OnJump()
 {
-	if (GetSolCharacter())
+	if (GetPawn<ASolCharacter>())
 	{
-		GetSolCharacter()->Jump();
+		GetPawn<ASolCharacter>()->Jump();
 	}
 	else if (GetSolSpectatorPawn())
 	{
@@ -398,17 +393,17 @@ void ASolPlayerController::OnJump()
 
 void ASolPlayerController::OnStopJump()
 {
-	if (GetSolCharacter())
+	if (GetPawn<ASolCharacter>())
 	{
-		GetSolCharacter()->StopJumping();
+		GetPawn<ASolCharacter>()->StopJumping();
 	}
 }
 
 void ASolPlayerController::OnCrouch()
 {
-	if (GetSolCharacter())
+	if (GetPawn<ASolCharacter>())
 	{
-		GetSolCharacter()->Crouch();
+		GetPawn<ASolCharacter>()->Crouch();
 	}
 	else if (GetSolSpectatorPawn())
 	{
@@ -419,25 +414,26 @@ void ASolPlayerController::OnCrouch()
 
 void ASolPlayerController::OnStopCrouch()
 {
-	if (GetSolCharacter())
+	if (GetPawn<ASolCharacter>())
 	{
-		GetSolCharacter()->UnCrouch();
+		GetPawn<ASolCharacter>()->UnCrouch();
 	}
 }
 
 void ASolPlayerController::OnSprint()
 {
-	if (GetSolCharacter())
+	if (GetPawn<ASolCharacter>())
 	{
-		GetSolCharacter()->StartSprint();
+		GetPawn<ASolCharacter>()->StartSprint();
 	}
 }
 
 void ASolPlayerController::OnStopSprint()
 {
-	if (GetSolCharacter())
+	GetPawn<ASolCharacter>();
+	if (GetPawn<ASolCharacter>())
 	{
-		GetSolCharacter()->StopSprint();
+		GetPawn<ASolCharacter>()->StopSprint();
 	}
 }
 
@@ -483,7 +479,7 @@ void ASolPlayerController::OnHideScoreboard()
 
 void ASolPlayerController::OnPreviousWeapon()
 {
-	if (GetSolCharacter() && GetHUD<ASolHUD>())
+	if (GetPawn<ASolCharacter>() && GetHUD<ASolHUD>())
 	{
 		if (!bSelectingWeapon)
 		{
@@ -495,7 +491,7 @@ void ASolPlayerController::OnPreviousWeapon()
 
 void ASolPlayerController::OnNextWeapon()
 {
-	if (GetSolCharacter() && GetHUD<ASolHUD>())
+	if (GetPawn<ASolCharacter>() && GetHUD<ASolHUD>())
 	{
 		if (!bSelectingWeapon)
 		{
@@ -533,9 +529,9 @@ void ASolPlayerController::FinishSelectWeapon(int32 DeltaIndex)
 		GetHUD<ASolHUD>()->SetShowWeaponList(false);
 	}
 
-	if (GetSolCharacter())
+	if (GetPawn<ASolCharacter>())
 	{
-		GetSolCharacter()->EquipWeaponByDeltaIndex(DeltaIndex);
+		GetPawn<ASolCharacter>()->EquipWeaponByDeltaIndex(DeltaIndex);
 	}
 
 	WeapSelectIndex = 0;

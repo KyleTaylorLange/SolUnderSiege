@@ -20,9 +20,6 @@ class LASTIM_API ASolPlayerController : public APlayerController
 
 	virtual void ReceivedPlayer() override;
 
-	/** Returns a pointer to the current Lastim Character. May return NULL. **/
-	ASolCharacter* GetSolCharacter() const;
-
 	/** Returns a pointer to the current Lastim Spectator Pawn. May return NULL. **/
 	ASolSpectatorPawn* GetSolSpectatorPawn() const;
 
