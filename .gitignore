@@ -1,7 +1,8 @@
 .vs/
-Binaries/
-Build/
-Content/
-Intermediate/
-Saved/
-SolUnderSiege.sln
+/Binaries/
+/Build/
+/Content/
+/DerivedDataCache/
+/Intermediate/
+/Saved/
+/*.sln
