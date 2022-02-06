@@ -3,17 +3,15 @@
 #pragma once
 
 #include "GameFramework/Actor.h"
-#include "UsableObjectInterface.h"
 #include "DominationControlPoint.generated.h"
 
 DECLARE_DELEGATE_OneParam(FOnScoreCP, ADominationControlPoint*)
 
 UCLASS()
-class LASTIM_API ADominationControlPoint : public AActor, public IUsableObjectInterface
+class LASTIM_API ADominationControlPoint : public AActor
 {
 	GENERATED_UCLASS_BODY()
 	
-public:	
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 	
@@ -26,11 +24,11 @@ public:
 	// Gets owning team.
 	class ATeamState* GetOwningTeam();
 
-	virtual bool CanBeUsedBy(AActor* User) override;
+	UFUNCTION()
+	virtual bool CanInteractWith(UInteractableComponent* Component, AActor* Interactor, TSubclassOf<UInteractionEvent> Interaction);
 
-	virtual bool OnStartUseBy(AActor* User) override;
-
-	virtual FString GetUseActionName(AActor* User) override;
+	UFUNCTION()
+	virtual void OnStartUseBy(UInteractableComponent* Interactable, AActor* Interactor, TSubclassOf<UInteractionEvent> Interaction);
 
 	UFUNCTION()
 	virtual void OnOverlapBegin(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepHitResult);
@@ -39,6 +37,8 @@ public:
 	virtual void OnOverlapEnd(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
 	FOnScoreCP OnScoreCPDelegate;
+
+
 
 private:
 
@@ -53,6 +53,9 @@ private:
 	
 	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
 	UCapsuleComponent* DetectionCapsule;
+
+	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
+	UInteractableComponent* InteractableComponent;
 
 	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
 	FLinearColor LightColor;

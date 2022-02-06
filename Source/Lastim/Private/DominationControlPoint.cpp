@@ -43,17 +43,25 @@ ADominationControlPoint::ADominationControlPoint(const FObjectInitializer& Objec
 	DetectionCapsule->SetCollisionResponseToChannel(COLLISION_PROJECTILE, ECR_Ignore);
 	DetectionCapsule->SetupAttachment(GetRootComponent());
 
+	InteractableComponent = ObjectInitializer.CreateDefaultSubobject<UInteractableComponent>(this, "InteractableComponent");
+	InteractableComponent->CanInteractWithDelegate.BindUObject(this, &ADominationControlPoint::CanInteractWith);
+	InteractableComponent->OnStartUseByDelegate.BindUObject(this, &ADominationControlPoint::OnStartUseBy);
+	InteractableComponent->InteractionEvents.Empty();
+	InteractableComponent->InteractionEvents.Add(UInteractionEvent_CapturePoint::StaticClass());
+
+
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	//PrimaryActorTick.bCanEverTick = true;
 
 	bReplicates = true;
-	bCaptureOnTouch = true;
+	bCaptureOnTouch = false;
 }
 
 // Called when the game starts or when spawned
 void ADominationControlPoint::BeginPlay()
 {
 	Super::BeginPlay();
+
 	
 }
 
@@ -81,29 +89,20 @@ void ADominationControlPoint::OnOverlapEnd(UPrimitiveComponent* HitComp, AActor*
 	/* Nothing here yet. */
 }
 
-bool ADominationControlPoint::CanBeUsedBy(AActor* User)
+bool ADominationControlPoint::CanInteractWith(UInteractableComponent* Component, AActor* Interactor, TSubclassOf<UInteractionEvent> Interaction)
 {
 	return !bCaptureOnTouch;
 }
 
-bool ADominationControlPoint::OnStartUseBy(AActor* User)
+void ADominationControlPoint::OnStartUseBy(UInteractableComponent* Component, AActor* Interactor, TSubclassOf<UInteractionEvent> Interaction)
 {
-	ASolCharacter* SChar = Cast<ASolCharacter>(User);
-	if (SChar)
+	if (ASolCharacter* SChar = Cast<ASolCharacter>(Interactor))
 	{
-		ASolPlayerState* PS = Cast<ASolPlayerState>(SChar->GetPlayerState());
-		if (PS)
+		if (ASolPlayerState* PS = Cast<ASolPlayerState>(SChar->GetPlayerState()))
 		{
 			OnTeamChange(PS);
-			return true;
 		}
 	}
-	return false;
-}
-
-FString ADominationControlPoint::GetUseActionName(AActor* User)
-{
-	return FString("Capture Control Point");
 }
 
 void ADominationControlPoint::OnTeamChange(ASolPlayerState* NewOwner)
@@ -143,7 +142,7 @@ void ADominationControlPoint::OnTeamChange(ASolPlayerState* NewOwner)
 
 void ADominationControlPoint::AddPointToOwner()
 {
-	OnScoreCPDelegate.Execute(this);
+	OnScoreCPDelegate.ExecuteIfBound(this);
 	/*
 	if (GetLocalRole() == ROLE_Authority)
 	{
