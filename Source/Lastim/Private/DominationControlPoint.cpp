@@ -91,7 +91,21 @@ void ADominationControlPoint::OnOverlapEnd(UPrimitiveComponent* HitComp, AActor*
 
 bool ADominationControlPoint::CanInteractWith(UInteractableComponent* Component, AActor* Interactor, TSubclassOf<UInteractionEvent> Interaction)
 {
-	return !bCaptureOnTouch;
+	// Do not allow capture interaction if we already own this point.
+	if (Interaction == UInteractionEvent_CapturePoint::StaticClass() && !bCaptureOnTouch)
+	{
+		if (ASolCharacter* SChar = Cast<ASolCharacter>(Interactor))
+		{
+			if (ASolPlayerState* PS = Cast<ASolPlayerState>(SChar->GetPlayerState()))
+			{
+				if (PS && PS->GetTeam() && PS->GetTeam() == OwningTeam)
+				{
+					return false;
+				}
+			}
+		}
+	}
+	return true;
 }
 
 void ADominationControlPoint::OnStartUseBy(UInteractableComponent* Component, AActor* Interactor, TSubclassOf<UInteractionEvent> Interaction)
