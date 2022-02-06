@@ -52,6 +52,14 @@ APickup::APickup(const FObjectInitializer& ObjectInitializer) : Super(ObjectInit
 	ProjectileMovement->Velocity = FVector(0.0f, 0.0f, -1.0f);
 	ProjectileMovement->ProjectileGravityScale = 1.f;
 
+	UInteractableComponent* InteractComp = ObjectInitializer.CreateDefaultSubobject<UInteractableComponent>(this, TEXT("InteractableComponent"));
+	InteractComp->CanInteractWithDelegate.BindUObject(this, &APickup::CanInteractWith);
+	InteractComp->OnStartUseByDelegate.BindUObject(this, &APickup::OnStartUseBy);
+	InteractComp->OnStopUseByDelegate.BindUObject(this, &APickup::OnStopUseBy);
+	InteractComp->InteractionEvents.Empty();
+	InteractComp->InteractionEvents.Add(UInteractionEvent_PickUpItem::StaticClass());
+	InteractComp->InteractionEvents.Add(UInteractionEvent_SwapForItem::StaticClass());
+
 	bReplicates = true;
 	SetReplicatingMovement(true);
 }
@@ -172,41 +180,38 @@ void APickup::GivePickupTo(class ASolCharacter* Pawn)
 	//GEngine->AddOnScreenDebugMessage(-1, 15.f, FColor::Green, FString::Printf(TEXT("%s: APickup::GivePickupTo() was called!"), *this->GetName()));
 }
 
-bool APickup::CanBeUsedBy(AActor* User)
+bool APickup::CanInteractWith(UInteractableComponent* Component, AActor* Interactor, TSubclassOf<UInteractionEvent> Interaction)
 {
-	ASolCharacter* UsingCharacter = Cast<ASolCharacter>(User);
+	ASolCharacter* UsingCharacter = Cast<ASolCharacter>(Interactor);
 	if (UsingCharacter)
 	{
-		return CanBePickedUp(UsingCharacter) && UsingCharacter->CanPickUpItem(GetHeldItem());
+		if (!CanBePickedUp(UsingCharacter))
+		{
+			return false;
+		}
+		if (Interaction == UInteractionEvent_PickUpItem::StaticClass())
+		{
+			return UsingCharacter->CanHoldItem(GetHeldItem());
+		}
+		if (Interaction == UInteractionEvent_SwapForItem::StaticClass())
+		{
+			return UsingCharacter->CanSwapForItem(GetHeldItem()) != nullptr;
+		}
 	}
 	return false;
 }
 
-bool APickup::OnStartUseBy(AActor* User)
+void APickup::OnStartUseBy(UInteractableComponent* Component, AActor* Interactor, TSubclassOf<UInteractionEvent> Interaction)
 {
-	if (Cast<ASolCharacter>(User))
+	if (ASolCharacter* SChar = Cast<ASolCharacter>(Interactor))
 	{
-		PickupOnUse(Cast<ASolCharacter>(User));
-		return true;
+		PickupOnUse(SChar);
 	}
-	return false;
 }
 
-FString APickup::GetUseActionName(AActor* User)
+void APickup::OnStopUseBy(UInteractableComponent* Component, AActor* Interactor, TSubclassOf<UInteractionEvent> Interaction)
 {
-	ASolCharacter* UsingCharacter = Cast<ASolCharacter>(User);
-	if (CanBeUsedBy(UsingCharacter))
-	{
-		if (UsingCharacter->CanHoldItem(GetHeldItem()))
-		{
-			return FString::Printf(TEXT("Pick up %s"), GetHeldItem() ? *GetHeldItem()->GetDisplayName() : *FString("No Held Item"));
-		}
-		else if (UsingCharacter->CanSwapForItem(GetHeldItem()))
-		{
-			return FString::Printf(TEXT("Swap %s"), GetHeldItem() ? *GetHeldItem()->GetDisplayName() : *FString("No Held Item"));
-		}
-	}
-	return IUsableObjectInterface::GetUseActionName(User);
+	// Nothing for now.
 }
 
 void APickup::PickupOnUse(class ASolCharacter* Pawn)
@@ -257,6 +262,3 @@ void APickup::InitVelocity(FVector InVelocity)
 		//RootComponent->Velocity += InVelocity;
 	}
 }
-
-//////////////////////////////////////////////////////////////////////////
-// Replication

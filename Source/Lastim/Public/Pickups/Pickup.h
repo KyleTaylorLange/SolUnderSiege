@@ -3,13 +3,13 @@
 #pragma once
 
 #include "GameFramework/Actor.h"
-#include "UsableObjectInterface.h"
+#include "InteractableComponent.h"
 #include "Pickup.generated.h"
 
 // TODO: Merge sublcass SpecificPickup into me since GenericPickup has been deleted.
 //       No point in separating this from its subclass anymore.
 UCLASS()
-class LASTIM_API APickup : public AActor, public IUsableObjectInterface
+class LASTIM_API APickup : public AActor
 {
 	GENERATED_BODY()
 	
@@ -32,11 +32,14 @@ public:
 	// Give pickup to Pawn. Returns true if obtained.
 	virtual void GivePickupTo(class ASolCharacter* Pawn);
 
-	virtual bool CanBeUsedBy(AActor* User) override;
+	UFUNCTION()
+	virtual bool CanInteractWith(UInteractableComponent* Component, AActor* Interactor, TSubclassOf<UInteractionEvent> Interaction);
 
-	virtual bool OnStartUseBy(AActor* User) override;
+	UFUNCTION()
+	virtual void OnStartUseBy(UInteractableComponent* Component, AActor* Interactor, TSubclassOf<UInteractionEvent> Interaction);
 
-	virtual FString GetUseActionName(AActor* User) override;
+	UFUNCTION()
+	virtual void OnStopUseBy(UInteractableComponent* Component, AActor* Interactor, TSubclassOf<UInteractionEvent> Interaction);
 
 	// Called when pickup is used by a player.
 	void PickupOnUse(class ASolCharacter* Pawn);
