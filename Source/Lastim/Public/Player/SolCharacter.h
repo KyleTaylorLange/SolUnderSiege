@@ -3,9 +3,10 @@
 
 #pragma once
 #include "GameFramework/Character.h"
-#include "UsableObjectInterface.h"
 #include "InventoryItem.h"
 #include "SolCharacter.generated.h"
+
+
 
 // This struct was mostly taken from the ShooterGame example project.
 USTRUCT(BlueprintType)
@@ -143,7 +144,7 @@ struct FBodySectionInfo
 };
 
 UCLASS(config=Game)
-class ASolCharacter : public ACharacter, public IUsableObjectInterface
+class ASolCharacter : public ACharacter
 {
 	GENERATED_UCLASS_BODY()
 
@@ -269,7 +270,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = Input)
 	void StopSprint();
 
-
 	/** Handles moving forward/backward */
 	UFUNCTION(BlueprintCallable, Category = Input)
 	void MoveForward(float Val);
@@ -301,9 +301,8 @@ public:
 	virtual void DestroyInventory();
 
 	// Get item we can use at the moment.
-    // NOTE: Returns AActor since returning the interface causes a compilation error.
 	UFUNCTION(BlueprintCallable, Category = Gameplay)
-	AActor* GetUsableObject();
+	class UInteractableComponent* FindInteractable(TSubclassOf<UInteractionEvent>& Interaction);
 	
 	/** Get player's current health. */
 	UFUNCTION(BlueprintCallable, Category = Gameplay)
@@ -343,7 +342,6 @@ public:
 	  */
 	UFUNCTION(BlueprintCallable, Category = Gameplay)
 	virtual void SetMaxHealth(float MaxHealth);
-
 
 	/** Get player's full leg health. */
 	UFUNCTION(BlueprintCallable, Category = Gameplay)
@@ -784,10 +782,6 @@ private:
 
 	/* Amount of recoil left to apply. */
 	FVector CurrentRecoilVelocity;
-
-	/* Amount of recoil when we started the curve.
-		Needed for the curve to work correctly. */
-	FVector LastRecoilVelocity;
 
 	/* Percentage of recoil still remaining to apply. */
 	float RecoilCurveTime;

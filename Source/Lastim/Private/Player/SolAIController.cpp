@@ -421,7 +421,9 @@ bool ASolAIController::FindClosestPickupWithLOS()
 			{
 				MyBot->Crouch();
 				bool bUseSuccessful = false;
-				if (GetPickup() == Cast<APickup>(MyBot->GetUsableObject()))
+				TSubclassOf<UInteractionEvent> Interaction;
+				UInteractableComponent* Interactable = MyBot->FindInteractable(Interaction);
+				if (Interactable && GetPickup() == Interactable->GetOwner())
 				{
 					StopMovement();
 					MyBot->OnStartUse();

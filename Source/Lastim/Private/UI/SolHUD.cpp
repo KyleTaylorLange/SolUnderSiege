@@ -13,7 +13,7 @@
 #include "TeamState.h"
 #include "Firearm.h"
 #include "Ammo.h"
-#include "UsableObjectInterface.h"
+#include "InteractableComponent.h"
 #include "Math/UnitConversion.h"
 #include "SolHUD.h"
 #include "Engine/Canvas.h"
@@ -222,10 +222,15 @@ void ASolHUD::DrawHUD()
 			Canvas->ApplySafeZoneTransform();
 		}
 		// Draw use object message if necessary.
-		IUsableObjectInterface* UseableObj = Cast<IUsableObjectInterface>(MyPawn->GetUsableObject());
-		if (UseableObj)
+		TSubclassOf<UInteractionEvent> Interaction = nullptr;
+		if (UInteractableComponent* Interactable = MyPawn->FindInteractable(Interaction))
 		{
-			FString TextString = FString::Printf(TEXT("[USE] %s"), *UseableObj->GetUseActionName(MyPawn));
+			FString TextString = FString::Printf(TEXT("[USE] ~Unknown Use~"));
+			if (Interaction)
+			{
+				FString InteractionName = Interaction->GetDefaultObject<UInteractionEvent>()->GetActionName();
+				TextString = FString::Printf(TEXT("[USE] %s"), *InteractionName);
+			}
 			FCanvasTextItem TextItem = GetDefaultTextItem();
 			TextItem.bCentreX = true;
 			TextItem.bCentreY = true;
@@ -846,7 +851,12 @@ void ASolHUD::ShowInGameMenu(bool bEnable)
 	}
 	if (MyPC)
 	{
-		MyPC->bShowMouseCursor = bShowInGameMenu;
+		MyPC->SetShowMouseCursor(bShowInGameMenu);
+		if (bShowInGameMenu)
+		{
+			// TODO: Centre mouse over menu once it's pulled up.
+			//MyPC->SetMouseLocation(Canvas->ClipX / 2, Canvas->ClipY / 2);
+		}
 		MyPC->bEnableMouseOverEvents = bShowInGameMenu;
 		MyPC->bEnableClickEvents = bShowInGameMenu;
 		MyPC->SetIgnoreLookInput(bShowInGameMenu);

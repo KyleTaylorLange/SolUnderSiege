@@ -14,6 +14,8 @@
 #include "AmmoBag.h"
 #include "SolPlayerController.h"
 #include "SolHUD.h"
+#include "InteractionEvent.h"
+#include "InteractableComponent.h"
 //#include "Pickup.h" // TO LATER MOVE TO Weapon/InventoryItem
 #include "SolCharacterMovementComponent.h"
 #include "SolCharacter.h"
@@ -184,7 +186,6 @@ ASolCharacter::ASolCharacter(const FObjectInitializer& ObjectInitializer) //: Su
 
 	// Recoil system variables; in constant flux right now. Most intialize as null/zero.
 	CurrentRecoilVelocity = FVector::ZeroVector;
-	LastRecoilVelocity = FVector::ZeroVector;
 	RecoilCurveTime = 0.0f;
 	RecoilTimeScalar = 0.5f;
 
@@ -274,7 +275,7 @@ void ASolCharacter::Tick(float DeltaSeconds)
 		/** Add recoil to character if necessary. */
 		if (RecoilCurveTime > 0.0f)
 		{
-			//ProcessRecoil(DeltaSeconds);
+			ProcessRecoil(DeltaSeconds);
 		}
 
 		// Zoom in if we want to.
@@ -563,7 +564,7 @@ void ASolCharacter::ServerSetSprinting_Implementation(bool bNewSprinting)
 	SetSprinting(bNewSprinting);
 }
 
-AActor* ASolCharacter::GetUsableObject()
+UInteractableComponent* ASolCharacter::FindInteractable(TSubclassOf<UInteractionEvent>& Interaction)
 {
 	AActor* UsableObject = nullptr;
 	// Perform a trace to get objects.
@@ -571,7 +572,7 @@ AActor* ASolCharacter::GetUsableObject()
 	FVector StartVector = GetActorLocation() + FVector(0.f, 0.f, BaseEyeHeight);
 	// End vector is 1m in the direction the player is looking, with up to an extra 50cm if the player is looking down (since we cannot crouch yet).
 	FVector EndVector = GetControlRotation().Vector();
-		float Scalar = 100.f;
+	float Scalar = 100.f;
 	if (EndVector.Z < 0)
 	{
 		Scalar += (-50.f * EndVector.Z);
@@ -597,20 +598,26 @@ AActor* ASolCharacter::GetUsableObject()
 	{
 		for (int32 i = 0; i < OutHits.Num(); i++)
 		{
-			UPrimitiveComponent* FoundComp = Cast<UPrimitiveComponent>(OutHits[i].GetComponent());
-			IUsableObjectInterface* FoundItem = Cast<IUsableObjectInterface>(FoundComp->GetOwner());
-			if (FoundItem && FoundItem->CanBeUsedBy(this))
+			if (AActor* Obj = OutHits[i].GetActor())
 			{
-				AActor* FoundActor = Cast<AActor>(FoundItem);
-				if (FoundActor)
+				// Get the first component for now.
+				if (UInteractableComponent* Interactable = Obj->FindComponentByClass<UInteractableComponent>())
 				{
-					UsableObject = FoundActor;
-					return UsableObject;
+					TArray<TSubclassOf<UInteractionEvent>> Interactions = Interactable->GetInteractions(this);
+					for (int j = 0; i < Interactions.Num(); j++)
+					{
+						UInteractionEvent* TestInteraction = Interactions[j]->GetDefaultObject<UInteractionEvent>();
+						if (TestInteraction && TestInteraction->CanInteract(this, Interactable))
+						{
+							Interaction = Interactions[j];
+							return Interactable;
+						}
+					}
 				}
 			}
 		}
 	}
-	return UsableObject;
+	return nullptr;
 }
 
 void ASolCharacter::HandleUse()
@@ -622,19 +629,22 @@ void ASolCharacter::HandleUse()
 	}
 
 	bool bUseSuccessful = false;
-	IUsableObjectInterface* UsableObject = Cast< IUsableObjectInterface>(GetUsableObject());
-	if (UsableObject != nullptr)
+	TSubclassOf<UInteractionEvent> Interaction = nullptr;
+	if (UInteractableComponent* Interactable = FindInteractable(Interaction))
 	{
-		bUseSuccessful = UsableObject->OnStartUseBy(this);
+		Interactable->OnStartUseBy(this, Interaction);
+		/*
+		bUseSuccessful = Interactable->OnStartUseBy(this);
 		// Only play sound if local player controller owns this pawn.
 		if (PickupItemSound && IsFirstPerson())
 		{
 			UGameplayStatics::PlaySoundAtLocation(this, PickupItemSound, GetActorLocation());
 		}
-	}
-	if (!bUseSuccessful && UseDenialSound && IsFirstPerson())
-	{
-		UGameplayStatics::PlaySoundAtLocation(this, UseDenialSound, GetActorLocation());
+		if (!bUseSuccessful && UseDenialSound && IsFirstPerson())
+		{
+			UGameplayStatics::PlaySoundAtLocation(this, UseDenialSound, GetActorLocation());
+		}
+		*/
 	}
 }
 
@@ -1022,25 +1032,6 @@ bool ASolCharacter::CanPickUpItem(AInventoryItem* Item) const
 //////////////////////////////////////////////////////////////////////////
 // Weapon Location/Rotation
 
-/** Here's the current system:
-    + OnCameraUpdate() positions the weapon's 1P mesh.
-	+ GetWeaponRotationOffset() and GetWeaponLocationOffset() calculate the offset from the camera's
-	  origin rotation and location.
-	+ GetWeaponAimRot() and GetWeaponAimLoc() find the rot/loc of where the weapon's "muzzle" is. It
-	  combines the player camera's location/rotation with the previously mentioned GetWeaponRotationOffset() 
-	  and GetWeaponLocationOffset() for projectile spawning. Note that shot spread/inaccuracy is handled at
-	  the weapon level (e.g. GetAdjustedAimRot()).
-	+ Currently, UpdateWeapnRotationAndLocation() only uses GetWeaponLocationOffset(). Rotation offset is solely
-	  used to spawn projectiles; once we get a proper "origin" working, we can reflect the offset in the mesh.
-	+ TODO: 
-	  + The gun's origin rot/loc and the muzzle rot/loc should probably be calculated separately. E.g:
-	    GetWeaponAimRot() and GetWeaponRotation() functions. The latter function can then be used for both
-		GetWeaponAimRot() and OnCameraUpdate().
-	  + Figure out how to correctly offset the weapon mesh's rotation.
-	+ AddRecoil() is called by the weapon; it adds recoil to the player's recoil aim offset.
-	+ ProcessRecoil() is called every tick if there is recoil. It adjusts the offset over time.
-	*/
-
 FRotator ASolCharacter::AddWeaponOffset(FRotator RotationToAdd, float MaxPitch, float MaxYaw)
 {
 	// These are the actual pitch and yaw offset values we can add.
@@ -1208,16 +1199,12 @@ FVector ASolCharacter::GetWeaponAimLoc() const
 
 void ASolCharacter::AddRecoil(FVector InRecoil)
 {
-	if (RecoilCurveTime >= 0.0f)
+	if (RecoilCurveTime <= 0.0f)
 	{
 		CurrentRecoilVelocity = FVector::ZeroVector;
-		LastRecoilVelocity = FVector::ZeroVector;
 	}
-	CurrentRecoilVelocity += (InRecoil * 0.1f);
-	LastRecoilVelocity = CurrentRecoilVelocity;
+	CurrentRecoilVelocity += InRecoil;
 	RecoilCurveTime = 1.0f;
-	/* Currently a default property, but we could make it a weapon-specific input. */
-	//RecoilTimeScalar = 0.5f;
 }
 
 void ASolCharacter::ProcessRecoil(float DeltaSeconds)
@@ -1227,29 +1214,17 @@ void ASolCharacter::ProcessRecoil(float DeltaSeconds)
 		// Make a pseudo-curve (faster to slower).
 		const float ScaledTime = DeltaSeconds / RecoilTimeScalar;
 		const float RecoilThisTick = FMath::Clamp(ScaledTime, 0.0f, RecoilCurveTime);
-		const float RecoilCurveStart = FMath::Max(0.0f, 2 * RecoilCurveTime);
-		const float RecoilCurveEnd = FMath::Max(0.0f, 2 * (RecoilCurveTime - RecoilThisTick));
 
 		// Calculate recoil to apply this tick.
-		const float RecoilCurveAverage = (RecoilCurveStart + RecoilCurveEnd) / 2;
-		const FVector TotalRecoilThisTick = RecoilThisTick * RecoilCurveAverage * LastRecoilVelocity;
+		const FVector TotalRecoilThisTick = RecoilThisTick * CurrentRecoilVelocity;
 
-		/* In the future, we will apply recoil to both the weapon's offset and the player's view.
-			How much goes to the view  vs. weapon offset largely depends on if the weapon is aimed.
-			However, we'll have to add view recoil by a method other than AddControllerPitch/YawInput() for best results.
-			So, we'll just add it to the weapon offset for now. */
-		//const float PctCameraRecoil = FMath::Clamp(CurrentAimPct, 0.1f, 0.9f);
-		//const FVector CameraRecoilThisTick = TotalRecoilThisTick * PctCameraRecoil;
-		//const FVector OffsetRecoilThisTick = TotalRecoilThisTick - CameraRecoilThisTick;
-		AddWeaponOffset(FRotator(TotalRecoilThisTick.X, TotalRecoilThisTick.Y, 0.0f), MaxRecoilOffsetRadius, MaxRecoilOffsetRadius); // REMOVE ME IF UNCOMMENTING OTHER CODE.
-		//FRotator Remainder = AddWeaponOffset(FRotator(OffsetRecoilThisTick.X, OffsetRecoilThisTick.Y, 0.0f), MaxRecoilOffsetRadius, MaxRecoilOffsetRadius);
-		//AddControllerPitchInput(-CameraRecoilThisTick.X - Remainder.Pitch);
-		//AddControllerYawInput(-CameraRecoilThisTick.Y - Remainder.Yaw);
+		AddWeaponOffset(FRotator(TotalRecoilThisTick.X, TotalRecoilThisTick.Y, 0.0f), MaxRecoilOffsetRadius * 3.f, MaxRecoilOffsetRadius * 3.f);
 
 		// Finally, update the recoil.
 		const float NewRecoilTime = FMath::Max(RecoilCurveTime - RecoilThisTick, 0.0f);
 		RecoilCurveTime = NewRecoilTime;
-		CurrentRecoilVelocity -= TotalRecoilThisTick;
+		const float RecoilDampening = FMath::Min(CurrentRecoilVelocity.Size() * DeltaSeconds, 1.f);
+		CurrentRecoilVelocity -= CurrentRecoilVelocity * RecoilDampening;
 	}
 }
 
