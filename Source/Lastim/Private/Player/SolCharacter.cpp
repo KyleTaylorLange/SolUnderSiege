@@ -600,11 +600,12 @@ UInteractableComponent* ASolCharacter::FindInteractable(TSubclassOf<UInteraction
 		{
 			if (AActor* Obj = OutHits[i].GetActor())
 			{
-				// Get the first component for now.
+				// Get the first InteractableComponent for now.
 				if (UInteractableComponent* Interactable = Obj->FindComponentByClass<UInteractableComponent>())
 				{
+					// Get all interactions and return the first one that we can do.
 					TArray<TSubclassOf<UInteractionEvent>> Interactions = Interactable->GetInteractions(this);
-					for (int j = 0; i < Interactions.Num(); j++)
+					for (int j = 0; j < Interactions.Num(); j++)
 					{
 						UInteractionEvent* TestInteraction = Interactions[j]->GetDefaultObject<UInteractionEvent>();
 						if (TestInteraction && TestInteraction->CanInteract(this, Interactable))
