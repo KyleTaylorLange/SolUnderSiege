@@ -1,8 +1,7 @@
 // Copyright Kyle Taylor Lange
 
-#include "Lastim.h"
-#include "UnrealNetwork.h"
 #include "TeamState.h"
+#include "UnrealNetwork.h"
 
 ATeamState::ATeamState(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {

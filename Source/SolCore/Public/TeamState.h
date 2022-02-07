@@ -9,7 +9,7 @@
  * Contains data about a team like how a PlayerState contains data about a player.
  */
 UCLASS()
-class LASTIM_API ATeamState : public AInfo
+class SOLCORE_API ATeamState : public AInfo
 {
 	GENERATED_UCLASS_BODY()
 	
