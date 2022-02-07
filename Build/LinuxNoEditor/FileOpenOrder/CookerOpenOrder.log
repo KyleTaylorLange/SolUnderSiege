@@ -1,0 +1,443 @@
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Character/UE4_Mannequin/Mesh/UE4_Mannequin_Skeleton.uasset" 0
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Character/UE4_Mannequin/Animations/Crouch_Idle_Rifle_Hip.uasset" 1
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Character/UE4_Mannequin/Animations/Idle_Rifle_Ironsights.uasset" 2
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Character/UE4_Mannequin/Animations/Jump_From_Jog.uasset" 3
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Character/UE4_Mannequin/Animations/Jump_From_Stand.uasset" 4
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Character/UE4_Mannequin/Mesh/Idle_Test_Still.uasset" 5
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Character/UE4_Mannequin/Animations/Crouch_Walk_Bwd_Rifle_Hip.uasset" 6
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Character/UE4_Mannequin/Animations/Crouch_Walk_Fwd_Rifle_Hip.uasset" 7
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Character/UE4_Mannequin/Animations/Crouch_Walk_Lt_Rifle_Hip.uasset" 8
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Character/UE4_Mannequin/Animations/Crouch_Walk_Rt_Rifle_Hip.uasset" 9
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Character/UE4_Mannequin/Animations/BS_CrouchWalk.uasset" 10
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Character/UE4_Mannequin/Animations/Jog_Bwd_Rifle.uasset" 11
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Character/UE4_Mannequin/Animations/Jog_Fwd_Rifle.uasset" 12
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Character/UE4_Mannequin/Animations/Jog_Lt_Rifle.uasset" 13
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Character/UE4_Mannequin/Animations/Jog_Rt_Rifle.uasset" 14
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Character/UE4_Mannequin/Animations/Sprint_Fwd_Rifle.uasset" 15
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Character/UE4_Mannequin/Animations/BS_Jog.uasset" 16
+"../../../Engine/Content/Functions/Engine_MaterialFunctions02/Utility/BlendAngleCorrectedNormals.uasset" 17
+"../../../Engine/Content/Functions/MaterialLayerFunctions/MatLayerBlend_AO.uasset" 18
+"../../../Engine/Content/Functions/MaterialLayerFunctions/MatLayerBlend_NormalBlend.uasset" 19
+"../../../Engine/Content/Functions/MaterialLayerFunctions/MatLayerBlend_Simple.uasset" 20
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Character/UE4_Mannequin/Materials/MaterialLayers/T_ML_Rubber_Blue_01_D.uasset" 21
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Character/UE4_Mannequin/Materials/MaterialLayers/T_ML_Rubber_Blue_01_N.uasset" 22
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Character/UE4_Mannequin/Materials/MaterialLayers/ML_GlossyBlack_Latex_UE4.uasset" 23
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Character/UE4_Mannequin/Materials/MaterialLayers/ML_Plastic_Shiny_Beige.uasset" 24
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Character/UE4_Mannequin/Textures/UE4_LOGO_CARD.uasset" 25
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Character/UE4_Mannequin/Materials/MaterialLayers/ML_Plastic_Shiny_Beige_LOGO.uasset" 26
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Character/UE4_Mannequin/Materials/MaterialLayers/T_ML_Aluminum01.uasset" 27
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Character/UE4_Mannequin/Materials/MaterialLayers/T_ML_Aluminum01_N.uasset" 28
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Character/UE4_Mannequin/Materials/MaterialLayers/ML_SoftMetal_UE4.uasset" 29
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Character/UE4_Mannequin/Textures/UE4_Mannequin__normals.uasset" 30
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Character/UE4_Mannequin/Textures/UE4_Mannequin_MAT_MASKA.uasset" 31
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Character/UE4_Mannequin/Textures/UE4_Mannequin_occlusion_Mobile.uasset" 32
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Materials/PhysicalMaterials/PM_Flesh.uasset" 33
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Character/UE4_Mannequin/Materials/M_UE4Man_Body.uasset" 34
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Character/UE4_Mannequin/Textures/UE4Man_Logo_N.uasset" 35
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Character/UE4_Mannequin/Materials/M_UE4Man_ChestLogo.uasset" 36
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Character/UE4_Mannequin/Mesh/SK_Mannequin_PhysicsAsset.uasset" 37
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Character/UE4_Mannequin/Mesh/SK_Mannequin.uasset" 38
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Character/UE4_Mannequin/Animations/Ue4ASP_Character.uasset" 39
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Character/UE4_Mannequin/Animations/UE4ASP_HeroTPP_AnimBlueprint.uasset" 40
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Character/UE4_Mannequin/Animations/Idle_Rifle_Hip.uasset" 41
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Character/UE4_Mannequin/Mesh/SK_Mannequin_1PArms_PhysicsAsset.uasset" 42
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Character/UE4_Mannequin/Mesh/SK_Mannequin_1PArms.uasset" 43
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Blueprints/MyCharacter.uasset" 44
+"../../../Engine/Content/EngineMaterials/OrientParticle.uasset" 45
+"../../../Engine/Content/EngineMaterials/DefaultParticle.uasset" 46
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Meshes/Weapons/M_BulletRibbonTracer.uasset" 47
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Meshes/Weapons/M_BulletTracer.uasset" 48
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Meshes/Weapons/StdBullet_Mat.uasset" 49
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Meshes/Weapons/StdBullet.uasset" 50
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Blueprints/PS_BulletTest.uasset" 51
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Character/UE4_Mannequin/Animations/Idle_Pistol.uasset" 52
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Character/UE4_Mannequin/Animations/AM_IdlePistol.uasset" 53
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Character/UE4_Mannequin/Animations/Reload_Pistol.uasset" 54
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Character/UE4_Mannequin/Animations/WeaponAnims/AM_D9_Charge_Begin.uasset" 55
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Character/UE4_Mannequin/Animations/WeaponAnims/AM_D9_Charge_End.uasset" 56
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Character/UE4_Mannequin/Animations/Equip_Pistol_Standing.uasset" 57
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Character/UE4_Mannequin/Animations/WeaponAnims/AM_D9_Equip.uasset" 58
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Character/UE4_Mannequin/Animations/WeaponAnims/AM_D9_Reload.uasset" 59
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Character/UE4_Mannequin/Animations/WeaponAnims/AM_D9_Unequip.uasset" 60
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/StarterContent/Textures/T_MacroVariation.uasset" 61
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/StarterContent/Textures/T_Metal_Steel_D.uasset" 62
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/StarterContent/Textures/T_Metal_Steel_N.uasset" 63
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/StarterContent/Materials/M_Metal_Steel.uasset" 64
+"../../../Engine/Content/Functions/Engine_MaterialFunctions01/Gradient/LinearGradient.uasset" 65
+"../../../Engine/Content/Functions/Engine_MaterialFunctions02/Texturing/CustomRotator.uasset" 66
+"../../../Engine/Content/Functions/Engine_MaterialFunctions02/Utility/Sign.uasset" 67
+"../../../Engine/Content/Functions/Engine_MaterialFunctions02/Utility/Round.uasset" 68
+"../../../Engine/Content/Functions/Engine_MaterialFunctions02/Utility/VectorToRadialValue.uasset" 69
+"../../../Engine/Content/EngineResources/Bad.uasset" 70
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Materials/NumbersTest.uasset" 71
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Materials/TestHealthBar.uasset" 72
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Materials/BarTest.uasset" 73
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Meshes/Weapons/SK_D9Pistol_PhysicsAsset.uasset" 74
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Meshes/Weapons/SK_D9Pistol_Skeleton.uasset" 75
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Meshes/Weapons/SK_D9Pistol.uasset" 76
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/ShooterGameEffects/Textures/LensFlare/T_Lensflare_01.uasset" 77
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/ShooterGameEffects/materials/LensFlare/M_Lensflare_01.uasset" 78
+"../../../Engine/Content/Functions/Engine_MaterialFunctions01/Gradient/RadialGradient.uasset" 79
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/ShooterGameEffects/materials/Ramp/M_SoftGradient_Muzzle.uasset" 80
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/ShooterGameEffects/Textures/Smoke/T_Clouds_01.uasset" 81
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/ShooterGameEffects/Textures/Smoke/T_SmokeBall_01_8_8.uasset" 82
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/ShooterGameEffects/materials/Smoke/M_ImpactSmoke.uasset" 83
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/ShooterGameEffects/materials/Smoke/M_SmokeBall.uasset" 84
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/ShooterGameEffects/Textures/Weapon/T_muzzle_flashes.uasset" 85
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/ShooterGameEffects/materials/Weapon/M_muzzle_flash_subUV.uasset" 86
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/ShooterGameEffects/Textures/Mask/T_SquareMaskTightEdge.uasset" 87
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/ShooterGameEffects/Textures/Noise/T_TileNoise.uasset" 88
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/ShooterGameEffects/materials/Weapon/M_MuzzleGlow.uasset" 89
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/ShooterGameEffects/Meshes/Weapon/SM_MuzzleCone.uasset" 90
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/ShooterGameEffects/ParticleSystems/Weapons/AssaultRifle/Muzzle/P_AR_MF_NonLoop.uasset" 91
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Sounds/DefaultWeaponSoundAttenuation.uasset" 92
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Sounds/SC_D9PistolFire.uasset" 93
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Blueprints/Weapons/BP_D9Pistol.uasset" 94
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/StarterContent/Textures/T_Metal_Copper_D.uasset" 95
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/StarterContent/Textures/T_Metal_Gold_N.uasset" 96
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/StarterContent/Materials/M_Metal_Copper.uasset" 97
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Meshes/Weapons/SK_Tsume_PhysicsAsset.uasset" 98
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Meshes/Weapons/SK_Tsume_Skeleton.uasset" 99
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Meshes/Weapons/SK_Tsume.uasset" 100
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Sounds/SC_TsumeFire.uasset" 101
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Blueprints/Weapons/BP_Tsume.uasset" 102
+"../../../Engine/Content/Functions/Engine_MaterialFunctions01/Opacity/CameraDepthFade.uasset" 103
+"../../../Engine/Content/EngineMaterials/T_Default_Material_Grid_M.uasset" 104
+"../../../Engine/Content/EngineMaterials/T_Default_Material_Grid_N.uasset" 105
+"../../../Engine/Content/EngineMaterials/WorldGridMaterial.uasset" 106
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Meshes/Textures/Smoke/T_Clouds_01.uasset" 107
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Effects/Materials/M_DomCPGlow.uasset" 108
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Meshes/Gameplay/DomXSymbol.uasset" 109
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Effects/ParticleSystems/PS_DomCPSymbol.uasset" 110
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Textures/RifleCartridge_D.uasset" 111
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Textures/RifleCartridge_E.uasset" 112
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Materials/M_RifleCartridge.uasset" 113
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Materials/MI_PistolCartridge.uasset" 114
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Meshes/Weapons/SK_RifleCartridge_PhysicsAsset.uasset" 115
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Meshes/Weapons/SK_RifleCartridge_Skeleton.uasset" 116
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Meshes/Weapons/SK_RifleCartridge.uasset" 117
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/ShooterGameEffects/Textures/T_blood_various.uasset" 118
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/ShooterGameEffects/Textures/T_blood_various_N.uasset" 119
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/ShooterGameEffects/materials/Gameplay/M_impact_splash_subUV.uasset" 120
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/ShooterGameEffects/ParticleSystems/Gameplay/Player/P_body_bullet_impact.uasset" 121
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/ShooterGameEffects/Textures/LensFlare/Flare_02.uasset" 122
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/ShooterGameEffects/materials/LensFlare/M_LensFlare_02.uasset" 123
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/ShooterGameEffects/materials/Ramp/M_radial_ramp_soft.uasset" 124
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/ShooterGameEffects/Textures/Water/T_Steam_02_Packed.uasset" 125
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/ShooterGameEffects/materials/Smoke/M_MuzzleSmokeDetail_GPU.uasset" 126
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/ShooterGameEffects/Textures/Spark/T_SparkCore_2X2.uasset" 127
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/ShooterGameEffects/materials/spark/M_spark_subUV.uasset" 128
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/ShooterGameEffects/ParticleSystems/Weapons/AssaultRifle/Impacts/P_AssaultRifle_IH.uasset" 129
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/ShooterGameEffects/Textures/Ramp/T_FX_CameraDistort.uasset" 130
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/ShooterGameEffects/Textures/Ramp/T_FX_ColorDistort.uasset" 131
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/ShooterGameEffects/Textures/Water/T_Caustics_2.uasset" 132
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/ShooterGameEffects/materials/Weapon/M_WP_Linkgun_Connection.uasset" 133
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/StarterContent/Textures/T_Water_N.uasset" 134
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/ShooterGameEffects/materials/Weapon/M_WP_ShockRifle_Panning_Beam.uasset" 135
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/ShooterGameEffects/ParticleSystems/Weapons/AssaultRifle/Muzzle/P_AssaultRifle_Trail.uasset" 136
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Sounds/ShooterGame/Weapon_AssaultRifle_ImpactConcrete01.uasset" 137
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Sounds/ShooterGame/Weapon_AssaultRifle_ImpactConcrete02.uasset" 138
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Sounds/ShooterGame/Weapon_AssaultRifle_ImpactConcrete03.uasset" 139
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Sounds/ShooterGame/Weapon_AssaultRifle_ImpactConcrete04.uasset" 140
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Sounds/ShooterGame/Weapon_AssaultRifle_ImpactConcrete05.uasset" 141
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Sounds/ShooterGame/Weapon_AssaultRifle_ImpactConcrete06.uasset" 142
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Sounds/SoundAttenuationTest.uasset" 143
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Sounds/SC_BulletImpact.uasset" 144
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Sounds/ShooterGame/FoleyFlesh_Impact02.uasset" 145
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Sounds/ShooterGame/FoleyFlesh_Impact03.uasset" 146
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Sounds/ShooterGame/FoleyFlesh_Impact05.uasset" 147
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Sounds/ShooterGame/FoleyFlesh_Impact06.uasset" 148
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Sounds/ShooterGame/FoleyFlesh_Impact07.uasset" 149
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Sounds/ShooterGame/FoleyFlesh_Impact08.uasset" 150
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Sounds/SC_InfantryImpact.uasset" 151
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Sounds/Weapon_AssaultRifle_Empty02.uasset" 152
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Sounds/SC_PickupItem.uasset" 153
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Sounds/SC_PlayerRespawn.uasset" 154
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Sounds/SC_UseDenial.uasset" 155
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Sounds/PostApocalypseGuns/Sounds/AssaultRifles/AR/AR_1p_01.uasset" 156
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Sounds/PostApocalypseGuns/Sounds/AssaultRifles/AR/AR_1p_02.uasset" 157
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Sounds/PostApocalypseGuns/Sounds/AssaultRifles/NailGun/NailGun_1p_01.uasset" 158
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Sounds/PostApocalypseGuns/Sounds/AssaultRifles/NailGun/NailGun_1p_02.uasset" 159
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Sounds/PostApocalypseGuns/Sounds/Pistols/Bolter/Bolter_1p_01.uasset" 160
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Sounds/PostApocalypseGuns/Sounds/Pistols/Bolter/Bolter_1p_02.uasset" 161
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Sounds/PostApocalypseGuns/Sounds/Pistols/Bolter/Bolter_1p_03.uasset" 162
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Sounds/PostApocalypseGuns/Sounds/Pistols/CompactOne/CompactOne_1p_01.uasset" 163
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Sounds/PostApocalypseGuns/Sounds/Pistols/CompactOne/CompactOne_1p_02.uasset" 164
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Sounds/PostApocalypseGuns/Sounds/Pistols/CompactOne/CompactOne_1p_03.uasset" 165
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Sounds/ShooterGame/Stinger_PlayerDeath01.uasset" 166
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Sounds/ShooterGame/Weapon_AssaultRifle_Empty01.uasset" 167
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Sounds/ShooterGame/Weapon_AssaultRifle_Empty03.uasset" 168
+"../../../Engine/Content/EditorBlueprintResources/StandardMacros.uasset" 169
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/UI/HUD/DeathMessageWidget.uasset" 170
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/UI/HUD/LowHealthOverlay.uasset" 171
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/UI/HUD/Roboto09.uasset" 172
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/UI/HUD/Roboto18.uasset" 173
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/UI/HUD/Roboto51.uasset" 174
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/UI/HUD/WikipediaStarOfLifeMono.uasset" 175
+"../../../Engine/Content/Animation/DefaultAnimCurveCompressionSettings.uasset" 176
+"../../../Engine/Content/ArtTools/RenderToTexture/Meshes/S_1_Unit_Plane.uasset" 177
+"../../../Engine/Content/EngineMaterials/DefaultMaterial.uasset" 178
+"../../../Engine/Content/BasicShapes/Cone.uasset" 179
+"../../../Engine/Content/BasicShapes/Cube.uasset" 180
+"../../../Engine/Content/BasicShapes/Plane.uasset" 181
+"../../../Engine/Content/BasicShapes/Sphere.uasset" 182
+"../../../Engine/Content/EditorMaterials/MAT_Groups_Toggle.uasset" 183
+"../../../Engine/Content/EditorMaterials/MAT_Groups_Visibility.uasset" 184
+"../../../Engine/Content/EditorMaterials/PreviewShadowIndicator.uasset" 185
+"../../../Engine/Content/EditorMaterials/PreviewShadowIndicatorMaterial.uasset" 186
+"../../../Engine/Content/EditorMaterials/MatineeGroups/MAT_ColorTrack.uasset" 187
+"../../../Engine/Content/EditorMaterials/MatineeGroups/MAT_Groups_Anim.uasset" 188
+"../../../Engine/Content/EditorMaterials/MatineeGroups/MAT_Groups_AudioMaster.uasset" 189
+"../../../Engine/Content/EditorMaterials/MatineeGroups/MAT_Groups_Director.uasset" 190
+"../../../Engine/Content/EditorMaterials/MatineeGroups/MAT_Groups_Event.uasset" 191
+"../../../Engine/Content/EditorMaterials/MatineeGroups/MAT_Groups_Fade.uasset" 192
+"../../../Engine/Content/EditorMaterials/MatineeGroups/MAT_Groups_Float.uasset" 193
+"../../../Engine/Content/EditorMaterials/MatineeGroups/MAT_Groups_Move.uasset" 194
+"../../../Engine/Content/EditorMaterials/MatineeGroups/MAT_Groups_Slomo.uasset" 195
+"../../../Engine/Content/EditorMaterials/MatineeGroups/MAT_Groups_Sound.uasset" 196
+"../../../Engine/Content/EditorMaterials/MatineeGroups/MAT_Groups_Vector.uasset" 197
+"../../../Engine/Content/EditorMaterials/ParticleSystems/PSysThumbnail_NoImage.uasset" 198
+"../../../Engine/Content/EditorMaterials/ParticleSystems/PSysThumbnail_OOD.uasset" 199
+"../../../Engine/Content/EditorMaterials/Camera/CineMat.uasset" 200
+"../../../Engine/Content/EditorMaterials/Camera/MI_CineMat_Rig.uasset" 201
+"../../../Engine/Content/EditorMeshes/Camera/SM_CraneRig_Arm.uasset" 202
+"../../../Engine/Content/EditorMeshes/Camera/SM_CraneRig_Base.uasset" 203
+"../../../Engine/Content/EditorMeshes/Camera/SM_CraneRig_Body.uasset" 204
+"../../../Engine/Content/EditorMeshes/Camera/SM_CraneRig_Mount.uasset" 205
+"../../../Engine/Content/EditorMeshes/Camera/SM_RailRig_Mount.uasset" 206
+"../../../Engine/Content/EditorMeshes/Camera/SM_RailRig_Track.uasset" 207
+"../../../Engine/Content/EditorResources/BSPVertex.uasset" 208
+"../../../Engine/Content/EditorResources/EmptyActor.uasset" 209
+"../../../Engine/Content/EditorResources/S_Actor.uasset" 210
+"../../../Engine/Content/EditorResources/S_Note.uasset" 211
+"../../../Engine/Content/EditorResources/S_Solver.uasset" 212
+"../../../Engine/Content/EditorResources/S_Trigger.uasset" 213
+"../../../Engine/Content/EditorResources/LightIcons/S_LightError.uasset" 214
+"../../../Engine/Content/EditorResources/SequenceRecorder/Countdown.uasset" 215
+"../../../Engine/Content/EditorResources/SequenceRecorder/RecordingIndicator.uasset" 216
+"../../../Engine/Content/EditorSounds/Notifications/CompileFailed.uasset" 217
+"../../../Engine/Content/EditorSounds/Notifications/CompileFailed_Cue.uasset" 218
+"../../../Engine/Content/EditorSounds/Notifications/CompileSuccess.uasset" 219
+"../../../Engine/Content/EditorSounds/Notifications/CompileStart_Cue.uasset" 220
+"../../../Engine/Content/EditorSounds/Notifications/CompileSuccess_Cue.uasset" 221
+"../../../Engine/Content/EngineDamageTypes/DmgTypeBP_Environmental.uasset" 222
+"../../../Engine/Content/EngineDebugMaterials/DebugEditorMaterial.uasset" 223
+"../../../Engine/Content/EngineDebugMaterials/DebugMeshMaterial.uasset" 224
+"../../../Engine/Content/EngineDebugMaterials/M_SimpleTranslucent.uasset" 225
+"../../../Engine/Content/Functions/Engine_MaterialFunctions02/Utility/CameraDirectionVector.uasset" 226
+"../../../Engine/Content/EngineDebugMaterials/VolumeToRender.uasset" 227
+"../../../Engine/Content/EngineDebugMaterials/M_VolumeRenderSphereTracePP.uasset" 228
+"../../../Engine/Content/EngineDebugMaterials/WireframeMaterial.uasset" 229
+"../../../Engine/Content/EngineFonts/Faces/DroidSansFallback.uasset" 230
+"../../../Engine/Content/EngineFonts/Faces/RobotoBold.uasset" 231
+"../../../Engine/Content/EngineFonts/Faces/RobotoBoldItalic.uasset" 232
+"../../../Engine/Content/EngineFonts/Faces/RobotoItalic.uasset" 233
+"../../../Engine/Content/EngineFonts/Faces/RobotoLight.uasset" 234
+"../../../Engine/Content/EngineFonts/Faces/RobotoRegular.uasset" 235
+"../../../Engine/Content/EngineFonts/Roboto.uasset" 236
+"../../../Engine/Content/EngineMaterials/BaseFlattenDiffuseMap.uasset" 237
+"../../../Engine/Content/EngineMaterials/BaseFlattenEmissiveMap.uasset" 238
+"../../../Engine/Content/EngineMaterials/BaseFlattenGrayscaleMap.uasset" 239
+"../../../Engine/Content/EngineMaterials/BaseFlattenNormalMap.uasset" 240
+"../../../Engine/Content/EngineMaterials/BaseFlattenMaterial.uasset" 241
+"../../../Engine/Content/EngineMaterials/BlueNoise.uasset" 242
+"../../../Engine/Content/EngineMaterials/DefaultBloomKernel.uasset" 243
+"../../../Engine/Content/EngineMaterials/DefaultBokeh.uasset" 244
+"../../../Engine/Content/EngineMaterials/DefaultDiffuse.uasset" 245
+"../../../Engine/Content/EngineMaterials/DefaultDeferredDecalMaterial.uasset" 246
+"../../../Engine/Content/EngineMaterials/DefaultLightFunctionMaterial.uasset" 247
+"../../../Engine/Content/Functions/Engine_MaterialFunctions02/Utility/BreakOutFloat2Components.uasset" 248
+"../../../Engine/Content/EngineMaterials/DefaultPostProcessMaterial.uasset" 249
+"../../../Engine/Content/EngineFonts/RobotoDistanceField.uasset" 250
+"../../../Engine/Content/EngineMaterials/DefaultTextMaterialOpaque.uasset" 251
+"../../../Engine/Content/EngineMaterials/DefaultVirtualTextureMaterial.uasset" 252
+"../../../Engine/Content/EngineMaterials/DefaultWhiteGrid.uasset" 253
+"../../../Engine/Content/EngineMaterials/DefaultWhiteGrid_Low.uasset" 254
+"../../../Engine/Content/EngineMaterials/EmissiveMeshMaterial.uasset" 255
+"../../../Engine/Content/EngineMaterials/GizmoMaterial.uasset" 256
+"../../../Engine/Content/EngineMaterials/Good64x64TilingNoiseHighFreq.uasset" 257
+"../../../Engine/Content/EngineMaterials/HairDefaultMaterial.uasset" 258
+"../../../Engine/Content/EngineMaterials/MiniFont.uasset" 259
+"../../../Engine/Content/EngineMaterials/InvalidLightmapSettings.uasset" 260
+"../../../Engine/Content/EngineMaterials/M_InvalidLightmapSettings.uasset" 261
+"../../../Engine/Content/Functions/Engine_MaterialFunctions02/WorldPositionOffset/CameraOffset.uasset" 262
+"../../../Engine/Content/EngineMaterials/PhAT_JointLimitMaterial.uasset" 263
+"../../../Engine/Content/EngineMaterials/PreintegratedSkinBRDF.uasset" 264
+"../../../Engine/Content/EngineMaterials/RemoveSurfaceMaterial.uasset" 265
+"../../../Engine/Content/EngineMaterials/WeightMapPlaceholderTexture.uasset" 266
+"../../../Engine/Content/EngineResources/WhiteSquareTexture.uasset" 267
+"../../../Engine/Content/EngineMaterials/Widget3DPassThrough.uasset" 268
+"../../../Engine/Content/EngineMaterials/Widget3DPassThrough_Masked.uasset" 269
+"../../../Engine/Content/EngineMaterials/Widget3DPassThrough_Opaque.uasset" 270
+"../../../Engine/Content/EngineMaterials/Widget3DPassThrough_Masked_OneSided.uasset" 271
+"../../../Engine/Content/EngineMaterials/Widget3DPassThrough_Opaque_OneSided.uasset" 272
+"../../../Engine/Content/EngineMaterials/Widget3DPassThrough_Translucent.uasset" 273
+"../../../Engine/Content/EngineMaterials/Widget3DPassThrough_Translucent_OneSided.uasset" 274
+"../../../Engine/Content/EngineMeshes/Cylinder.uasset" 275
+"../../../Engine/Content/EngineMeshes/Sphere.uasset" 276
+"../../../Engine/Content/EngineResources/Black.uasset" 277
+"../../../Engine/Content/EngineResources/DefaultTexture.uasset" 278
+"../../../Engine/Content/EngineResources/DefaultTextureCube.uasset" 279
+"../../../Engine/Content/EngineResources/DefaultVolumeTexture2D.uasset" 280
+"../../../Engine/Content/EngineResources/DefaultVolumeTexture.uasset" 281
+"../../../Engine/Content/EngineResources/GradientTexture0.uasset" 282
+"../../../Engine/Content/EngineSounds/Master.uasset" 283
+"../../../Engine/Content/Functions/Engine_MaterialFunctions01/Shading/ConvertFromDiffSpec.uasset" 284
+"../../../Engine/Content/Functions/Engine_MaterialFunctions01/Shading/PowerToRoughness.uasset" 285
+"../../../Engine/Content/Maps/Templates/Thumbnails/Default.uasset" 286
+"../../../Engine/Content/Maps/Templates/Thumbnails/VR-Basic.uasset" 287
+"../../../Engine/Content/MobileResources/T_MobileControls_texture.uasset" 288
+"../../../Engine/Content/MobileResources/T_MobileMenu2.uasset" 289
+"../../../Engine/Content/MobileResources/HUD/AnalogHat.uasset" 290
+"../../../Engine/Content/MobileResources/HUD/VirtualJoystick_Background.uasset" 291
+"../../../Engine/Content/MobileResources/HUD/VirtualJoystick_Thumb.uasset" 292
+"../../../Engine/Content/MobileResources/HUD/DefaultVirtualJoysticks.uasset" 293
+"../../../Engine/Content/MobileResources/HUD/LeftVirtualJoystickOnly.uasset" 294
+"../../../Engine/Content/MobileResources/HUD/MobileHUDButton1_off.uasset" 295
+"../../../Engine/Content/MobileResources/HUD/MobileHUDButton1_on.uasset" 296
+"../../../Engine/Content/MobileResources/HUD/MobileHUDButton2_off.uasset" 297
+"../../../Engine/Content/MobileResources/HUD/MobileHUDButton2_on.uasset" 298
+"../../../Engine/Content/MobileResources/HUD/MobileHUDButton3.uasset" 299
+"../../../Engine/Content/MobileResources/HUD/MobileHUDButtonFire.uasset" 300
+"../../../Engine/Content/MobileResources/HUD/MobileHUDDirectionPad.uasset" 301
+"../../../Engine/Content/MobileResources/HUD/MobileHUDDirectionPad2.uasset" 302
+"../../../Engine/Content/MobileResources/HUD/MobileHUDDirectionPad3.uasset" 303
+"../../../Engine/Content/MobileResources/HUD/MobileHUDDirectionStick.uasset" 304
+"../../../Engine/Content/MobileResources/HUD/T_Castle_ThumbstickInner.uasset" 305
+"../../../Engine/Content/MobileResources/HUD/T_Castle_ThumbstickOutter.uasset" 306
+"../../../Engine/Content/Tutorial/ContentIntroCurve.uasset" 307
+"../../../Engine/Content/Tutorial/Basics/LevelEditorAttract.uasset" 308
+"../../../Engine/Content/VREditor/LaserPointer/VR_LaserPower_01.uasset" 309
+"../../../Engine/Content/VREditor/TransformGizmo/TransformGizmoMaterial.uasset" 310
+"../../../Engine/Content/VREditor/TransformGizmo/TranslucentTransformGizmoMaterial.uasset" 311
+"../../../Engine/Content/VREditor/TransformGizmo/BoundingBoxCorner.uasset" 312
+"../../../Engine/Content/VREditor/TransformGizmo/BoundingBoxEdge.uasset" 313
+"../../../Engine/Content/VREditor/TransformGizmo/PlaneTranslationHandle.uasset" 314
+"../../../Engine/Content/VREditor/TransformGizmo/Main.uasset" 315
+"../../../Engine/Content/VREditor/TransformGizmo/Xray.uasset" 316
+"../../../Engine/Content/VREditor/TransformGizmo/SM_Sequencer_Key.uasset" 317
+"../../../Engine/Content/VREditor/TransformGizmo/SM_Sequencer_Node.uasset" 318
+"../../Plugins/2D/Paper2D/Content/PlaceholderTextures/DummySpriteTexture.uasset" 319
+"../../Plugins/2D/Paper2D/Content/DummySprite.uasset" 320
+"../../Plugins/2D/Paper2D/Content/DefaultPaperTerrainMaterial.uasset" 321
+"../../Plugins/2D/Paper2D/Content/DummySpriteTexture.uasset" 322
+"../../Plugins/2D/Paper2D/Content/DefaultSpriteMaterial.uasset" 323
+"../../Plugins/2D/Paper2D/Content/MaskedUnlitSpriteMaterial.uasset" 324
+"../../Plugins/2D/Paper2D/Content/OpaqueUnlitSpriteMaterial.uasset" 325
+"../../../Engine/Content/Functions/Engine_MaterialFunctions02/Utility/BreakOutFloat4Components.uasset" 326
+"../../../Engine/Content/Functions/Engine_MaterialFunctions02/Utility/MakeFloat2.uasset" 327
+"../../../Engine/Content/Functions/Engine_MaterialFunctions02/Utility/MakeFloat3.uasset" 328
+"../../Plugins/Runtime/Oculus/OculusVR/Content/Materials/OculusMR_ChromaKey.uasset" 329
+"../../Plugins/Runtime/Oculus/OculusVR/Content/Materials/OculusMR_ChromaKey_Lit.uasset" 330
+"../../Plugins/Runtime/Oculus/OculusVR/Content/Materials/OculusMR_OpaqueColoredMaterial.uasset" 331
+"../../Plugins/Runtime/Oculus/OculusVR/Content/Materials/OculusMR_WhiteMaterial.uasset" 332
+"../../../Engine/Content/EngineSky/C_Sky_Cloud_Color.uasset" 333
+"../../../Engine/Content/EngineSky/C_Sky_Horizon_Color.uasset" 334
+"../../../Engine/Content/EngineSky/C_Sky_Zenith_Color.uasset" 335
+"../../../Engine/Content/EngineSky/T_Sky_Stars.uasset" 336
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Materials/Environment/M_Sky_Jovian.uasset" 337
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Meshes/Environment/SM_SkySphere_Jovian.uasset" 338
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Blueprints/BP_Sky_Sphere_Jovian.uasset" 339
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Character/UE4_Mannequin/Animations/Equip_Rifle_Standing.uasset" 340
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Character/UE4_Mannequin/Animations/WeaponAnims/AM_BR_Equip.uasset" 341
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Character/UE4_Mannequin/Animations/WeaponAnims/AM_BR_Unequip.uasset" 342
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Character/UE4_Mannequin/Animations/Reload_Rifle_Hip.uasset" 343
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Character/UE4_Mannequin/Animations/WeaponAnims/AM_SHZ_Charge_Begin.uasset" 344
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Character/UE4_Mannequin/Animations/WeaponAnims/AM_SHZ_Charge_End.uasset" 345
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Character/UE4_Mannequin/Animations/WeaponAnims/AM_SHZ_Reload.uasset" 346
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Meshes/Weapons/SM_FragGrenade_Physics3.uasset" 347
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Meshes/Weapons/SM_FragGrenade_Skeleton.uasset" 348
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Meshes/Weapons/SM_FragGrenade.uasset" 349
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/StarterContent/Audio/Explosion01.uasset" 350
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/StarterContent/Audio/Explosion02.uasset" 351
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/StarterContent/Audio/Explosion_Cue.uasset" 352
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/StarterContent/Textures/T_Burst_M.uasset" 353
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/StarterContent/Particles/Materials/M_Burst.uasset" 354
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/StarterContent/Textures/T_Explosion_SubUV.uasset" 355
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/StarterContent/Particles/Materials/M_explosion_subUV.uasset" 356
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/StarterContent/Particles/Materials/m_flare_01.uasset" 357
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/StarterContent/Particles/Materials/M_radial_ramp.uasset" 358
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/StarterContent/Textures/T_Smoke_SubUV.uasset" 359
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/StarterContent/Textures/T_Smoke_Tiled_D.uasset" 360
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/StarterContent/Particles/Materials/M_smoke_subUV.uasset" 361
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/StarterContent/Particles/P_Explosion.uasset" 362
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Blueprints/TestGrenadeProj.uasset" 363
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/StarterContent/Textures/T_Metal_Aluminum_D.uasset" 364
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/StarterContent/Materials/M_Metal_Burnished_Steel.uasset" 365
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Meshes/Weapons/SK_BattleRifle_Physics2.uasset" 366
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Meshes/Weapons/SK_BattleRifle_Skeleton.uasset" 367
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Meshes/Weapons/SK_BattleRifle.uasset" 368
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Sounds/SC_BattleRifleFire.uasset" 369
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Blueprints/Weapons/BP_BattleRifle.uasset" 370
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Meshes/Weapons/SK_Blunderbuss_Skeleton.uasset" 371
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Meshes/Weapons/SK_Blunderbuss.uasset" 372
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Blueprints/Weapons/BP_Blunderbuss.uasset" 373
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Character/UE4_Mannequin/Animations/WeaponAnims/AM_SHZ_Equip.uasset" 374
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Character/UE4_Mannequin/Animations/WeaponAnims/AM_SHZ_Unequip.uasset" 375
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Meshes/Weapons/SK_SHZCarbine_PhysicsAsset.uasset" 376
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Meshes/Weapons/SK_SHZRifle_Skeleton.uasset" 377
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Meshes/Weapons/SK_SHZCarbine.uasset" 378
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Sounds/SC_SHZCarbineFire.uasset" 379
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Blueprints/Weapons/BP_SHZCarbine.uasset" 380
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Meshes/Weapons/SK_SHZRifle_PhysicsAsset.uasset" 381
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Meshes/Weapons/SK_SHZRifle.uasset" 382
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Sounds/SC_SHZRifleFire.uasset" 383
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Blueprints/Weapons/BP_SHZRifle.uasset" 384
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Character/UE4_Mannequin/Animations/AM_ReloadTest.uasset" 385
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Character/UE4_Mannequin/Animations/WeaponAnims/AM_SMG_Equip.uasset" 386
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Character/UE4_Mannequin/Animations/WeaponAnims/AM_SMG_Unequip.uasset" 387
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/StarterContent/Textures/T_Metal_Rust_D.uasset" 388
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/StarterContent/Textures/T_Metal_Rust_N.uasset" 389
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/StarterContent/Materials/M_Metal_Rust.uasset" 390
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Sounds/BWTemp/BWTemp_RSMP-Fire.uasset" 391
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Sounds/SC_SMGFire.uasset" 392
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Blueprints/Weapons/BP_SMG.uasset" 393
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Sounds/Freesound/220161__gameaudio__teleport-morphy.uasset" 394
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Sounds/SC_PickupRespawn.uasset" 395
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Blueprints/BP_WeaponSpawner.uasset" 396
+"../../../Engine/Content/EditorLandscapeResources/DataLayer.uasset" 397
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Maps/Athena_BuiltData.uasset" 398
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/StarterContent/Textures/T_Concrete_Poured_D.uasset" 399
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/StarterContent/Textures/T_Concrete_Poured_N.uasset" 400
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/StarterContent/Textures/T_Perlin_Noise_M.uasset" 401
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Materials/Environment/M_ConcreteBase.uasset" 402
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Materials/PhysicalMaterials/PM_Default.uasset" 403
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Materials/Environment/MI_Concrete_DarkGrey.uasset" 404
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/StarterContent/Textures/T_Rock_Slate_D.uasset" 405
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/StarterContent/Textures/T_Rock_Slate_N.uasset" 406
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Materials/Environment/M_RockBase.uasset" 407
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Materials/Environment/MI_Rock_Callisto.uasset" 408
+"../../../Engine/Content/BasicShapes/Cylinder.uasset" 409
+"../../../Engine/Content/EngineMaterials/DefaultPhysicalMaterial.uasset" 410
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Meshes/Environment/CrateCasia150cm.uasset" 411
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/StarterContent/Materials/M_Basic_Floor.uasset" 412
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/StarterContent/Architecture/Floor_400x400.uasset" 413
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/StarterContent/Materials/M_Basic_Wall.uasset" 414
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/StarterContent/Architecture/Wall_400x400.uasset" 415
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/StarterContent/Architecture/Wall_Door_400x400.uasset" 416
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Maps/Athena.umap" 417
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Maps/DuelArena_BuiltData.uasset" 418
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/StarterContent/Textures/T_Concrete_Tiles_D.uasset" 419
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/StarterContent/Textures/T_Concrete_Tiles_M.uasset" 420
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/StarterContent/Textures/T_Concrete_Tiles_N.uasset" 421
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/StarterContent/Textures/T_Concrete_Tiles_Variation_M.uasset" 422
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/StarterContent/Materials/M_Concrete_Tiles.uasset" 423
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Materials/Environment/MI_Concrete_Blue.uasset" 424
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Materials/Environment/MI_Concrete_Brown.uasset" 425
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Materials/Environment/MI_Concrete_Green.uasset" 426
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Materials/Environment/MI_Concrete_Grey.uasset" 427
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Meshes/Environment/JovianDeco/Meshes/SM_JovWall500cm.uasset" 428
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Materials/Environment/MI_Concrete_DarkGreen.uasset" 429
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Meshes/Environment/JovianDeco/Meshes/SM_JovWallCorner.uasset" 430
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Maps/DuelArena.umap" 431
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Maps/MainMenu.umap" 432
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Maps/Parkhaus_BuiltData.uasset" 433
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Materials/Environment/MI_Concrete_Red.uasset" 434
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Materials/Environment/MI_Concrete_Yellow.uasset" 435
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/StarterContent/Architecture/Wall_400x200.uasset" 436
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Maps/Parkhaus.umap" 437
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Maps/Urbania_BuiltData.uasset" 438
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Meshes/Environment/DoorCasiaLarge_DoorR.uasset" 439
+"../../../../../../Users/Kyle/Documents/Unreal Projects/SolUnderSiege/Content/Maps/Urbania.umap" 440
+"../../../Engine/Content/Maps/Entry_BuiltData.uasset" 441
+"../../../Engine/Content/Maps/Entry.umap" 442
