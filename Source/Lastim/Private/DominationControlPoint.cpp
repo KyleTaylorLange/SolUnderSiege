@@ -7,6 +7,7 @@
 #include "TeamState.h"
 #include "SolGameState.h"
 #include "InteractableComponent.h"
+#include "Interaction_CaptureObjective.h"
 #include "DominationControlPoint.h"
 
 
@@ -48,7 +49,7 @@ ADominationControlPoint::ADominationControlPoint(const FObjectInitializer& Objec
 	InteractableComponent->CanInteractWithDelegate.BindUObject(this, &ADominationControlPoint::CanInteractWith);
 	InteractableComponent->OnStartUseByDelegate.BindUObject(this, &ADominationControlPoint::OnStartUseBy);
 	InteractableComponent->InteractionEvents.Empty();
-	InteractableComponent->InteractionEvents.Add(UInteractionEvent_CapturePoint::StaticClass());
+	InteractableComponent->InteractionEvents.Add(UInteraction_CaptureObjective::StaticClass());
 
 
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
@@ -93,7 +94,7 @@ void ADominationControlPoint::OnOverlapEnd(UPrimitiveComponent* HitComp, AActor*
 bool ADominationControlPoint::CanInteractWith(UInteractableComponent* Component, AActor* Interactor, TSubclassOf<UInteractionEvent> Interaction)
 {
 	// Do not allow capture interaction if we already own this point.
-	if (Interaction == UInteractionEvent_CapturePoint::StaticClass() && !bCaptureOnTouch)
+	if (Interaction == UInteraction_CaptureObjective::StaticClass() && !bCaptureOnTouch)
 	{
 		if (ASolCharacter* SChar = Cast<ASolCharacter>(Interactor))
 		{

@@ -1,6 +1,5 @@
 // Copyright Kyle Taylor Lange
 
-#include "Lastim.h"
 #include "InteractableComponent.h"
 
 // Sets default values for this component's properties

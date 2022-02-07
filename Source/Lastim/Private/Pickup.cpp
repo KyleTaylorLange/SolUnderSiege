@@ -9,6 +9,8 @@
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "PickupSpawner.h"
 #include "Pickup.h"
+#include "Interaction_PickUpItem.h"
+#include "Interaction_SwapForItem.h"
 
 //////////////////////////////////////////////////////////////////////////
 // APickup
@@ -57,8 +59,8 @@ APickup::APickup(const FObjectInitializer& ObjectInitializer) : Super(ObjectInit
 	InteractComp->OnStartUseByDelegate.BindUObject(this, &APickup::OnStartUseBy);
 	InteractComp->OnStopUseByDelegate.BindUObject(this, &APickup::OnStopUseBy);
 	InteractComp->InteractionEvents.Empty();
-	InteractComp->InteractionEvents.Add(UInteractionEvent_PickUpItem::StaticClass());
-	InteractComp->InteractionEvents.Add(UInteractionEvent_SwapForItem::StaticClass());
+	InteractComp->InteractionEvents.Add(UInteraction_PickUpItem::StaticClass());
+	InteractComp->InteractionEvents.Add(UInteraction_SwapForItem::StaticClass());
 
 	HeldItem = nullptr;
 
@@ -198,11 +200,11 @@ bool APickup::CanInteractWith(UInteractableComponent* Component, AActor* Interac
 	ASolCharacter* UsingCharacter = Cast<ASolCharacter>(Interactor);
 	if (UsingCharacter && CanBePickedUp(UsingCharacter))
 	{
-		if (Interaction == UInteractionEvent_PickUpItem::StaticClass())
+		if (Interaction == UInteraction_PickUpItem::StaticClass())
 		{
 			return UsingCharacter->CanHoldItem(GetHeldItem());
 		}
-		if (Interaction == UInteractionEvent_SwapForItem::StaticClass())
+		if (Interaction == UInteraction_SwapForItem::StaticClass())
 		{
 			return UsingCharacter->CanSwapForItem(GetHeldItem()) != nullptr;
 		}

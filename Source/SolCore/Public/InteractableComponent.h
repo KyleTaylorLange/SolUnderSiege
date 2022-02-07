@@ -18,7 +18,7 @@ DECLARE_DELEGATE_ThreeParams(FOnStopUseByDelegate, UInteractableComponent*, AAct
  * and may call delegate functions to refine how interaction works.
  */
 UCLASS(Blueprintable, ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
-class LASTIM_API UInteractableComponent : public UActorComponent
+class SOLCORE_API UInteractableComponent : public UActorComponent
 {
 	GENERATED_UCLASS_BODY()
 
