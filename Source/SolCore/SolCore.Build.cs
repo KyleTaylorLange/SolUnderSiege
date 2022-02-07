@@ -2,11 +2,12 @@
 
 using UnrealBuildTool;
 
-public class Lastim : ModuleRules
+public class SolCore : ModuleRules
 {
-	public Lastim(ReadOnlyTargetRules Target) : base(Target)
+	public SolCore(ReadOnlyTargetRules Target) : base(Target)
 	{
-        PrivatePCHHeaderFile = "Public/Lastim.h";
+        PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
+        //PrivatePCHHeaderFile = "Public/SolCore.h";
         PublicDependencyModuleNames.AddRange(
             new string[] { 
                 "Core", 
@@ -17,8 +18,7 @@ public class Lastim : ModuleRules
                 "InputCore",
                 "AIModule",
                 "NavigationSystem",
-                "PhysicsCore",
-                "SolCore"
+                "PhysicsCore"
             }
         );
         PrivateDependencyModuleNames.AddRange(
@@ -29,7 +29,7 @@ public class Lastim : ModuleRules
 				"SlateCore",
 			}
         );
-       // DynamicallyLoadedModuleNames.Add("OnlineSubsystemSteam");
+        // DynamicallyLoadedModuleNames.Add("OnlineSubsystemSteam");
         DynamicallyLoadedModuleNames.AddRange(
             new string[] {
                 "OnlineSubsystemNull",

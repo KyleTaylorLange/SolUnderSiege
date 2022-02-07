@@ -8,6 +8,7 @@ public class SolUnderSiegeTarget : TargetRules
 	public SolUnderSiegeTarget(TargetInfo Target) : base(Target)
 	{
 		Type = TargetType.Game;
+        ExtraModuleNames.Add("SolCore");
         ExtraModuleNames.Add("Lastim");
         //bUsesSteam = true;
     }
