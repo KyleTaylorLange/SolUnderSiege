@@ -1052,16 +1052,6 @@ FString ASolHUD::GetHealthString()
 	return OutString;
 }
 
-FString ASolHUD::GetAmmoString()
-{
-	return FString::Printf(TEXT("GetAmmoString() IS DEPRECIATED"));
-}
-
-FString ASolHUD::GetClipsString()
-{
-	return FString::Printf(TEXT("GetClipsString() IS DEPRECIATED"));
-}
-
 FString ASolHUD::GetTimerString()
 {
 	FString OutString;

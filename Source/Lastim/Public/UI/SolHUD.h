@@ -42,18 +42,10 @@ public:
 UCLASS()
 class ASolHUD : public AHUD
 {
-	GENERATED_BODY()
-
-public:
-	ASolHUD(const FObjectInitializer& ObjectInitializer);
+	GENERATED_UCLASS_BODY()
 
 	/** Primary draw call for the HUD */
 	virtual void DrawHUD() override;
-
-	/* Scales HUD elements. */
-	float HUDDrawScale;
-
-public:
 
 	// Toggles visibility of the inventory screen.
 	void ToggleInventory();
@@ -145,12 +137,6 @@ public:
 	FString GetHealthString();
 
 	UFUNCTION(BlueprintCallable, Category = HUD)
-	FString GetAmmoString();
-
-	UFUNCTION(BlueprintCallable, Category = HUD)
-	FString GetClipsString();
-
-	UFUNCTION(BlueprintCallable, Category = HUD)
 	FString GetTimerString();
 
 	UFUNCTION(BlueprintCallable, Category = HUD)
@@ -164,14 +150,14 @@ public:
 
 	/* Class for the In-Game Menu Widget. Subclassable for gametype-specific options (e.g. changing teams). */
 	//UPROPERTY(EditDefaultsOnly)
-	TSubclassOf< class SInGameMenuWidget> InGameMenuWidgetClass;
+	TSubclassOf<class SInGameMenuWidget> InGameMenuWidgetClass;
 
 	/* Pointer to the HUD's In Game Menu Widget. */
 	TSharedPtr<class SInGameMenuWidget> InGameMenuWidget;
 
 	/* Class for the Scoreboard Widget. The default scoreboard can handle many (but not all) gametypes. */
 	//UPROPERTY(EditDefaultsOnly)
-	TSubclassOf< class SInGameMenuWidget> ScoreboardWidgetClass;
+	TSubclassOf<class SInGameMenuWidget> ScoreboardWidgetClass;
 
 	/* Pointer to the HUD's Scoreboard Widget. */
 	TSharedPtr<class SScoreboardWidget> ScoreboardWidget;
@@ -218,6 +204,12 @@ protected:
 
 	// Should the in-game menu be shown?
 	bool bShowInGameMenu;
+
+	/* Should we show the weapon list? */
+	bool bShowWeaponList;
+
+	/* Scales HUD elements. */
+	float HUDDrawScale;
 	
 	////////////////////////////////
 	// BEGIN UMG STUFF
@@ -264,9 +256,6 @@ protected:
 	/** The amount of NotifyHitDamage after last hit. **/
 	float LastNotifyHitDamage;
 
-	/* Should we show the weapon list? */
-	bool bShowWeaponList;
-
 	/* The weapon we have selected in relation to the currently equipped one. */
 	int32 DeltaWeapSelectIndex;
 
@@ -280,8 +269,5 @@ protected:
 	UPROPERTY(BlueprintReadWrite, Category = HUD)
 	bool bHUDMessagesChanged;
 
-private:
-
-	// There was stuff here, but not any more.
 };
 
