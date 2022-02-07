@@ -20,7 +20,7 @@ class LASTIM_API UInteractionEvent : public UObject
 {
 	GENERATED_UCLASS_BODY()
 
-	FString GetActionName() const;
+	virtual FString GetActionName(AActor* Interactor = nullptr, UObject* Interactee = nullptr) const;
 
 	virtual bool CanInteract(AActor* Interactor, AActor* Interactee) const;
 
@@ -29,11 +29,6 @@ class LASTIM_API UInteractionEvent : public UObject
 	virtual void OnStartUse(AActor* Interactor, AActor* Interactee) const;
 
 	virtual void OnStopUse(AActor* Interactor, AActor* Interactee) const;
-
-protected:
-
-	UPROPERTY(EditDefaultsOnly, Category = Interactable)
-	FString ActionName;
 };
 
 // TODO: Move these to separate header and source files, or move them to objects that use them.
@@ -41,16 +36,22 @@ UCLASS()
 class LASTIM_API UInteractionEvent_PickUpItem : public UInteractionEvent
 {
 	GENERATED_UCLASS_BODY()
+
+		FString GetActionName(AActor* Interactor = nullptr, UObject* Interactee = nullptr) const override;
 };
 
 UCLASS()
 class LASTIM_API UInteractionEvent_SwapForItem : public UInteractionEvent
 {
 	GENERATED_UCLASS_BODY()
+
+	FString GetActionName(AActor* Interactor = nullptr, UObject* Interactee = nullptr) const override;
 };
 
 UCLASS()
 class LASTIM_API UInteractionEvent_CapturePoint : public UInteractionEvent
 {
 	GENERATED_UCLASS_BODY()
+
+	FString GetActionName(AActor* Interactor = nullptr, UObject* Interactee = nullptr) const override;
 };

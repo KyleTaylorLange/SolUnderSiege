@@ -228,7 +228,7 @@ void ASolHUD::DrawHUD()
 			FString TextString = FString::Printf(TEXT("[USE] ~Unknown Use~"));
 			if (Interaction)
 			{
-				FString InteractionName = Interaction->GetDefaultObject<UInteractionEvent>()->GetActionName();
+				FString InteractionName = Interaction->GetDefaultObject<UInteractionEvent>()->GetActionName(MyPawn, Interactable);
 				TextString = FString::Printf(TEXT("[USE] %s"), *InteractionName);
 			}
 			FCanvasTextItem TextItem = GetDefaultTextItem();
