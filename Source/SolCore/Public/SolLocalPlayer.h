@@ -9,11 +9,9 @@
  */
 //UCLASS(config=Engine) UCLASS(Within=Engine, config=Engine, transient)
 UCLASS()
-class LASTIM_API USolLocalPlayer : public ULocalPlayer
+class SOLCORE_API USolLocalPlayer : public ULocalPlayer
 {
 	GENERATED_UCLASS_BODY()
-
-public:
 
 	// Overridden as a test.
 	virtual FString GetNickname() const override;

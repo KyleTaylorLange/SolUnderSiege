@@ -9,7 +9,7 @@
  * 
  */
 UCLASS()
-class LASTIM_API USolGameEngine : public UGameEngine
+class SOLCORE_API USolGameEngine : public UGameEngine
 {
 	GENERATED_BODY()
 	

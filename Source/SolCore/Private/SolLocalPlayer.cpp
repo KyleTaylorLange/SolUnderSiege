@@ -1,10 +1,10 @@
 // Copyright Kyle Taylor Lange
 
-#include "Lastim.h"
+#include "SolLocalPlayer.h"
 #include "Online.h"
 #include "OnlineSubsystemUtils.h"
 #include "OnlineIdentityInterface.h"
-#include "SolLocalPlayer.h"
+#include "SolTypes.h"
 
 USolLocalPlayer::USolLocalPlayer(const class FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)

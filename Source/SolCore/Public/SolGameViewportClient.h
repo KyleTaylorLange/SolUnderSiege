@@ -9,7 +9,7 @@
  * 
  */
 UCLASS()
-class LASTIM_API USolGameViewportClient : public UGameViewportClient
+class SOLCORE_API USolGameViewportClient : public UGameViewportClient
 {
 	GENERATED_BODY()
 	
