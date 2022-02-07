@@ -295,6 +295,7 @@ public:
 	virtual bool IsSprinting() const;
 
 	/** Returns length of the player's inventory. **/
+	UFUNCTION(BlueprintCallable, Category = Gameplay)
 	int32 GetInventoryCount() const;
 
 	// Destroys all inventory items.
