@@ -2,7 +2,7 @@
 
 #include "Lastim.h"
 #include "UnrealNetwork.h"
-#include "SpecificPickup.h"
+#include "Pickup.h"
 #include "InventoryItem.h"
 #include "SolGameMode.h"
 #include "PickupSpawner.h"
@@ -90,10 +90,10 @@ void APickupSpawner::ServerCreateNewPickup_Implementation()
 		FVector SpawnLocation = GetActorLocation() + FVector(0.f, 0.f, 100.f); // Temporarily increase it so it's further away from the ground.
 		FRotator SpawnRotation = GetActorRotation();
 		FTransform SpawnTM(SpawnRotation, SpawnLocation);
-		ASpecificPickup* NewPickup = Cast<ASpecificPickup>(UGameplayStatics::BeginDeferredActorSpawnFromClass(this, ASpecificPickup::StaticClass(), SpawnTM));
+		APickup* NewPickup = Cast<APickup>(UGameplayStatics::BeginDeferredActorSpawnFromClass(this, APickup::StaticClass(), SpawnTM));
 		if (NewPickup && NewInvItem)
 		{
-			NewPickup->AssignItemToPickup(NewInvItem);
+			NewPickup->SetHeldItem(NewInvItem);
 			//int32 Index = FMath::RandRange(0, InventoryClasses.Num() - 1);
 			//NewPickup->SetInventoryClass(InventoryClasses[Index]);
 			NewPickup->Spawner = this;

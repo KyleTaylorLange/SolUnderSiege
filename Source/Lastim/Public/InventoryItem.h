@@ -3,7 +3,6 @@
 #pragma once
 
 #include "GameFramework/Actor.h"
-#include "DroppedPickup.h"
 #include "InventoryItem.generated.h"
 
 /**
@@ -116,7 +115,7 @@ public:
 
 	// Class this inventory item should use for dropped pickups.
 	//UPROPERTY(EditDefaultsOnly)
-	TSubclassOf<class ADroppedPickup> DroppedPickupClass;
+	TSubclassOf<class APickup> DroppedPickupClass;
 
 	/** Modify the damage given to the player. Default implementation does nothing. */
 	//UFUNCTION(BlueprintImplementableEvent)

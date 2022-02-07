@@ -2,6 +2,7 @@
 
 #include "Lastim.h"
 #include "UnrealNetwork.h"
+#include "Pickup.h"
 #include "SolCharacter.h"
 #include "InventoryItem.h"
 
@@ -11,7 +12,7 @@
 AInventoryItem::AInventoryItem(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
 	DisplayName = NSLOCTEXT("InventoryItem", "ItemName", "Unknown Item");
-	DroppedPickupClass = ADroppedPickup::StaticClass();
+	DroppedPickupClass = APickup::StaticClass();
 	MassInKG = 0.5f;
 	InventoryMassScalar = 1.f;
 	bCanBeEquipped = true;

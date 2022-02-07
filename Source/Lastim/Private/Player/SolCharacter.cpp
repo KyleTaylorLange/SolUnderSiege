@@ -16,7 +16,7 @@
 #include "SolHUD.h"
 #include "InteractionEvent.h"
 #include "InteractableComponent.h"
-//#include "Pickup.h" // TO LATER MOVE TO Weapon/InventoryItem
+#include "Pickup.h"
 #include "SolCharacterMovementComponent.h"
 #include "SolCharacter.h"
 #include "Animation/AnimInstance.h"
@@ -491,12 +491,12 @@ void ASolCharacter::DropInventory(AInventoryItem* Inv)
 			FVector SpawnVector = GetWeaponAimLoc(); //+ (GetWeaponAimRot().RotateVector(FVector(50.f, 0.f, 0.f)));
 			FTransform SpawnTM(GetWeaponAimRot(), SpawnVector);
 			// Changed DroppedPickup class to SpecificPickup class since physics don't work on the DroppedPickup.
-			ASpecificPickup* DroppedPickup = Cast<ASpecificPickup>(UGameplayStatics::BeginDeferredActorSpawnFromClass(this, ASpecificPickup::StaticClass(), SpawnTM));
+			APickup* DroppedPickup = Cast<APickup>(UGameplayStatics::BeginDeferredActorSpawnFromClass(this, APickup::StaticClass(), SpawnTM));
 			if (DroppedPickup)
 			{
 				UE_LOG(LogDamage, Warning, TEXT("%s: Dropping item %s."), *GetName(), *Inv->GetName());
 				RemoveFromInventory(Inv);
-				DroppedPickup->AssignItemToPickup(Inv);
+				DroppedPickup->SetHeldItem(Inv);
 				// Temporarily set the lifespan here.
 				DroppedPickup->SetLifeSpan(60.f);
 				// TODO: Inherit the player's velocity.
