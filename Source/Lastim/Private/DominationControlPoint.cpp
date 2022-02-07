@@ -6,6 +6,7 @@
 #include "SolPlayerState.h"
 #include "TeamState.h"
 #include "SolGameState.h"
+#include "InteractableComponent.h"
 #include "DominationControlPoint.h"
 
 
