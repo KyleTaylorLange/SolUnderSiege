@@ -60,6 +60,8 @@ APickup::APickup(const FObjectInitializer& ObjectInitializer) : Super(ObjectInit
 	InteractComp->InteractionEvents.Add(UInteractionEvent_PickUpItem::StaticClass());
 	InteractComp->InteractionEvents.Add(UInteractionEvent_SwapForItem::StaticClass());
 
+	HeldItem = nullptr;
+
 	bReplicates = true;
 	SetReplicatingMovement(true);
 }
@@ -164,9 +166,16 @@ void APickup::CreatePickupMesh(class AInventoryItem* InItem)
 
 AInventoryItem* APickup::GetHeldItem() const
 {
-	// Nothing here in the base class. This version should never be called!
-	//GEngine->AddOnScreenDebugMessage(-1, 15.f, FColor::Green, FString::Printf(TEXT("%s: APickup::GetHeldItem() was called!"), *this->GetName()));
-	return nullptr;
+	return HeldItem;
+}
+
+void APickup::SetHeldItem(AInventoryItem* InItem)
+{
+	HeldItem = InItem;
+	if (HeldItem)
+	{
+		CreatePickupMesh(HeldItem);
+	}
 }
 
 bool APickup::CanBePickedUp(class ASolCharacter* TestPawn) const
@@ -176,19 +185,19 @@ bool APickup::CanBePickedUp(class ASolCharacter* TestPawn) const
 
 void APickup::GivePickupTo(class ASolCharacter* Pawn)
 {
-	// Nothing here in the base class. This version should never be called!
-	//GEngine->AddOnScreenDebugMessage(-1, 15.f, FColor::Green, FString::Printf(TEXT("%s: APickup::GivePickupTo() was called!"), *this->GetName()));
+	if (HeldItem)
+	{
+		Pawn->AddToInventory(HeldItem);
+		// Set item to null so it doesn't get destroyed when pickup is destroyed.
+		HeldItem = nullptr;
+	}
 }
 
 bool APickup::CanInteractWith(UInteractableComponent* Component, AActor* Interactor, TSubclassOf<UInteractionEvent> Interaction)
 {
 	ASolCharacter* UsingCharacter = Cast<ASolCharacter>(Interactor);
-	if (UsingCharacter)
+	if (UsingCharacter && CanBePickedUp(UsingCharacter))
 	{
-		if (!CanBePickedUp(UsingCharacter))
-		{
-			return false;
-		}
 		if (Interaction == UInteractionEvent_PickUpItem::StaticClass())
 		{
 			return UsingCharacter->CanHoldItem(GetHeldItem());
@@ -241,6 +250,10 @@ void APickup::Destroyed()
 	{
 		Spawner->OnPickupDestroyed(this);
 	}
+	if (HeldItem)
+	{
+		HeldItem->Destroy();
+	}
 	Super::Destroyed();
 }
 
@@ -261,4 +274,19 @@ void APickup::InitVelocity(FVector InVelocity)
 	{
 		//RootComponent->Velocity += InVelocity;
 	}
+}
+
+//////////////////////////////////////////////////////////////////////////
+// Replication
+
+void APickup::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(APickup, HeldItem);
+}
+
+void APickup::OnRep_HeldItem()
+{
+	CreatePickupMesh(HeldItem);
 }
