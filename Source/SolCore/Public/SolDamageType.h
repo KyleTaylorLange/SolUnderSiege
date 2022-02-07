@@ -45,7 +45,7 @@ struct FSolRadialDamageEvent : public FRadialDamageEvent
  * 
  */
 UCLASS()
-class LASTIM_API USolDamageType : public UDamageType
+class SOLCORE_API USolDamageType : public UDamageType
 {
 	GENERATED_UCLASS_BODY()
 
