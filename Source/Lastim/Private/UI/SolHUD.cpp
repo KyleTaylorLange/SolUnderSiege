@@ -45,6 +45,9 @@ ASolHUD::ASolHUD(const FObjectInitializer& ObjectInitializer) : Super(ObjectInit
 	//static ConstructorHelpers::FClassFinder<UUserWidget> FoundHUDWidgetClass(TEXT("/Game/UI/HUD/TestHUDWidget"));
 	//UMGHUDWidgetClass = FoundHUDWidgetClass.Class;
 
+	static ConstructorHelpers::FClassFinder<UUserWidget> FoundInventoryWidgetClass(TEXT("/Game/UI/HUD/InventoryDisplayWidget"));
+	InventoryWidgetClass = FoundInventoryWidgetClass.Class;
+
 	//ScoreboardWidgetClass = class<SScoreboardWidget>;
 	//InGameMenuWidgetClass = SInGameMenuWidget::StaticClass();
 
@@ -65,18 +68,16 @@ void ASolHUD::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
 
-	if (UMGHUDWidgetClass && PlayerOwner)
+	if (const ASolPlayerController* PCOwner = Cast<ASolPlayerController>(PlayerOwner))
 	{
-		UMGHUDWidget = CreateWidget<UUserWidget>(PlayerOwner, UMGHUDWidgetClass);
-		if (UMGHUDWidget)
+		// Create the HUD widget.
+		if (HUDWidgetClass)
 		{
-			UMGHUDWidget->AddToViewport();
+			if ((HUDWidget = CreateWidget<UUserWidget>(PlayerOwner, HUDWidgetClass)) != nullptr)
+			{
+				HUDWidget->AddToViewport();
+			}
 		}
-	}
-	const ASolPlayerController* PCOwner = Cast<ASolPlayerController>(PlayerOwner);
-
-	if (PCOwner)
-	{
 		if (!ScoreboardWidget.IsValid())
 		{
 			//SAssignNew(ScoreboardWidget, ScoreboardWidgetClass)
@@ -171,9 +172,9 @@ void ASolHUD::DrawHUD()
 	// Draw the Scoreboard if toggled, the game is over, or if the game hasn't begun yet.
 	if (bShowScoreboard || GetMatchState() == "WaitingPostMatch" || GetMatchState() == "WaitingToStart")
 	{
-		if (UMGHUDWidget && UMGHUDWidget->GetVisibility() != ESlateVisibility::Hidden)
+		if (HUDWidget && HUDWidget->GetVisibility() != ESlateVisibility::Hidden)
 		{
-			UMGHUDWidget->SetVisibility(ESlateVisibility::Hidden);
+			HUDWidget->SetVisibility(ESlateVisibility::Hidden);
 		}
 		if (ScoreboardWidget.IsValid())
 		{
@@ -182,9 +183,9 @@ void ASolHUD::DrawHUD()
 	}
 	else
 	{
-		if (UMGHUDWidget && UMGHUDWidget->GetVisibility() != ESlateVisibility::Visible)
+		if (HUDWidget && HUDWidget->GetVisibility() != ESlateVisibility::Visible)
 		{
-			UMGHUDWidget->SetVisibility(ESlateVisibility::Visible);
+			HUDWidget->SetVisibility(ESlateVisibility::Visible);
 		}
 		if (ScoreboardWidget.IsValid())
 		{
@@ -244,30 +245,35 @@ void ASolHUD::DrawHUD()
 	}
 	// This should be transferred to the HUD.
 	//  In addition, the text should change if the player cannot respawn.
-	else if (!bShowScoreboard && MyGameState && GetMatchState() == "InProgress")
+	else
 	{
-		ASolPlayerState* MyPlayerState = PlayerOwner ? Cast<ASolPlayerState>(PlayerOwner->PlayerState) : NULL;
-		FText DeathText;
-		if (PlayerOwner->CanRestartPlayer())
+		// Hide inventory if we have no pawn.
+		ShowInventory(false);
+		if (!bShowScoreboard && MyGameState && GetMatchState() == "InProgress")
 		{
-			DeathText = NSLOCTEXT("HUD", "DeathText", "Press [FIRE] to respawn.");
-		}
-		else if (MyPlayerState && MyPlayerState->RespawnTime > 0.0f)
-		{
-			DeathText = FText::FromString(FString::Printf(TEXT("Can respawn in: %d"), FMath::CeilToInt(MyPlayerState->RespawnTime)));
-		}
-		if (!DeathText.IsEmpty())
-		{
-			FCanvasTextItem TextItem = GetDefaultTextItem();
-			TextItem.Text = DeathText;
-			TextItem.Font = LargeFont;
-			TextItem.bCentreX = true;
-			TextItem.bCentreY = true;
-			TextItem.Scale = FVector2D(HUDDrawScale, HUDDrawScale);
-			FVector2D DrawPosition = FVector2D((Canvas->ClipX * 0.5), (Canvas->ClipY * 0.75));
-			TextItem.SetColor(FColor::White);
-			TextItem.Position = DrawPosition;
-			Canvas->DrawItem(TextItem);
+			ASolPlayerState* MyPlayerState = PlayerOwner ? Cast<ASolPlayerState>(PlayerOwner->PlayerState) : NULL;
+			FText DeathText;
+			if (PlayerOwner->CanRestartPlayer())
+			{
+				DeathText = NSLOCTEXT("HUD", "DeathText", "Press [FIRE] to respawn.");
+			}
+			else if (MyPlayerState && MyPlayerState->RespawnTime > 0.0f)
+			{
+				DeathText = FText::FromString(FString::Printf(TEXT("Can respawn in: %d"), FMath::CeilToInt(MyPlayerState->RespawnTime)));
+			}
+			if (!DeathText.IsEmpty())
+			{
+				FCanvasTextItem TextItem = GetDefaultTextItem();
+				TextItem.Text = DeathText;
+				TextItem.Font = LargeFont;
+				TextItem.bCentreX = true;
+				TextItem.bCentreY = true;
+				TextItem.Scale = FVector2D(HUDDrawScale, HUDDrawScale);
+				FVector2D DrawPosition = FVector2D((Canvas->ClipX * 0.5), (Canvas->ClipY * 0.75));
+				TextItem.SetColor(FColor::White);
+				TextItem.Position = DrawPosition;
+				Canvas->DrawItem(TextItem);
+			}
 		}
 	}
 	if (!bShowScoreboard && GetMatchState() != MatchState::EnteringMap && GetMatchState() != MatchState::WaitingToStart)
@@ -276,6 +282,7 @@ void ASolHUD::DrawHUD()
 		DrawDeathMessages(DrawPosition);
 		DrawGameData(DrawPosition, MyGameState);
 		DrawHeaderMessages();
+
 		if (MyPawn)
 		{
 			DrawPlayerInfo(MyPawn);
@@ -289,10 +296,6 @@ void ASolHUD::DrawHUD()
 			{
 				DrawWeaponList(MyPawn);
 			}
-			if (bShowInventory)
-			{
-				DrawInventory(MyPawn);
-			}
 		}
 	}
 }
@@ -301,41 +304,6 @@ void ASolHUD::DrawPlayerInfo(ASolCharacter* InPlayer)
 {
 	if (InPlayer)
 	{
-		/*FLinearColor HealthColor = FLinearColor(0.05f,0.05f, 0.75f, 1.f);
-		FLinearColor HealableColor = HealthColor.Desaturate(0.5f);
-		HealableColor.A = 0.25f + 0.5f * FMath::Abs(FMath::Sin(GetWorld()->GetTimeSeconds() * 10.f));
-		FLinearColor UnhealableColor = HealthColor.Desaturate(1.f);
-		UnhealableColor.A = 0.75f;
-		const float Health = InPlayer->GetHealth();
-		const float Healable = InPlayer->GetCappedHealth();
-		const float FullHealth = InPlayer->GetFullHealth();
-		
-		// Draw greyed-out health icon for max health.
-		const float IconSize = FMath::Min(Canvas->ClipY, Canvas->ClipX) * 0.125f;
-		FVector2D Corner(0.f, Canvas->ClipY - IconSize);
-		FVector2D Edge(IconSize, Canvas->ClipY);
-		FCanvasTileItem TileItem(Corner, HealthIconTexture->Resource, FVector2D(IconSize, IconSize), FVector2D(0.f, 0.f), FVector2D(1.f, 1.f), UnhealableColor);
-		TileItem.BlendMode = SE_BLEND_Translucent;
-		Canvas->DrawItem(TileItem);
-
-		// Draw lighter icon for health that can regenerate.
-		TileItem.SetColor(HealableColor);
-		Corner.Y = Canvas->ClipY - (IconSize * Healable / FullHealth);
-		TileItem.Position = Corner;
-		TileItem.Size = FVector2D(IconSize, IconSize * (Healable - Health) / FullHealth);
-		TileItem.UV0 = FVector2D(0.f, FMath::Clamp(1.f - (Healable / FullHealth), 0.f, 1.f));
-		TileItem.UV1 = FVector2D(1.f, FMath::Clamp(1.f - (Health / FullHealth), 0.f, 1.f));
-		Canvas->DrawItem(TileItem);
-
-		// Draw full-colour health icon for current health.
-		TileItem.SetColor(HealthColor);
-		Corner.Y = Canvas->ClipY - (IconSize * Health / FullHealth);
-		TileItem.Position = Corner;
-		TileItem.Size = FVector2D(IconSize, IconSize * Health / FullHealth);
-		TileItem.UV0 = FVector2D(0.f, FMath::Clamp(1.f - (Health / FullHealth), 0.f, 1.f));
-		TileItem.UV1 = FVector2D(1.f, 1.f);
-		Canvas->DrawItem(TileItem);*/
-
 		FLinearColor HealthColor = FLinearColor(0.125f, 0.125f, 1.f);
 		FLinearColor EnergyColor = FLinearColor::Yellow;
 		FVector2D BarSize(Canvas->ClipY / 8.f, Canvas->ClipY / 32.f);
@@ -489,65 +457,6 @@ void ASolHUD::DrawWeaponList(ASolCharacter* InPlayer)
 				DrawPosition.Y += 20.0f;
 				Canvas->DrawItem(TextItem, DrawPosition);
 			}
-		}
-	}
-}
-
-void ASolHUD::DrawInventory(ASolCharacter* InPlayer)
-{
-	if (InPlayer)
-	{
-		//Currently draws inventory in the upper-left corner of the screen.
-		FVector2D Size(0.0f, 0.0f);
-		FVector2D DrawPosition(Canvas->ClipX * 0.15f, Canvas->ClipY * 0.15f);
-		FCanvasTextItem TextItem = GetDefaultTextItem();
-		TextItem.Font = MediumFont;
-
-
-		TArray<AInventoryItem*> InvList = InPlayer->ItemInventory;
-		TArray<FText> TextItemsToDraw, WeaponsToDraw, AmmoToDraw, OthersToDraw;
-		// Get a weapon list.
-		WeaponsToDraw.Add(FText::FromString("Weapons:"));
-		AmmoToDraw.Add(FText::FromString(""));
-		AmmoToDraw.Add(FText::FromString("Ammo:"));
-		OthersToDraw.Add(FText::FromString(""));
-		OthersToDraw.Add(FText::FromString("Other:"));
-
-		for (int32 i = 0; i < InvList.Num(); i++)
-		{
-			if (InvList[i] != nullptr)
-			{
-				AWeapon* WeaponItem = Cast<AWeapon>(InvList[i]);
-				AAmmo* AmmoItem = Cast<AAmmo>(InvList[i]);
-				if (WeaponItem)
-				{
-					WeaponsToDraw.Add(FText::FromString(WeaponItem->GetDisplayName()));
-				}
-				else if (AmmoItem)
-				{
-					AmmoToDraw.Add(FText::FromString(AmmoItem->GetDisplayName()));
-				}
-				else
-				{
-					OthersToDraw.Add(FText::FromString(InvList[i]->GetDisplayName()));
-				}
-			}
-			else
-			{
-				TextItemsToDraw.Add(FText::FromString("NULLPTR"));
-			}
-		}
-
-		TextItemsToDraw.Append(WeaponsToDraw);
-		TextItemsToDraw.Append(AmmoToDraw);
-		TextItemsToDraw.Append(OthersToDraw);
-
-		for (int32 i = 0; i < TextItemsToDraw.Num(); i++)
-		{
-			TextItem.Text = TextItemsToDraw[i];
-			TextItem.SetColor(FColor(127, 127, 127));
-			Canvas->DrawItem(TextItem, DrawPosition);
-			DrawPosition.Y += 20.0f;
 		}
 	}
 }
@@ -832,7 +741,41 @@ void ASolHUD::ToggleInventory()
 
 void ASolHUD::ShowInventory(bool bEnable)
 {
-	bShowInventory = bEnable;
+	// Only show if we have a pawn.
+	ASolCharacter* SolPawn = Cast<ASolCharacter>(GetOwningPawn());
+	if (SolPawn && bEnable && InventoryWidgetClass)
+	{
+		bShowInventory = true;
+		// Create the Inventory widget if it is not already created.
+		if (!InventoryWidget)
+		{
+			if ((InventoryWidget = CreateWidget<UUserWidget>(PlayerOwner, InventoryWidgetClass)) != nullptr)
+			{
+				InventoryWidget->AddToViewport();
+				InventoryWidget->SetVisibility(ESlateVisibility::Visible);
+			}
+		}
+	}
+	// Delete widget if we're not showing the inventory.
+	else
+	{
+		bShowInventory = false;
+		if (InventoryWidget)
+		{
+			InventoryWidget->RemoveFromViewport();
+			InventoryWidget = nullptr;
+		}
+	}
+
+	// Handle showing mouse and allowing input.
+	if (ASolPlayerController* MyPC = Cast<ASolPlayerController>(PlayerOwner))
+	{
+		MyPC->SetShowMouseCursor(bShowInventory);
+		MyPC->bEnableMouseOverEvents = bShowInventory;
+		MyPC->bEnableClickEvents = bShowInventory;
+		MyPC->SetIgnoreLookInput(bShowInventory);
+		//MyPC->SetIgnoreMoveInput(bShowInventory);
+	}
 }
 
 void ASolHUD::ToggleInGameMenu()
@@ -843,13 +786,11 @@ void ASolHUD::ToggleInGameMenu()
 void ASolHUD::ShowInGameMenu(bool bEnable)
 {
 	bShowInGameMenu = bEnable;
-	// Temporary: show cursor. 
-	ASolPlayerController* MyPC = Cast<ASolPlayerController>(PlayerOwner);
 	if (InGameMenuWidget.IsValid())
 	{
 		InGameMenuWidget->SetVisibility(bShowInGameMenu ? EVisibility::Visible : EVisibility::Hidden);
 	}
-	if (MyPC)
+	if (ASolPlayerController* MyPC = Cast<ASolPlayerController>(PlayerOwner))
 	{
 		MyPC->SetShowMouseCursor(bShowInGameMenu);
 		if (bShowInGameMenu)

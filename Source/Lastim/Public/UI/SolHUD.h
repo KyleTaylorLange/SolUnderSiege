@@ -103,9 +103,6 @@ class ASolHUD : public AHUD
 	/* Draws list of the player's weapons. */
 	virtual void DrawWeaponList(class ASolCharacter* InPlayer);
 
-	// Draws the player's inventory screen.
-	virtual void DrawInventory(class ASolCharacter* InPlayer);
-
 	/* Draws death messages in Canvas. */
 	virtual void DrawDeathMessages(FVector2D &DrawPosition);
 
@@ -216,11 +213,19 @@ protected:
 
 	/** Test UMG HUD Class. **/
 	UPROPERTY(EditDefaultsOnly)
-	TSubclassOf< class UUserWidget> UMGHUDWidgetClass;
+	TSubclassOf< class UUserWidget> HUDWidgetClass;
 
 	/** Test UMG HUD Class. **/
 	UPROPERTY(BlueprintReadWrite)
-	UUserWidget* UMGHUDWidget;
+	UUserWidget* HUDWidget;
+
+	/** Test UMG HUD Class. **/
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf< class UUserWidget> InventoryWidgetClass;
+
+	/** Test UMG HUD Class. **/
+	UPROPERTY(BlueprintReadWrite)
+	UUserWidget* InventoryWidget;
 
 	////////////////////////////////
 	// END UMG STUFF
