@@ -1,7 +1,6 @@
 // Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
 #pragma once 
 #include "GameFramework/HUD.h"
-#include "UserWidget.h"
 #include "SolHUD.generated.h"
 
 // String that draws different portions with different colours.
@@ -91,14 +90,8 @@ class ASolHUD : public AHUD
 	/** Notifies the HUD that damage was taken. **/
 	virtual void NotifyPlayerHit(float InDamage);
 
-	/* Draws the player's information (e.g. health). */
-	virtual void DrawPlayerInfo(class ASolCharacter* InPlayer);
-
 	/** Draws the crosshair for the selected weapon. */
-	virtual void DrawCrosshair(ASolCharacter* InPlayer, class AWeapon* InWeapon);
-
-	/* Draws information for the player's current weapon. */
-	virtual void DrawWeaponInfo(class ASolCharacter* InPlayer, class AWeapon* InWeapon);
+	virtual void DrawCrosshair(class ASolCharacter* InPlayer, class AWeapon* InWeapon);
 
 	/* Draws list of the player's weapons. */
 	virtual void DrawWeaponList(class ASolCharacter* InPlayer);
@@ -189,6 +182,8 @@ class ASolHUD : public AHUD
 	UPROPERTY(BlueprintReadOnly, Category = HUD)
 	float HeaderMessageDuration;
 
+
+
 protected:
 
 	virtual void PostInitializeComponents() override;
@@ -213,19 +208,19 @@ protected:
 
 	/** Test UMG HUD Class. **/
 	UPROPERTY(EditDefaultsOnly)
-	TSubclassOf< class UUserWidget> HUDWidgetClass;
+	TSubclassOf<class UUserWidget> HUDWidgetClass;
 
 	/** Test UMG HUD Class. **/
 	UPROPERTY(BlueprintReadWrite)
-	UUserWidget* HUDWidget;
+	class UUserWidget* HUDWidget;
 
 	/** Test UMG HUD Class. **/
 	UPROPERTY(EditDefaultsOnly)
-	TSubclassOf< class UUserWidget> InventoryWidgetClass;
+	TSubclassOf<class UUserWidget> InventoryWidgetClass;
 
 	/** Test UMG HUD Class. **/
 	UPROPERTY(BlueprintReadWrite)
-	UUserWidget* InventoryWidget;
+	class UUserWidget* InventoryWidget;
 
 	////////////////////////////////
 	// END UMG STUFF

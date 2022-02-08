@@ -1,5 +1,6 @@
 // Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
 
+#include "SolHUD.h"
 #include "Lastim.h"
 #include "SolCharacter.h"
 #include "SolGameState.h"
@@ -15,7 +16,6 @@
 #include "Ammo.h"
 #include "InteractableComponent.h"
 #include "Math/UnitConversion.h"
-#include "SolHUD.h"
 #include "Engine/Canvas.h"
 #include "TextureResource.h"
 #include "CanvasItem.h"
@@ -42,8 +42,8 @@ ASolHUD::ASolHUD(const FObjectInitializer& ObjectInitializer) : Super(ObjectInit
 	SmallFont = SmallFontObj.Object; //GEngine->GetSmallFont()
 
 	// Just draw the HUD in canvas for now. Too many changes to keep the UMG one updated.
-	//static ConstructorHelpers::FClassFinder<UUserWidget> FoundHUDWidgetClass(TEXT("/Game/UI/HUD/TestHUDWidget"));
-	//UMGHUDWidgetClass = FoundHUDWidgetClass.Class;
+	static ConstructorHelpers::FClassFinder<UUserWidget> FoundHUDWidgetClass(TEXT("/Game/UI/HUD/HUDWidget"));
+	HUDWidgetClass = FoundHUDWidgetClass.Class;
 
 	static ConstructorHelpers::FClassFinder<UUserWidget> FoundInventoryWidgetClass(TEXT("/Game/UI/HUD/InventoryDisplayWidget"));
 	InventoryWidgetClass = FoundInventoryWidgetClass.Class;
@@ -285,78 +285,16 @@ void ASolHUD::DrawHUD()
 
 		if (MyPawn)
 		{
-			DrawPlayerInfo(MyPawn);
 			AWeapon* MyWeapon = Cast<AWeapon>(MyPawn->GetEquippedItem());
 			if (MyWeapon)
 			{
 				DrawCrosshair(MyPawn, MyWeapon);
-				DrawWeaponInfo(MyPawn, MyWeapon);
 			}
 			if (bShowWeaponList)
 			{
 				DrawWeaponList(MyPawn);
 			}
 		}
-	}
-}
-
-void ASolHUD::DrawPlayerInfo(ASolCharacter* InPlayer)
-{
-	if (InPlayer)
-	{
-		FLinearColor HealthColor = FLinearColor(0.125f, 0.125f, 1.f);
-		FLinearColor EnergyColor = FLinearColor::Yellow;
-		FVector2D BarSize(Canvas->ClipY / 8.f, Canvas->ClipY / 32.f);
-		float MidPadding = Canvas->ClipY * 0.0625f / 2;
-		float EdgePadding = Canvas->ClipY * 0.0625f / 4;
-
-		// Draw health info.
-
-		FVector2D Size(0.0f, 0.0f);
-		FVector2D DrawPosition(Canvas->ClipX, Canvas->ClipY);
-		FCanvasTextItem TextItem = GetDefaultTextItem();
-		TextItem.SetColor(HealthColor);
-		TextItem.Font = MediumFont;
-		FString TextString = FString::Printf(TEXT("%d/%d"), FMath::CeilToInt(InPlayer->GetHealth()), FMath::CeilToInt(InPlayer->GetFullHealth()));
-		TextItem.Text = FText::FromString(TextString);
-		GetTextSize(TextString, Size.X, Size.Y, MediumFont);
-		DrawPosition = FVector2D(Canvas->ClipX * 0.5f - Size.X - MidPadding, Canvas->ClipY - Size.Y - BarSize.Y - EdgePadding);
-		Canvas->DrawItem(TextItem, DrawPosition);
-
-		// Draw energy info.
-		TextItem.SetColor(EnergyColor);
-		TextString = FString::Printf(TEXT("%d/%d"), FMath::CeilToInt(InPlayer->GetEnergy()), FMath::CeilToInt(InPlayer->GetFullEnergy()));
-		TextItem.Text = FText::FromString(TextString);
-		GetTextSize(TextString, Size.X, Size.Y, MediumFont);
-		DrawPosition = FVector2D(Canvas->ClipX * 0.5f + MidPadding, Canvas->ClipY - Size.Y - BarSize.Y - EdgePadding);
-		Canvas->DrawItem(TextItem, DrawPosition);
-
-		FVector2D HealthBarStart;
-		FVector2D EnergyBarEnd;
-		// Draw health bar background.
-		FVector2D StartPos = FVector2D((Canvas->ClipX * 0.5f) - BarSize.X - MidPadding, Canvas->ClipY - BarSize.Y - EdgePadding);
-		FCanvasTileItem TileItem(StartPos, BarSize, HealthColor * 0.5f);
-		//FCanvasTileItem TileItem(Corner, HealthIconTexture->Resource, Corner, Edge, FVector2D(1.f, 1.f), HealthColor);
-		TileItem.BlendMode = SE_BLEND_Translucent;
-		Canvas->DrawItem(TileItem);
-
-		float HealthPct = FMath::Clamp(InPlayer->GetHealth() / InPlayer->GetFullHealth(), 0.f, 1.f);
-		TileItem.Position = FVector2D(StartPos.X + (BarSize.X * (1.0f - HealthPct)), StartPos.Y);
-		TileItem.Size = FVector2D(BarSize.X * HealthPct, BarSize.Y);
-		TileItem.SetColor(HealthColor);
-		Canvas->DrawItem(TileItem);
-
-		// Draw energy bar background.
-		StartPos = FVector2D(Canvas->ClipX * 0.5f + MidPadding, Canvas->ClipY - BarSize.Y - EdgePadding);
-		TileItem.Size = BarSize;
-		TileItem.SetColor(EnergyColor * 0.25f);
-		TileItem.Position = StartPos;
-		Canvas->DrawItem(TileItem);
-
-		float EnergyPct = FMath::Clamp(InPlayer->GetEnergy() / InPlayer->GetFullEnergy(), 0.f, 1.f);
-		TileItem.Size = FVector2D(BarSize.X * EnergyPct, BarSize.Y);
-		TileItem.SetColor(EnergyColor);
-		Canvas->DrawItem(TileItem);
 	}
 }
 
@@ -378,36 +316,6 @@ void ASolHUD::DrawCrosshair(ASolCharacter* InPlayer, AWeapon* InWeapon)
 					ScreenPos.X - (Crosshair.VL * CrosshairScale / 2.f),
 					ScreenPos.Y - (Crosshair.VL * CrosshairScale / 2.f),
 					CrosshairScale);
-			}
-		}
-	}
-}
-
-void ASolHUD::DrawWeaponInfo(ASolCharacter* InPlayer, AWeapon* InWeapon)
-{
-	if (InWeapon)
-	{
-		FVector2D Size(0.0f, 0.0f);
-		FVector2D DrawPosition(Canvas->ClipX * 0.5f, Canvas->ClipY * 0.4f);
-		FCanvasTextItem TextItem = GetDefaultTextItem();
-		TextItem.Font = MediumFont;
-		AFirearm* InFirearm = Cast<AFirearm>(InWeapon);
-		if (InFirearm)
-		{
-			/* Draw ammo string. */
-			FString TextString = FString::Printf(TEXT("Energy: %d - Shots: %d/%d - Percent: %d%%"), InFirearm->GetAmmo(), 
-				InFirearm->GetAmmoForFireMode(InFirearm->GetCurrentFireMode()), InFirearm->GetMaxAmmoForFireMode(InFirearm->GetCurrentFireMode()),
-				FMath::CeilToInt(100 * InFirearm->GetAmmoPct()));
-			TextItem.Text = FText::FromString(TextString);
-			GetTextSize(TextString, Size.X, Size.Y, MediumFont);
-			DrawPosition = FVector2D(Canvas->ClipX - Size.X, Canvas->ClipY - Size.Y);
-			Canvas->DrawItem(TextItem, DrawPosition);
-			ASolWorldSettings* Env = Cast<ASolWorldSettings>(GetWorld()->GetWorldSettings());
-			if (Env)
-			{
-				TextItem.Text = FText::FromString(FString::Printf(TEXT("%d C - %2f gravity"), FMath::FloorToInt(Env->GetTemperature() - 273.15f), Env->GetGravityZ() / 1000));
-				DrawPosition = FVector2D(0, Canvas->ClipY - Size.Y);
-				Canvas->DrawItem(TextItem, DrawPosition);
 			}
 		}
 	}
