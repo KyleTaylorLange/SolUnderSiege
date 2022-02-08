@@ -124,6 +124,10 @@ public:
 	// When item is destroyed. Overridden to inform the Pickup Spawner.
 	virtual void Destroyed() override;
 
+	/** The widget class that should be drawn to the HUD when this item is equipped. **/
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = HUD)
+	TSubclassOf<class UUserWidget> HUDInfoWidgetClass;
+
 protected:
 
 	// Human readable name for this item.

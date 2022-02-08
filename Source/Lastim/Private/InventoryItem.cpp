@@ -4,6 +4,7 @@
 #include "UnrealNetwork.h"
 #include "Pickup.h"
 #include "SolCharacter.h"
+#include "UserWidget.h"
 #include "InventoryItem.h"
 
 //////////////////////////////////////////////////////////////////////////
@@ -26,6 +27,10 @@ AInventoryItem::AInventoryItem(const FObjectInitializer& ObjectInitializer) : Su
 	UStaticMeshComponent* StaticMeshComp = ObjectInitializer.CreateDefaultSubobject<UStaticMeshComponent>(this, TEXT("AmmoMesh"));
 	PickupMesh = StaticMeshComp;
 	PickupMesh->SetVisibility(false); // TEMP. TODO: Properly handle mesh visibility (when to hide and show).
+
+	// Go ahead and init the InfoWidget with the default one.
+	static ConstructorHelpers::FClassFinder<UUserWidget> FoundWidgetClass(TEXT("/Game/UI/HUD/DefaultItemHUDWidget"));
+	HUDInfoWidgetClass = FoundWidgetClass.Class;
 }
 
 void AInventoryItem::PostInitializeComponents()
