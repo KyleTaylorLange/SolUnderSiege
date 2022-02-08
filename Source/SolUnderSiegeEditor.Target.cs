@@ -8,8 +8,6 @@ public class SolUnderSiegeEditorTarget : TargetRules
 	public SolUnderSiegeEditorTarget(TargetInfo Target) : base(Target)
 	{
 		Type = TargetType.Editor;
-		ExtraModuleNames.Add("SolCore");
-		ExtraModuleNames.Add("Lastim");
-		ExtraModuleNames.Add("SolGame");
+		ExtraModuleNames.Add("Sol");
     }
 }

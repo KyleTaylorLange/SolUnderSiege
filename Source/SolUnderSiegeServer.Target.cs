@@ -8,8 +8,6 @@ public class SolUnderSiegeServerTarget : TargetRules
 	public SolUnderSiegeServerTarget(TargetInfo Target) : base(Target)
 	{
 		Type = TargetType.Server;
-		ExtraModuleNames.Add("SolCore");
-		ExtraModuleNames.Add("Lastim");
-		ExtraModuleNames.Add("SolGame");
+		ExtraModuleNames.Add("Sol");
     }
 }
