@@ -1,5 +1,6 @@
 ;// Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
 
+#include "SolCharacter.h"
 #include "Lastim.h"
 #include "UnrealNetwork.h"
 #include "Kismet/KismetSystemLibrary.h" // For the sphere trace.
@@ -18,7 +19,6 @@
 #include "InteractableComponent.h"
 #include "Pickup.h"
 #include "SolCharacterMovementComponent.h"
-#include "SolCharacter.h"
 #include "Animation/AnimInstance.h"
 
 //////////////////////////////////////////////////////////////////////////
@@ -1899,6 +1899,16 @@ bool ASolCharacter::IsSprinting() const
 void ASolCharacter::OnRep_EquippedItem(class AInventoryItem* LastWeapon)
 {
 	SetEquippedWeapon(EquippedItem, LastWeapon);
+}
+
+float ASolCharacter::GetCurrentInventoryMass() const
+{
+	return CurrentInventoryMass;
+}
+
+float ASolCharacter::GetMaxInventoryMass() const
+{
+	return DefaultInventoryMassCapacity;
 }
 
 /** Taken almost verbatim from ShooterGame example. **/

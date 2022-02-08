@@ -3,7 +3,6 @@
 
 #pragma once
 #include "GameFramework/Character.h"
-#include "InventoryItem.h"
 #include "SolCharacter.generated.h"
 
 
@@ -370,13 +369,13 @@ public:
 	float MaxStamina;
 
 	UFUNCTION(BlueprintCallable, Category = Gameplay)
-	AInventoryItem* GetEquippedItem() const;
+	class AInventoryItem* GetEquippedItem() const;
 
 	UFUNCTION(BlueprintCallable, Category = Gameplay)
-	AInventoryItem* GetPendingItem();
+	class AInventoryItem* GetPendingItem();
 
 	UFUNCTION(BlueprintCallable, Category = Gameplay)
-	AInventoryItem* GetInventoryItem(int32 WeapNum);
+	class AInventoryItem* GetInventoryItem(int32 WeapNum);
 
 	UFUNCTION(BlueprintCallable, Category = Gameplay)
 	virtual void EquipSpecificWeapon(int32 WeapNum);
@@ -407,7 +406,7 @@ public:
 	virtual void SpawnInitialInventory(TArray<TSubclassOf<class AInventoryItem>> InventoryFromGameMode, bool bUsePawnDefaultInventory = false);
 
 	// Creates and returns new item of class NewItemClass and adds it to the inventory.
-	AInventoryItem* CreateNewInventoryItem(TSubclassOf<class AInventoryItem> NewItemClass);
+	class AInventoryItem* CreateNewInventoryItem(TSubclassOf<class AInventoryItem> NewItemClass);
 
 	// Adds item to the inventory.
 	void AddToInventory(class AInventoryItem* NewItem, class AInventoryItem* OldItem = nullptr);
@@ -434,7 +433,7 @@ public:
 
 	// Checks if the player can pick up this item by swapping for it.
 	// Returns a pointer to the item they would swap for.
-	AInventoryItem* CanSwapForItem(class AInventoryItem* Item) const;
+	class AInventoryItem* CanSwapForItem(class AInventoryItem* Item) const;
 
 	// Checks if the player can grab the pickup.
 	// TODO: Maybe split to see if player:
@@ -586,6 +585,12 @@ public:
 	/** List of inventory items carried by this character. */
 	UPROPERTY(Transient, Replicated)
 	TArray<class AInventoryItem*> ItemInventory;
+
+	UFUNCTION(BlueprintCallable, Category = Inventory)
+	float GetCurrentInventoryMass() const;
+
+	UFUNCTION(BlueprintCallable, Category = Inventory)
+	float GetMaxInventoryMass() const;
 
 protected:
 
