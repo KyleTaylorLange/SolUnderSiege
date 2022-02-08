@@ -2,9 +2,7 @@
 
 Author: Kyle Taylor Lange
 
-[Download Windows 10 64-bit Executable](https://1drv.ms/u/s!ApUEptdrQboHiL5VWqADVujp1HvbDg?e=2h4bO5)
-
-[Download UE4 Project Files](https://1drv.ms/u/s!ApUEptdrQboHiL5XjLP1MsC0zeNmqg?e=AWPrDq)
+[Download Windows 10 64-bit Executable (2020-03-02)](https://1drv.ms/u/s!ApUEptdrQboHiL5VWqADVujp1HvbDg?e=2h4bO5)
 
 ## Introduction
 
