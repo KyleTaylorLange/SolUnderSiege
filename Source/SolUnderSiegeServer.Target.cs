@@ -10,5 +10,6 @@ public class SolUnderSiegeServerTarget : TargetRules
 		Type = TargetType.Server;
 		ExtraModuleNames.Add("SolCore");
 		ExtraModuleNames.Add("Lastim");
+		ExtraModuleNames.Add("SolGame");
     }
 }

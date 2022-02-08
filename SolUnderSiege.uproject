@@ -28,6 +28,14 @@
 				"CoreUObject",
 				"SolCore"
 			]
+		},
+		{
+			"Name": "SolGame",
+			"Type": "Runtime",
+			"LoadingPhase": "Default",
+			"AdditionalDependencies": [
+				"SolCore"
+			]
 		}
 	],
 	"Plugins": [

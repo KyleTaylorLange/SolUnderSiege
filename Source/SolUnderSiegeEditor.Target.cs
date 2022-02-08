@@ -10,5 +10,6 @@ public class SolUnderSiegeEditorTarget : TargetRules
 		Type = TargetType.Editor;
 		ExtraModuleNames.Add("SolCore");
 		ExtraModuleNames.Add("Lastim");
+		ExtraModuleNames.Add("SolGame");
     }
 }
