@@ -9,6 +9,6 @@ public class SolUnderSiegeTarget : TargetRules
 	{
 		Type = TargetType.Game;
         ExtraModuleNames.Add("Sol");
-        //bUsesSteam = true;
+        bUsesSteam = true;
     }
 }

@@ -22,28 +22,19 @@ public class Sol : ModuleRules
         );
         PrivateDependencyModuleNames.AddRange(
             new string[] {
-				//"InputCore",
                 "UMG",
 				"Slate",
 				"SlateCore",
 			}
         );
-       // DynamicallyLoadedModuleNames.Add("OnlineSubsystemSteam");
         DynamicallyLoadedModuleNames.AddRange(
             new string[] {
-                "OnlineSubsystemNull",
-                "OnlineSubsystemSteam"
+                "OnlineSubsystemNull"
             }
         );
-        /*
         if ((Target.Platform == UnrealTargetPlatform.Win32) || (Target.Platform == UnrealTargetPlatform.Win64) || (Target.Platform == UnrealTargetPlatform.Linux) || (Target.Platform == UnrealTargetPlatform.Mac))
         {
-            if (UEBuildConfiguration.bCompileSteamOSS == true)
-            {
-                DynamicallyLoadedModuleNames.Add("OnlineSubsystemSteam");
-            }
+            DynamicallyLoadedModuleNames.Add("OnlineSubsystemSteam");
         }
-        */
     }
-
 }
