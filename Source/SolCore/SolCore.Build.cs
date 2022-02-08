@@ -6,8 +6,8 @@ public class SolCore : ModuleRules
 {
 	public SolCore(ReadOnlyTargetRules Target) : base(Target)
 	{
-        PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
-        //PrivatePCHHeaderFile = "Public/SolCore.h";
+        //PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
+        PrivatePCHHeaderFile = "Public/SolCore.h";
         PublicDependencyModuleNames.AddRange(
             new string[] { 
                 "Core", 
