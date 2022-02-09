@@ -20,10 +20,6 @@ features. It is currently only being distributed to potential employers and inte
 my programming skills. Almost all graphics are very simple placeholders. I intend to publicly release the
 game once more core features are complete and more thorougly tested.
 
-  The game originally went under a working title "Lastim" that is still reflected in the name of the core 
-module and certain classes that may be deleted or heavily modified in the future. Most of these references 
-have already been replaced, e.g. "LastimGameMode" being renamed to "SolGameMode".
-
 ## Copyright/Use
 
   All code has been written by me with the exception of sections taken or inspired by the source code from
