@@ -185,9 +185,9 @@ void AFirearm::StartReload(bool bFromReplication)
 AAmmo* AFirearm::ChooseBestAmmoItem(int SlotIndex)
 {
 	AAmmo* BestAmmo = nullptr;
-	for (int32 i = 0; i < MyPawn->ItemInventory.Num(); i++)
+	for (int32 i = 0; i < MyPawn->GetInventoryCount(); i++)
 	{
-		AAmmo* TestAmmo = Cast<AAmmo>(MyPawn->ItemInventory[i]);
+		AAmmo* TestAmmo = Cast<AAmmo>(MyPawn->GetInventoryItem(i));
 		if (TestAmmo && TestAmmo->GetClass() == DefaultAmmoClass[SlotIndex])
 		{
 			if (!CurrentAmmoItem[SlotIndex] || CurrentAmmoItem[SlotIndex]->GetAmmoCount() < TestAmmo->GetAmmoCount())

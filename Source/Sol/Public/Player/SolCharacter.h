@@ -580,11 +580,11 @@ protected:
 	UFUNCTION()
 	void OnRep_EquippedItem(class AInventoryItem* LastItem);
 
-public:
-
 	/** List of inventory items carried by this character. */
 	UPROPERTY(Transient, Replicated)
 	TArray<class AInventoryItem*> ItemInventory;
+
+public:
 
 	UFUNCTION(BlueprintCallable, Category = Inventory)
 	float GetCurrentInventoryMass() const;

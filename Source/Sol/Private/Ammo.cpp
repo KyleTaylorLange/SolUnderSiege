@@ -171,9 +171,9 @@ void AAmmo::OnEnterInventory(class ASolCharacter* NewOwner)
 	// Temp test to consolidate ammo.
 	if (NewOwner && !RechargesAmmo())
 	{
-		for (int32 i = 0; i < NewOwner->ItemInventory.Num(); i++)
+		for (int32 i = 0; i < NewOwner->GetInventoryCount(); i++)
 		{
-			AAmmo* OtherAmmo = Cast<AAmmo>(NewOwner->ItemInventory[i]);
+			AAmmo* OtherAmmo = Cast<AAmmo>(NewOwner->GetInventoryItem(i));
 			if (OtherAmmo && OtherAmmo != this && OtherAmmo->GetClass() == this->GetClass())
 			{
 				AAmmo* Transferer;
