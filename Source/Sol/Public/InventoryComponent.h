@@ -83,10 +83,10 @@ protected:
 	TArray<class AInventoryItem*> ItemInventory;
 
 	/** The current amount of mass in this inventory. */
-	UPROPERTY(EditDefaultsOnly, Category = Gameplay)
+	UPROPERTY(Transient, Replicated)
 	float CurrentInventoryMass;
 
 	/** The maximum mass the inventory can hold. */
-	UPROPERTY(EditDefaultsOnly, Category = Gameplay)
+	UPROPERTY(Replicated, EditAnywhere, Category = Gameplay)
 	float DefaultInventoryMassCapacity;
 };

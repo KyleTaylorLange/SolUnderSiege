@@ -12,6 +12,7 @@
 UInventoryComponent::UInventoryComponent(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
+	SetIsReplicated(true);
 	//PrimaryComponentTick.bCanEverTick = true;
 	CurrentInventoryMass = 0.f;
 	DefaultInventoryMassCapacity = 10.f;
@@ -146,5 +147,8 @@ void UInventoryComponent::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	// only to local owner: weapon change requests are locally instigated, other clients don't need it
-	DOREPLIFETIME_CONDITION(UInventoryComponent, ItemInventory, COND_OwnerOnly);
+	DOREPLIFETIME(UInventoryComponent, ItemInventory);
+	//DOREPLIFETIME_CONDITION(UInventoryComponent, ItemInventory, COND_OwnerOnly);
+	DOREPLIFETIME(UInventoryComponent, CurrentInventoryMass);
+	DOREPLIFETIME(UInventoryComponent, DefaultInventoryMassCapacity);
 }
