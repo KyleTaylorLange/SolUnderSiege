@@ -20,12 +20,10 @@ FString USolLocalPlayer::GetNickname() const
 	// TODO: Make system where player can either use Steam name (which dynamically updates)
 	//       or a custom name if entered in the options screen.
 	FName Steam = FName(TEXT("Steam"));
-	IOnlineSubsystem* const SteamOSS = IOnlineSubsystem::Get(Steam);
-	if (SteamOSS)
+	if (IOnlineSubsystem* const SteamOSS = IOnlineSubsystem::Get(Steam))
 	{
 		// Old code gets Steam name (Dakatsu) or the PC name (Kyle-PC-0F31...).
-		UWorld* World = GetWorld();
-		if (World != NULL)
+		if (UWorld* World = GetWorld())
 		{
 			IOnlineIdentityPtr OnlineIdentityInt = Online::GetIdentityInterface(World);
 			if (OnlineIdentityInt.IsValid())
