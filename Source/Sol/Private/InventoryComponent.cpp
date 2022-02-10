@@ -146,9 +146,7 @@ void UInventoryComponent::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	// only to local owner: weapon change requests are locally instigated, other clients don't need it
 	DOREPLIFETIME(UInventoryComponent, ItemInventory);
-	//DOREPLIFETIME_CONDITION(UInventoryComponent, ItemInventory, COND_OwnerOnly);
 	DOREPLIFETIME(UInventoryComponent, CurrentInventoryMass);
 	DOREPLIFETIME(UInventoryComponent, DefaultInventoryMassCapacity);
 }
