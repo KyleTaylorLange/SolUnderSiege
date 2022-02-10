@@ -1,5 +1,6 @@
 // Copyright Kyle Taylor Lange
 
+#include "SolAIController.h"
 #include "Sol.h"
 #include "SolCharacter.h"
 #include "Firearm.h"
@@ -9,7 +10,7 @@
 #include "SolGameMode.h"
 #include "Pickup.h"
 #include "PickupSpawner.h" // Currently only for RoamMap function
-#include "SolAIController.h"
+#include "InventoryComponent.h"
 
 ASolAIController::ASolAIController(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
@@ -236,15 +237,15 @@ void ASolAIController::EquipBestWeapon()
 {
 	if (GetPawn<ASolCharacter>())
 	{
-		int InvLength = GetPawn<ASolCharacter>()->GetInventoryCount();
+		TArray<AInventoryItem*> Inventory = GetPawn<ASolCharacter>()->GetInventoryComponent()->GetInventory();
+		int InvLength = Inventory.Num();
 		AWeapon* BestWeapon = nullptr;
 		AWeapon* EquippedWeapon = Cast<AWeapon>(GetPawn<ASolCharacter>()->GetEquippedItem());
 		int BestWeapIndex = -1;
 		float BestRating = 0.f;
-		for (int i = 0; i < InvLength; i++)
+		for (auto TestItem : Inventory)
 		{
 			// For now, just get the base rating. Do not equip anything with zero rating.
-			AInventoryItem* TestItem = GetPawn<ASolCharacter>()->GetInventoryItem(i);
 			float TestRating = 0.f;
 			AWeapon* TestWeapon = Cast<AWeapon>(TestItem);
 			if (TestWeapon)
@@ -268,13 +269,12 @@ void ASolAIController::EquipBestWeapon()
 			if (TestRating >= BestRating && TestRating > 0.f)
 			{
 				BestWeapon = TestWeapon;
-				BestWeapIndex = i;
 				BestRating = TestRating;
 			}
 		}
 		if (GetPawn<ASolCharacter>() && BestWeapon && GetPawn<ASolCharacter>()->GetPendingItem() == nullptr)
 		{
-			GetPawn<ASolCharacter>()->EquipSpecificWeapon(BestWeapIndex);
+			GetPawn<ASolCharacter>()->EquipItem(BestWeapon);
 		}
 	}
 }

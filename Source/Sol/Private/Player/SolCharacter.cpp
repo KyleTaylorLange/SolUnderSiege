@@ -17,6 +17,7 @@
 #include "SolHUD.h"
 #include "InteractionEvent.h"
 #include "InteractableComponent.h"
+#include "InventoryComponent.h"
 #include "Pickup.h"
 #include "SolCharacterMovementComponent.h"
 #include "Animation/AnimInstance.h"
@@ -78,6 +79,9 @@ ASolCharacter::ASolCharacter(const FObjectInitializer& ObjectInitializer) //: Su
 	HelmetMesh->bOwnerNoSee = true;
 	HelmetMesh->SetCollisionObjectType(ECC_Pawn);
 	HelmetMesh->SetupAttachment(GetMesh(), HelmetAttachPoint);
+
+	InventoryComponent = ObjectInitializer.CreateDefaultSubobject<UInventoryComponent>(this, TEXT("InventoryComponent"));
+	InventoryComponent->SetMaxInventoryMass(10.f);
 
 	/** There are nine different body sections so far. */
 	BodySections.SetNum(9);
@@ -157,8 +161,6 @@ ASolCharacter::ASolCharacter(const FObjectInitializer& ObjectInitializer) //: Su
 	MaxEnergy = 150.f;
 	Stamina = 10.f;
 	MaxStamina = 10.f;
-	DefaultInventoryMassCapacity = 10.f;
-	CurrentInventoryMass = 0.f;
 
 	CurrentAimPct = 0.f;
 	CurrentZoomPct = 0.f;
@@ -426,10 +428,11 @@ void ASolCharacter::OnNextWeapon()
 
 void ASolCharacter::EquipWeaponByDeltaIndex(int32 DeltaIndex)
 {
-	if (GetInventoryCount() >= 1 && (EquippedItem == NULL || EquippedItem->GetWeaponState() != "Equipping"))
+	if (GetInventoryComponent()->GetInventoryCount() >= 1 && (EquippedItem == NULL || EquippedItem->GetWeaponState() != "Equipping"))
 	{
-		const int32 EquippedItemIdx = ItemInventory.IndexOfByKey(EquippedItem); //Becomes -1 if there is no equipped weapon.
-		AInventoryItem* NewItem = ItemInventory[FMath::Abs(EquippedItemIdx + DeltaIndex) % GetInventoryCount()];
+		TArray<AInventoryItem*> Inventory = GetInventoryComponent()->GetInventory();
+		const int32 EquippedItemIdx = Inventory.IndexOfByKey(EquippedItem);
+		AInventoryItem* NewItem = Inventory[FMath::Abs(EquippedItemIdx + DeltaIndex) % Inventory.Num()];
 		if (NewItem && NewItem->CanBeEquipped() && NewItem != EquippedItem)
 		{
 			SetPendingWeapon(NewItem); //EquipItem(NewWeapon);
@@ -457,18 +460,15 @@ void ASolCharacter::OnStopUse()
 
 /** Below functions deal with the result of the input. **/
 
-void ASolCharacter::EquipItem(AInventoryItem* Weapon)
+void ASolCharacter::EquipItem(AInventoryItem* Item)
 {
-	if (Weapon)
+	if (GetLocalRole() == ROLE_Authority)
 	{
-		if (GetLocalRole() == ROLE_Authority)
-		{
-			SetEquippedWeapon(Weapon);
-		}
-		else
-		{
-			ServerEquipWeapon(Weapon);
-		}
+		SetEquippedWeapon(Item);
+	}
+	else
+	{
+		ServerEquipWeapon(Item);
 	}
 }
 
@@ -484,18 +484,18 @@ void ASolCharacter::ServerEquipWeapon_Implementation(AInventoryItem* Weapon)
 
 void ASolCharacter::DropInventory(AInventoryItem* Inv)
 {
-	if (Inv && Inv->DroppedPickupClass)
+	// Only allow us to drop the item if it is in our inventory.
+	if (Inv && Inv->DroppedPickupClass && GetInventoryComponent()->ContainsItem(Inv))
 	{
 		if (GetLocalRole() == ROLE_Authority)
 		{
 			FVector SpawnVector = GetWeaponAimLoc(); //+ (GetWeaponAimRot().RotateVector(FVector(50.f, 0.f, 0.f)));
 			FTransform SpawnTM(GetWeaponAimRot(), SpawnVector);
-			// Changed DroppedPickup class to SpecificPickup class since physics don't work on the DroppedPickup.
 			APickup* DroppedPickup = Cast<APickup>(UGameplayStatics::BeginDeferredActorSpawnFromClass(this, APickup::StaticClass(), SpawnTM));
 			if (DroppedPickup)
 			{
 				UE_LOG(LogDamage, Warning, TEXT("%s: Dropping item %s."), *GetName(), *Inv->GetName());
-				RemoveFromInventory(Inv);
+				GetInventoryComponent()->RemoveFromInventory(Inv);
 				DroppedPickup->SetHeldItem(Inv);
 				// Temporarily set the lifespan here.
 				DroppedPickup->SetLifeSpan(60.f);
@@ -672,6 +672,11 @@ USkeletalMeshComponent* ASolCharacter::GetPawnMesh() const
 	return IsFirstPerson() ? Mesh1P : GetMesh();
 }
 
+UInventoryComponent* ASolCharacter::GetInventoryComponent() const
+{
+	return InventoryComponent;
+}
+
 /** Mesh Functions **/
 USkeletalMeshComponent* ASolCharacter::GetSpecificPawnMesh(bool WantFirstPerson) const
 {
@@ -807,33 +812,6 @@ void ASolCharacter::SetWeaponFiringAllowed(bool bInWeaponFiringAllowed)
 	}
 }
 
-/** Just for debug purposes right now. **/
-AInventoryItem* ASolCharacter::GetInventoryItem(int32 WeapNum)
-{
-	AInventoryItem* TestWeapon = ItemInventory[WeapNum];
-	if (TestWeapon != NULL)
-	{
-		return TestWeapon;
-	}
-	else
-	{
-		return nullptr;
-	}
-}
-
-void ASolCharacter::EquipSpecificWeapon(int32 WeapNum)
-{
-	if (GetInventoryCount() >= (WeapNum + 1) && (EquippedItem == NULL || EquippedItem->GetWeaponState() != "Equipping"))
-	{
-		AInventoryItem* NewItem = ItemInventory[WeapNum];
-		/** Don't re-equip the same weapon. **/
-		if (NewItem && NewItem->CanBeEquipped() && NewItem != EquippedItem)
-		{
-			SetPendingWeapon(NewItem); // EquipItem(NewWeapon);
-		}
-	}
-}
-
 void ASolCharacter::SetEquippedWeapon(AInventoryItem* NewWeapon, AInventoryItem* LastWeapon)
 {
 	AInventoryItem* LocalLastWeapon = nullptr;
@@ -922,33 +900,14 @@ void ASolCharacter::SpawnInitialInventory(TArray<TSubclassOf<AInventoryItem>> De
 	// Equip an item we can wield.
 	if (!EquippedItem)
 	{
-		for (int32 i = 0; i < ItemInventory.Num(); i++)
+		for (auto InvItem : GetInventoryComponent()->GetInventory())
 		{
-			if (ItemInventory[i] && ItemInventory[i]->CanBeEquipped())
+			if (InvItem && InvItem->CanBeEquipped())
 			{
-				EquipItem(ItemInventory[i]);
+				EquipItem(InvItem);
 				break;
 			}
 		}
-	}
-}
-
-int32 ASolCharacter::GetInventoryCount() const
-{
-	return ItemInventory.Num();
-}
-
-void ASolCharacter::DestroyInventory()
-{
-	for (int32 i = 0; i < ItemInventory.Num(); i++)
-	{
-		UE_LOG(LogDamage, Warning, TEXT("%s: Deleting Item %s."), *GetName(), *ItemInventory[i]->GetName());
-		if (ItemInventory[i]->GetOwningPawn() != this && ItemInventory[i]->GetOwningPawn() != nullptr)
-		{
-			UE_LOG(LogDamage, Warning, TEXT("%s: Item %s belonged to another pawn!"), *GetName(), *ItemInventory[i]->GetName());
-		}
-		ItemInventory[i]->SetOwningPawn(nullptr);
-		ItemInventory[i]->Destroy();
 	}
 }
 
@@ -961,73 +920,13 @@ AInventoryItem* ASolCharacter::CreateNewInventoryItem(TSubclassOf<class AInvento
 	FActorSpawnParameters SpawnInfo;
 	SpawnInfo.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 	AInventoryItem* NewItem = GetWorld()->SpawnActor<AInventoryItem>(NewItemClass, SpawnInfo);
-	AddToInventory(NewItem);
+	GetInventoryComponent()->AddToInventory(NewItem);
 	return NewItem;
-}
-
-void ASolCharacter::AddToInventory(AInventoryItem* NewItem, AInventoryItem* OldItem)
-{
-	if (NewItem != nullptr && GetLocalRole() == ROLE_Authority)
-	{
-		if (CanHoldItem(NewItem) || CanSwapForItem(NewItem))
-		{
-			if (!CanHoldItem(NewItem))
-			{
-				OldItem = CanSwapForItem(NewItem);
-				if (OldItem)
-				{
-					DropInventory(OldItem);
-				}
-			}
-			ItemInventory.Add(NewItem);
-			CurrentInventoryMass += NewItem->GetMassInInventory();
-			NewItem->OnEnterInventory(this);
-			// Check if NewItem is nullptr just in case it is immediately deleted by the above function.
-			if (!GetEquippedItem() && NewItem && NewItem->CanBeEquipped())
-			{
-				EquipItem(NewItem);
-			}
-		}
-	}
-}
-
-bool ASolCharacter::RemoveFromInventory(AInventoryItem* ItemToRemove)
-{
-	if (ItemToRemove && GetLocalRole() == ROLE_Authority)
-	{
-		ItemInventory.Remove(ItemToRemove);
-		CurrentInventoryMass -= FMath::Min(ItemToRemove->GetMassInInventory(), CurrentInventoryMass);
-		if (EquippedItem == ItemToRemove)
-		{
-			EquippedItem = nullptr;
-		}
-		ItemToRemove->OnLeaveInventory();
-	}
-	return true;
-}
-
-AInventoryItem* ASolCharacter::CanSwapForItem(AInventoryItem* Item) const
-{
-	// Can't swap if there's no equipped weapon to swap.
-	if (EquippedItem && Item)
-	{
-		const float MassWithSwap = CurrentInventoryMass - EquippedItem->GetMassInInventory() + Item->GetMassInInventory();
-		if (MassWithSwap <= DefaultInventoryMassCapacity)
-		{
-			return EquippedItem;
-		}
-	}
-	return nullptr;
-}
-
-bool ASolCharacter::CanHoldItem(AInventoryItem* Item) const
-{
-	return Item && CurrentInventoryMass + Item->GetMassInInventory() <= DefaultInventoryMassCapacity;
 }
 
 bool ASolCharacter::CanPickUpItem(AInventoryItem* Item) const
 {
-	return CanHoldItem(Item) || CanSwapForItem(Item);
+	return InventoryComponent->CanHoldItem(Item) || InventoryComponent->CanSwapForItem(Item);
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -1358,7 +1257,7 @@ float ASolCharacter::TakeDamage(float Damage, struct FDamageEvent const& DamageE
 	Damage = Game ? Game->ModifyDamage(Damage, this, DamageEvent, EventInstigator, DamageCauser) : 0.f;
 
 	// Let inventory (e.g. armour) modify incoming damage.
-	for (auto InvItem : ItemInventory)
+	for (auto InvItem : GetInventoryComponent()->GetInventory())
 	{
 		InvItem->ModifyDamageTaken(Damage, DamageEvent.DamageTypeClass);
 	}
@@ -1547,9 +1446,10 @@ void ASolCharacter::OnDeath(float KillingDamage, struct FDamageEvent const& Dama
 		{
 			DropInventory(EquippedItem);
 		}
-		while (ItemInventory.IsValidIndex(0))
+		while (GetInventoryComponent()->GetInventoryCount() > 0)
 		{
-			DropInventory(ItemInventory[0]);
+			// Roundabout way of dropping the first item in the inventory.
+			DropInventory(GetInventoryComponent()->GetInventory()[0]);
 		}
 
 		// Drop up to three bags of ammo loot.
@@ -1585,7 +1485,7 @@ void ASolCharacter::OnDeath(float KillingDamage, struct FDamageEvent const& Dama
 			}
 		}*/
 
-		DestroyInventory();
+		GetInventoryComponent()->DestroyInventory();
 	}
 
 	// switch back to 3rd person view
@@ -1866,9 +1766,6 @@ void ASolCharacter::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & Out
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	// only to local owner: weapon change requests are locally instigated, other clients don't need it
-	DOREPLIFETIME_CONDITION(ASolCharacter, ItemInventory, COND_OwnerOnly);
-
 	// everyone except local owner: flag change is locally instigated
 	DOREPLIFETIME_CONDITION(ASolCharacter, bIsAiming, COND_SkipOwner);
 	DOREPLIFETIME_CONDITION(ASolCharacter, bIsSprinting, COND_SkipOwner);
@@ -1899,16 +1796,6 @@ bool ASolCharacter::IsSprinting() const
 void ASolCharacter::OnRep_EquippedItem(class AInventoryItem* LastWeapon)
 {
 	SetEquippedWeapon(EquippedItem, LastWeapon);
-}
-
-float ASolCharacter::GetCurrentInventoryMass() const
-{
-	return CurrentInventoryMass;
-}
-
-float ASolCharacter::GetMaxInventoryMass() const
-{
-	return DefaultInventoryMassCapacity;
 }
 
 /** Taken almost verbatim from ShooterGame example. **/

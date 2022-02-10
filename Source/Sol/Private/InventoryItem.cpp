@@ -1,11 +1,12 @@
 // Copyright Kyle Taylor Lange
 
+#include "InventoryItem.h"
 #include "Sol.h"
 #include "UnrealNetwork.h"
 #include "Pickup.h"
 #include "SolCharacter.h"
 #include "UserWidget.h"
-#include "InventoryItem.h"
+#include "InventoryComponent.h"
 
 //////////////////////////////////////////////////////////////////////////
 // AInventoryItem
@@ -384,7 +385,7 @@ void AInventoryItem::Destroyed()
 {
 	if (MyPawn)
 	{
-		MyPawn->RemoveFromInventory(this);
+		MyPawn->GetInventoryComponent()->RemoveFromInventory(this);
 		//GEngine->AddOnScreenDebugMessage(-1, 600.f, FColor::Red, FString::Printf(TEXT("~~~~%s: Item in inventory before destruction!~~~~"), *this->GetName()));
 		UE_LOG(LogDamage, Warning, TEXT("DESTROYED(): %s still has owner!"), *this->GetName());
 

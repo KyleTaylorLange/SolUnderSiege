@@ -3,23 +3,18 @@
 #pragma once
 
 #include "GameFramework/Actor.h"
-#include "InventoryItem.h"
 #include "PickupSpawner.generated.h"
 
 UCLASS()
 class SOL_API APickupSpawner : public AActor
 {
-	GENERATED_BODY()
-	
-public:	
-	// Sets default values for this actor's properties
-	APickupSpawner(const FObjectInitializer& ObjectInitializer);
+	GENERATED_UCLASS_BODY()
 
 	// Called when the game starts or when spawned.
 	virtual void BeginPlay() override;
 	
 	// Called every frame.
-	virtual void Tick( float DeltaSeconds ) override;
+	virtual void Tick(float DeltaSeconds) override;
 
 	// Classes of pickup to spawn, chosen randomly.
 	UPROPERTY(EditAnywhere, Category = Gameplay)
@@ -38,7 +33,7 @@ public:
 	USoundCue* RespawnSound;
 
 	// Current list of spawned pickups.
-	TArray<APickup*> SpawnedPickups;
+	TArray<class APickup*> SpawnedPickups;
 
 	// Maximum amount of pickups that can exist before the spawner stops spawning them. Generally just one.
 	UPROPERTY(EditAnywhere, Category = Gameplay)
@@ -51,8 +46,6 @@ protected:
 
 	UFUNCTION(reliable, server, WithValidation)
 	void ServerCreateNewPickup();
-	bool ServerCreateNewPickup_Validate();
-	void ServerCreateNewPickup_Implementation();
 
 	// Last time a weapon was spawned.
 	float NextSpawnTime;

@@ -13,12 +13,12 @@
 #include "SolPlayerState.h"
 #include "TeamState.h"
 #include "Firearm.h"
-#include "Ammo.h"
 #include "InteractableComponent.h"
 #include "Math/UnitConversion.h"
 #include "Engine/Canvas.h"
 #include "TextureResource.h"
 #include "CanvasItem.h"
+#include "InventoryComponent.h"
 
 ASolHUD::ASolHUD(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
@@ -331,13 +331,14 @@ void ASolHUD::DrawWeaponList(ASolCharacter* InPlayer)
 		TextItem.Font = MediumFont;
 		TextItem.bCentreX = true;
 		AInventoryItem* EquippedWeapon = InPlayer->GetEquippedItem();
-		AInventoryItem* TestWeapon = nullptr; // MyPawn->GetInventoryItem(i);
+		AInventoryItem* TestWeapon = nullptr;
 		int32 EquippedWeaponIndex = -1;
 
 		/* Roundabout way to get EquippedWeaponIndex. */
-		for (int32 i = 0; i < InPlayer->GetInventoryCount(); i++)
+		TArray<AInventoryItem*> Inventory = InPlayer->GetInventoryComponent()->GetInventory();
+		for (int32 i = 0; i < Inventory.Num(); i++)
 		{
-			TestWeapon = Cast<AInventoryItem>(InPlayer->GetInventoryItem(i));
+			TestWeapon = Cast<AInventoryItem>(Inventory[i]);
 			if (TestWeapon == EquippedWeapon)
 			{
 				EquippedWeaponIndex = i;
@@ -346,15 +347,15 @@ void ASolHUD::DrawWeaponList(ASolCharacter* InPlayer)
 		}
 
 		/* Draw the weapon list. */
-		for (int32 i = 0; i < InPlayer->GetInventoryCount(); i++)
+		for (int32 i = 0; i < Inventory.Num(); i++)
 		{
-			TestWeapon = InPlayer->GetInventoryItem(i);
+			TestWeapon = Inventory[i];
 			if (TestWeapon)
 			{
-				TextItem.Text = FText::FromString(InPlayer->GetInventoryItem(i)->GetDisplayName());
+				TextItem.Text = FText::FromString(Inventory[i]->GetDisplayName());
 				TextItem.SetColor(FColor(127, 127, 127));
 				// Highlight equipped weapon and selected weapon.
-				if (FMath::Abs(EquippedWeaponIndex + DeltaWeapSelectIndex) % InPlayer->GetInventoryCount() == i)
+				if (FMath::Abs(EquippedWeaponIndex + DeltaWeapSelectIndex) % Inventory.Num() == i)
 				{
 					TextItem.SetColor(FColor::Blue);
 				}

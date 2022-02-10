@@ -186,6 +186,10 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = Mesh)
 	FName BackAttachPoint;
 
+	/** Component responsible for handling inventory. */
+	UPROPERTY(VisibleDefaultsOnly, Category = Gameplay)
+	class UInventoryComponent* InventoryComponent;
+
 	/** The different sections of the player's body. */
 	UPROPERTY(EditDefaultsOnly, Category = Mesh)
 	TArray<FBodySectionInfo> BodySections;
@@ -200,16 +204,18 @@ private:
 	/** Sets bIsSprinting, and thus if the character is sprinting. **/
 	virtual void SetSprinting(bool bNewSprinting);
 
-	// Equip a specific weapon.
-	void EquipItem(class AInventoryItem* Item);
-
-	// Drop a specific inventory item.
-	void DropInventory(class AInventoryItem* Inv);
-
 	// Run through possible USE actions, then executes the best one.
 	void HandleUse();
 
 public:
+
+	// Equip a specific weapon.
+	UFUNCTION(BlueprintCallable, Category = Inventory)
+	void EquipItem(class AInventoryItem* Item);
+
+	// Drop a specific inventory item.
+	UFUNCTION(BlueprintCallable, Category = Inventory)
+	void DropInventory(class AInventoryItem* Inv);
 
 	// Returns either the first or third person mesh.
 	USkeletalMeshComponent* GetSpecificPawnMesh(bool WantFirstPerson) const;
@@ -220,6 +226,13 @@ public:
 
 	// Gets the correct mesh (first person or third person).
 	USkeletalMeshComponent* GetPawnMesh() const;
+
+	/**
+	 * Gets the InventoryComponent
+	 * @return The inventory component.
+	 */
+	UFUNCTION(BlueprintCallable, Category = Inventory)
+	class UInventoryComponent* GetInventoryComponent() const;
 
 	/** Base turn rate, in deg/sec. Other scaling may affect final turn rate. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category=Camera)
@@ -292,13 +305,6 @@ public:
 	/** Returns bIsSprinting. **/
 	UFUNCTION(BlueprintCallable, Category = Gameplay)
 	virtual bool IsSprinting() const;
-
-	/** Returns length of the player's inventory. **/
-	UFUNCTION(BlueprintCallable, Category = Gameplay)
-	int32 GetInventoryCount() const;
-
-	// Destroys all inventory items.
-	virtual void DestroyInventory();
 
 	// Get item we can use at the moment.
 	UFUNCTION(BlueprintCallable, Category = Gameplay)
@@ -374,12 +380,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = Gameplay)
 	class AInventoryItem* GetPendingItem();
 
-	UFUNCTION(BlueprintCallable, Category = Gameplay)
-	class AInventoryItem* GetInventoryItem(int32 WeapNum);
-
-	UFUNCTION(BlueprintCallable, Category = Gameplay)
-	virtual void EquipSpecificWeapon(int32 WeapNum);
-
 	/** Switches to a weapon based on its place in the weapon list relative to the current weapon. */
 	UFUNCTION(BlueprintCallable, Category = Gameplay)
 	virtual void EquipWeaponByDeltaIndex(int32 DeltaIndex);
@@ -408,12 +408,6 @@ public:
 	// Creates and returns new item of class NewItemClass and adds it to the inventory.
 	class AInventoryItem* CreateNewInventoryItem(TSubclassOf<class AInventoryItem> NewItemClass);
 
-	// Adds item to the inventory.
-	void AddToInventory(class AInventoryItem* NewItem, class AInventoryItem* OldItem = nullptr);
-
-	/** Removes item from inventory. */
-	bool RemoveFromInventory(class AInventoryItem* ItemToRemove);
-
 	/* Called by the player's previous weapon once it has finished being unequipped. */
 	void OnWeaponUnequipFinish(class AInventoryItem* OldWeapon);
 
@@ -427,13 +421,6 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = Animation)
 	UAnimSequence* GetIdleAnimSequence() const;
-
-	// Checks if the player can hold an inventory item (not including swapping for one).
-	bool CanHoldItem(class AInventoryItem* Item) const;
-
-	// Checks if the player can pick up this item by swapping for it.
-	// Returns a pointer to the item they would swap for.
-	class AInventoryItem* CanSwapForItem(class AInventoryItem* Item) const;
 
 	// Checks if the player can grab the pickup.
 	// TODO: Maybe split to see if player:
@@ -579,28 +566,6 @@ protected:
 
 	UFUNCTION()
 	void OnRep_EquippedItem(class AInventoryItem* LastItem);
-
-	/** List of inventory items carried by this character. */
-	UPROPERTY(Transient, Replicated)
-	TArray<class AInventoryItem*> ItemInventory;
-
-public:
-
-	UFUNCTION(BlueprintCallable, Category = Inventory)
-	float GetCurrentInventoryMass() const;
-
-	UFUNCTION(BlueprintCallable, Category = Inventory)
-	float GetMaxInventoryMass() const;
-
-protected:
-
-	/** The mass the player can hold in their inventory. */
-	UPROPERTY(EditDefaultsOnly, Category = Gameplay)
-	float DefaultInventoryMassCapacity;
-
-	/** The current amount of mass held by the player. */
-	UPROPERTY(EditDefaultsOnly, Category = Gameplay)
-	float CurrentInventoryMass;
 
 	void SetEquippedWeapon(class AInventoryItem* NewWeapon, class AInventoryItem* LastWeapon = nullptr);
 

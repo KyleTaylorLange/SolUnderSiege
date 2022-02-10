@@ -1,9 +1,10 @@
 // Copyright Kyle Taylor Lange
 
+#include "Ammo.h"
 #include "Sol.h"
 #include "UnrealNetwork.h"
 #include "SolCharacter.h"
-#include "Ammo.h"
+#include "InventoryComponent.h"
 
 AAmmo::AAmmo(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
@@ -157,10 +158,9 @@ void AAmmo::OnUnloadFromWeapon()
 	}
 	else if (AmmoCount <= 0)
 	{
-		ASolCharacter* LOwner = GetOwningPawn();
-		if (LOwner)
+		if (ASolCharacter* SolOwner = GetOwningPawn())
 		{
-			LOwner->RemoveFromInventory(this);
+			SolOwner->GetInventoryComponent()->RemoveFromInventory(this);
 		}
 		Destroy();
 	}
@@ -171,9 +171,10 @@ void AAmmo::OnEnterInventory(class ASolCharacter* NewOwner)
 	// Temp test to consolidate ammo.
 	if (NewOwner && !RechargesAmmo())
 	{
-		for (int32 i = 0; i < NewOwner->GetInventoryCount(); i++)
+		TArray<AInventoryItem*> AllItems = NewOwner->GetInventoryComponent()->GetInventory();
+		for (int32 i = 0; i < AllItems.Num(); i++)
 		{
-			AAmmo* OtherAmmo = Cast<AAmmo>(NewOwner->GetInventoryItem(i));
+			AAmmo* OtherAmmo = Cast<AAmmo>(AllItems[i]);
 			if (OtherAmmo && OtherAmmo != this && OtherAmmo->GetClass() == this->GetClass())
 			{
 				AAmmo* Transferer;
@@ -193,7 +194,7 @@ void AAmmo::OnEnterInventory(class ASolCharacter* NewOwner)
 				Transferee->AddAmmo(AmmoToTransfer);
 				if (Transferer->GetAmmoCount() <= 0)
 				{
-					NewOwner->RemoveFromInventory(Transferer);
+					NewOwner->GetInventoryComponent()->RemoveFromInventory(Transferer);
 					Transferer->Destroy();
 				}
 			}

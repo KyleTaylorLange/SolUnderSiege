@@ -5,6 +5,7 @@
 #include "SolCharacter.h"
 #include "TeamState.h"
 #include "GameMode_Elimination.h"
+#include "InventoryComponent.h"
 
 
 //////////////////////////////////////////////////////////////////////////
@@ -94,7 +95,7 @@ void AGameMode_Elimination::PrepareToStartRound()
 				Ctrlr->UnPossess();
 				if (OldPawn)
 				{
-					OldPawn->DestroyInventory();
+					OldPawn->GetInventoryComponent()->DestroyInventory();
 					OldPawn->DetachFromControllerPendingDestroy();
 					OldPawn->TurnOff();
 					OldPawn->SetActorHiddenInGame(true);

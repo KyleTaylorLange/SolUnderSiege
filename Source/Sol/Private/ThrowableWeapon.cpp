@@ -1,8 +1,9 @@
 // Copyright Kyle Taylor Lange
 
+#include "ThrowableWeapon.h"
 #include "Sol.h"
 #include "SolCharacter.h"
-#include "ThrowableWeapon.h"
+#include "InventoryComponent.h"
 
 AThrowableWeapon::AThrowableWeapon(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
@@ -55,10 +56,9 @@ void AThrowableWeapon::StopFire()
 
 void AThrowableWeapon::DestroyAfterUse()
 {
-	ASolCharacter* LOwner = Cast<ASolCharacter>(GetInstigator());
-	if (LOwner)
+	if (ASolCharacter* SolOwner = Cast<ASolCharacter>(GetInstigator()))
 	{
-		LOwner->RemoveFromInventory(this);
+		SolOwner->GetInventoryComponent()->RemoveFromInventory(this);
 	}
 	Destroy();
 }

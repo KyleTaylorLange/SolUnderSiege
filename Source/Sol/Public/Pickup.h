@@ -34,7 +34,7 @@ public:
 	virtual void OnRep_HeldItem();
 
 	// Can this item be picked up?
-	virtual bool CanBePickedUp(class ASolCharacter* TestPawn) const;
+	virtual bool CanBePickedUp(class AActor* NewOwner) const;
 
 	// Give pickup to Pawn. Returns true if obtained.
 	virtual void GivePickupTo(class ASolCharacter* Pawn);

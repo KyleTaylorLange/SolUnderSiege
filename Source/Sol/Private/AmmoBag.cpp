@@ -1,8 +1,9 @@
 // Copyright Kyle Taylor Lange
 
+#include "AmmoBag.h"
 #include "Sol.h"
 #include "SolCharacter.h"
-#include "AmmoBag.h"
+#include "InventoryComponent.h"
 
 FString AAmmoBag::GetDisplayName() const
 {
@@ -26,13 +27,13 @@ void AAmmoBag::OnEnterInventory(ASolCharacter* NewOwner)
 		{
 			if (ContainedItems[i] != nullptr)
 			{
-				NewOwner->AddToInventory(ContainedItems[i]);
+				NewOwner->GetInventoryComponent()->AddToInventory(ContainedItems[i]);
 			}
 		}
 		ContainedItems.Empty();
 		if (MyPawn)
 		{
-			MyPawn->RemoveFromInventory(this);
+			MyPawn->GetInventoryComponent()->RemoveFromInventory(this);
 		}
 		//GEngine->AddOnScreenDebugMessage(-1, 15.f, FColor::Green, FString::Printf(TEXT("AB %s should be destroyed!"), *GetDisplayName()));
 		Destroy();

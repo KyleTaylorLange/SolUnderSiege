@@ -8,6 +8,7 @@
 #include "SolCharacter.h"
 #include "SolDamageType.h"
 #include "Firearm.h"
+#include "InventoryComponent.h"
 
 //////////////////////////////////////////////////////////////////////////
 // AFirearm
@@ -159,7 +160,7 @@ void AFirearm::StartReload(bool bFromReplication)
 			{
 				if (MyPawn)
 				{
-					MyPawn->RemoveFromInventory(PendingAmmoItem[SlotNum]);
+					MyPawn->GetInventoryComponent()->RemoveFromInventory(PendingAmmoItem[SlotNum]);
 				}
 				bPendingReload = true;
 				DetermineWeaponState();
@@ -185,9 +186,10 @@ void AFirearm::StartReload(bool bFromReplication)
 AAmmo* AFirearm::ChooseBestAmmoItem(int SlotIndex)
 {
 	AAmmo* BestAmmo = nullptr;
-	for (int32 i = 0; i < MyPawn->GetInventoryCount(); i++)
+	TArray<AInventoryItem*> Inventory = MyPawn->GetInventoryComponent()->GetInventory();
+	for (int32 i = 0; i < Inventory.Num(); i++)
 	{
-		AAmmo* TestAmmo = Cast<AAmmo>(MyPawn->GetInventoryItem(i));
+		AAmmo* TestAmmo = Cast<AAmmo>(Inventory[i]);
 		if (TestAmmo && TestAmmo->GetClass() == DefaultAmmoClass[SlotIndex])
 		{
 			if (!CurrentAmmoItem[SlotIndex] || CurrentAmmoItem[SlotIndex]->GetAmmoCount() < TestAmmo->GetAmmoCount())
@@ -224,13 +226,13 @@ void AFirearm::ReloadFirearm(int SlotIndex)
 				PendingAmmoItem[SlotIndex] = nullptr;
 				if (OldAmmoItem->GetAmmoCount() <= 0)
 				{
-					MyPawn->RemoveFromInventory(OldAmmoItem);
+					MyPawn->GetInventoryComponent()->RemoveFromInventory(OldAmmoItem);
 					OldAmmoItem->Destroy();
 				}
 			}
 			else
 			{
-				MyPawn->RemoveFromInventory(PendingAmmoItem[SlotIndex]);
+				MyPawn->GetInventoryComponent()->RemoveFromInventory(PendingAmmoItem[SlotIndex]);
 				AAmmo* OldAmmoItem = CurrentAmmoItem[SlotIndex];
 				CurrentAmmoItem[SlotIndex] = PendingAmmoItem[SlotIndex];
 				PendingAmmoItem[SlotIndex] = nullptr;
@@ -241,7 +243,7 @@ void AFirearm::ReloadFirearm(int SlotIndex)
 				}
 				if (OldAmmoItem)
 				{
-					MyPawn->AddToInventory(OldAmmoItem);
+					MyPawn->GetInventoryComponent()->AddToInventory(OldAmmoItem);
 					OldAmmoItem->OnUnloadFromWeapon();
 				}
 			}
@@ -261,7 +263,7 @@ void AFirearm::CancelReloadInProgress()
 		{
 			if (PendingAmmoItem[i])
 			{
-				MyPawn->AddToInventory(PendingAmmoItem[i]);
+				MyPawn->GetInventoryComponent()->AddToInventory(PendingAmmoItem[i]);
 			}
 		}
 	}

@@ -1,5 +1,6 @@
 // Copyright Kyle Taylor Lange
 
+#include "Pickup.h"
 #include "Sol.h"
 #include "UnrealNetwork.h"
 #include "InventoryItem.h"
@@ -8,9 +9,9 @@
 #include "InventoryItem.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "PickupSpawner.h"
-#include "Pickup.h"
 #include "Interaction_PickUpItem.h"
 #include "Interaction_SwapForItem.h"
+#include "InventoryComponent.h"
 
 //////////////////////////////////////////////////////////////////////////
 // APickup
@@ -180,16 +181,20 @@ void APickup::SetHeldItem(AInventoryItem* InItem)
 	}
 }
 
-bool APickup::CanBePickedUp(class ASolCharacter* TestPawn) const
+bool APickup::CanBePickedUp(class AActor* NewOwner) const
 {
-	return TestPawn && TestPawn->IsAlive();
+	if (ASolCharacter* NewPawn = Cast<ASolCharacter>(NewOwner))
+	{
+		return NewPawn && NewPawn->IsAlive();
+	}
+	return true;
 }
 
 void APickup::GivePickupTo(class ASolCharacter* Pawn)
 {
 	if (HeldItem)
 	{
-		Pawn->AddToInventory(HeldItem);
+		Pawn->GetInventoryComponent()->AddToInventory(HeldItem);
 		// Set item to null so it doesn't get destroyed when pickup is destroyed.
 		HeldItem = nullptr;
 	}
@@ -197,16 +202,16 @@ void APickup::GivePickupTo(class ASolCharacter* Pawn)
 
 bool APickup::CanInteractWith(UInteractableComponent* Component, AActor* Interactor, TSubclassOf<UInteractionEvent> Interaction)
 {
-	ASolCharacter* UsingCharacter = Cast<ASolCharacter>(Interactor);
-	if (UsingCharacter && CanBePickedUp(UsingCharacter))
+	UInventoryComponent* Inventory = Cast<UInventoryComponent>(Interactor->GetComponentByClass(UInventoryComponent::StaticClass()));
+	if (Inventory && CanBePickedUp(Inventory->GetOwner()))
 	{
 		if (Interaction == UInteraction_PickUpItem::StaticClass())
 		{
-			return UsingCharacter->CanHoldItem(GetHeldItem());
+			return Inventory->CanHoldItem(GetHeldItem());
 		}
 		if (Interaction == UInteraction_SwapForItem::StaticClass())
 		{
-			return UsingCharacter->CanSwapForItem(GetHeldItem()) != nullptr;
+			return Inventory->CanSwapForItem(GetHeldItem()) != nullptr;
 		}
 	}
 	return false;

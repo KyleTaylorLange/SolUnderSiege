@@ -1,12 +1,11 @@
 // Copyright Kyle Taylor Lange
 
+#include "PickupSpawner.h"
 #include "Sol.h"
 #include "UnrealNetwork.h"
 #include "Pickup.h"
 #include "InventoryItem.h"
 #include "SolGameMode.h"
-#include "PickupSpawner.h"
-
 
 // Sets default values
 APickupSpawner::APickupSpawner(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
