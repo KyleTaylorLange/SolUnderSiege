@@ -51,8 +51,6 @@ class ASolGameMode : public AGameMode
 {
 	GENERATED_UCLASS_BODY()
 
-public:
-
 	virtual void PreInitializeComponents() override;
 
 	/** Select the best spawn point for the player. **/
@@ -138,18 +136,23 @@ public:
 protected:
 
 	/** Called before match starts. **/
+	UFUNCTION(BlueprintImplementableEvent, Category = "Game")
 	virtual void HandleMatchIsWaitingToStart() override;
 
 	/** Starts new match. **/
+	UFUNCTION(BlueprintImplementableEvent, Category = "Game")
 	virtual void HandleMatchHasStarted() override;
 
 	/* Modifies the map's objective points for the specific game mode. */
+	UFUNCTION(BlueprintImplementableEvent, Category = "Game")
 	virtual void ProcessObjectivePoint(class AObjectivePoint* InOP);
 
 	/** Determine the winner(s). **/
+	UFUNCTION(BlueprintImplementableEvent, Category = "Game")
 	virtual void DetermineMatchWinner();
 
 	/** Check if any player or team has met the victory conditions, and FinishMatch() if there are. **/
+	UFUNCTION(BlueprintImplementableEvent, Category = "Game")
 	virtual void CheckForMatchWinner();
 
 	/** Handle for efficient management of DefaultTimer timer. */
