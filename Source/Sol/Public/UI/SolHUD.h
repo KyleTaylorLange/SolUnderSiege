@@ -140,17 +140,17 @@ class ASolHUD : public AHUD
 
 	/* Class for the In-Game Menu Widget. Subclassable for gametype-specific options (e.g. changing teams). */
 	//UPROPERTY(EditDefaultsOnly)
-	TSubclassOf<class SInGameMenuWidget> InGameMenuWidgetClass;
+	TSubclassOf<class SInGameMenuWidget> SlateInGameMenuWidgetClass;
 
 	/* Pointer to the HUD's In Game Menu Widget. */
-	TSharedPtr<class SInGameMenuWidget> InGameMenuWidget;
+	TSharedPtr<class SInGameMenuWidget> SlateInGameMenuWidget;
 
 	/* Class for the Scoreboard Widget. The default scoreboard can handle many (but not all) gametypes. */
 	//UPROPERTY(EditDefaultsOnly)
-	TSubclassOf<class SInGameMenuWidget> ScoreboardWidgetClass;
+	TSubclassOf<class SInGameMenuWidget> SlateScoreboardWidgetClass;
 
 	/* Pointer to the HUD's Scoreboard Widget. */
-	TSharedPtr<class SScoreboardWidget> ScoreboardWidget;
+	TSharedPtr<class SScoreboardWidget> SlateScoreboardWidget;
 
 	/* Draw columns for lives/deaths only, e.g. for Last One Standing/Last Team Standing.
 		Not a great implementation, but it works for now. */
@@ -207,20 +207,36 @@ protected:
 	// BEGIN UMG STUFF
 
 	/** Test UMG HUD Class. **/
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category=Classes)
 	TSubclassOf<class UUserWidget> HUDWidgetClass;
 
 	/** Test UMG HUD Class. **/
 	UPROPERTY(BlueprintReadWrite)
 	class UUserWidget* HUDWidget;
 
-	/** Test UMG HUD Class. **/
-	UPROPERTY(EditDefaultsOnly)
+	/** Test UMG HUD Inventory Class. **/
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category=Classes)
 	TSubclassOf<class UUserWidget> InventoryWidgetClass;
 
 	/** Test UMG HUD Class. **/
 	UPROPERTY(BlueprintReadWrite)
 	class UUserWidget* InventoryWidget;
+
+	/** Test UMG HUD Inventory Class. **/
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category=Classes)
+	TSubclassOf<class UUserWidget> ScoreboardWidgetClass;
+
+	/** Test UMG HUD Class. **/
+	UPROPERTY(BlueprintReadWrite)
+	class UUserWidget* ScoreboardWidget;
+
+	/** Test UMG HUD Inventory Class. **/
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category=Classes)
+	TSubclassOf<class UUserWidget> InGameMenuWidgetClass;
+
+	/** Test UMG HUD Class. **/
+	UPROPERTY(BlueprintReadWrite)
+	class UUserWidget* InGameMenuWidget;
 
 	////////////////////////////////
 	// END UMG STUFF

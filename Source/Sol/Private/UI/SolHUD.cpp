@@ -48,8 +48,8 @@ ASolHUD::ASolHUD(const FObjectInitializer& ObjectInitializer) : Super(ObjectInit
 	static ConstructorHelpers::FClassFinder<UUserWidget> FoundInventoryWidgetClass(TEXT("/Game/UI/HUD/InventoryDisplayWidget"));
 	InventoryWidgetClass = FoundInventoryWidgetClass.Class;
 
-	//ScoreboardWidgetClass = class<SScoreboardWidget>;
-	//InGameMenuWidgetClass = SInGameMenuWidget::StaticClass();
+	//SlateScoreboardWidgetClass = class<SScoreboardWidget>;
+	//SlateInGameMenuWidgetClass = SInGameMenuWidget::StaticClass();
 
 	HUDDrawScale = 1.f;
 
@@ -78,42 +78,61 @@ void ASolHUD::PostInitializeComponents()
 				HUDWidget->AddToViewport();
 			}
 		}
-		if (!ScoreboardWidget.IsValid())
+
+		// Create a UMG scoreboard widget if we have one.
+		if (ScoreboardWidgetClass)
 		{
-			//SAssignNew(ScoreboardWidget, ScoreboardWidgetClass)
-			SAssignNew(ScoreboardWidget, SScoreboardWidget)
+			if ((ScoreboardWidget = CreateWidget<UUserWidget>(PlayerOwner, ScoreboardWidgetClass)) != nullptr)
+			{
+				ScoreboardWidget->AddToViewport();
+			}
+		}
+		// Otherwise, just make the old Slate widget for now.
+		else if (!SlateScoreboardWidget.IsValid())
+		{
+			//SAssignNew(SlateScoreboardWidget, SlateScoreboardWidgetClass)
+			SAssignNew(SlateScoreboardWidget, SScoreboardWidget)
 				.OwnerHUD(this)
 				.PCOwner(TWeakObjectPtr<APlayerController>(PlayerOwner));
 
-			if (ScoreboardWidget.IsValid())
+			if (SlateScoreboardWidget.IsValid())
 			{
 
 				GEngine->GameViewport->AddViewportWidgetContent(
 					SNew(SWeakWidget)
-					.PossiblyNullContent(ScoreboardWidget.ToSharedRef())
+					.PossiblyNullContent(SlateScoreboardWidget.ToSharedRef())
 					);
 				//MyHUDMenuWidget->ActionButtonsWidget->SetVisibility(EVisibility::Visible);
 				//MyHUDMenuWidget->ActionWidgetPosition.BindUObject(this, &AStrategyHUD::GetActionsWidgetPos);
 			}
 		}
 
-		if (!InGameMenuWidget.IsValid())
+		// Create a UMG in-game menu if we have one.
+		if (InGameMenuWidgetClass)
 		{
-			//SAssignNew(InGameMenuWidget, InGameMenuWidgetClass)
+			if ((InGameMenuWidget = CreateWidget<UUserWidget>(PlayerOwner, InGameMenuWidgetClass)) != nullptr)
+			{
+				InGameMenuWidget->AddToViewport();
+			}
+		}
+		// Otherwise, just make the old Slate version for now.
+		else if (!SlateInGameMenuWidget.IsValid())
+		{
+			//SAssignNew(SlateInGameMenuWidget, SlateInGameMenuWidgetClass)
 
 			ULocalPlayer* const MyPlayerOwner = Cast<ULocalPlayer>(PCOwner->Player);
 
-			SAssignNew(InGameMenuWidget, SInGameMenuWidget)
+			SAssignNew(SlateInGameMenuWidget, SInGameMenuWidget)
 			.Cursor(EMouseCursor::Default)
 			.PlayerOwner(MyPlayerOwner)
 			.OwnerHUD(this);
 
-			if (InGameMenuWidget.IsValid())
+			if (SlateInGameMenuWidget.IsValid())
 			{
 
 				GEngine->GameViewport->AddViewportWidgetContent(
 					SNew(SWeakWidget)
-					.PossiblyNullContent(InGameMenuWidget.ToSharedRef())
+					.PossiblyNullContent(SlateInGameMenuWidget.ToSharedRef())
 					);
 				ShowInGameMenu(false);
 				//MyHUDMenuWidget->ActionButtonsWidget->SetVisibility(EVisibility::Visible);
@@ -125,8 +144,8 @@ void ASolHUD::PostInitializeComponents()
 		TSharedPtr<SViewport> GameViewportWidget = GEngine->GetGameViewportWidget();
 		if (GameViewportWidget.IsValid())
 		{
-			//GameViewportWidget->SetWidgetToFocusOnActivate(ScoreboardWidget);
-			//GameViewportWidget->SetWidgetToFocusOnActivate(InGameMenuWidget);
+			//GameViewportWidget->SetWidgetToFocusOnActivate(SlateScoreboardWidget);
+			//GameViewportWidget->SetWidgetToFocusOnActivate(SlateInGameMenuWidget);
 		}
 	}
 	if (GEngine)
@@ -176,9 +195,13 @@ void ASolHUD::DrawHUD()
 		{
 			HUDWidget->SetVisibility(ESlateVisibility::Hidden);
 		}
-		if (ScoreboardWidget.IsValid())
+		if (ScoreboardWidget)
 		{
-			ScoreboardWidget->SetVisibility(EVisibility::Visible);
+			ScoreboardWidget->SetVisibility(ESlateVisibility::Visible);
+		}
+		else if (SlateScoreboardWidget.IsValid())
+		{
+			SlateScoreboardWidget->SetVisibility(EVisibility::Visible);
 		}
 	}
 	else
@@ -187,9 +210,13 @@ void ASolHUD::DrawHUD()
 		{
 			HUDWidget->SetVisibility(ESlateVisibility::Visible);
 		}
-		if (ScoreboardWidget.IsValid())
+		if (ScoreboardWidget)
 		{
-			ScoreboardWidget->SetVisibility(EVisibility::Hidden);
+			ScoreboardWidget->SetVisibility(ESlateVisibility::Hidden);
+		}
+		else if (SlateScoreboardWidget.IsValid())
+		{
+			SlateScoreboardWidget->SetVisibility(EVisibility::Hidden);
 		}
 	}
 	// Most HUD stuff is still in canvas for now.
@@ -695,9 +722,13 @@ void ASolHUD::ToggleInGameMenu()
 void ASolHUD::ShowInGameMenu(bool bEnable)
 {
 	bShowInGameMenu = bEnable;
-	if (InGameMenuWidget.IsValid())
+	if (InGameMenuWidget)
 	{
-		InGameMenuWidget->SetVisibility(bShowInGameMenu ? EVisibility::Visible : EVisibility::Hidden);
+		InGameMenuWidget->SetVisibility(bShowInGameMenu ? ESlateVisibility::Visible : ESlateVisibility::Hidden);
+	}
+	else if (SlateInGameMenuWidget.IsValid())
+	{
+		SlateInGameMenuWidget->SetVisibility(bShowInGameMenu ? EVisibility::Visible : EVisibility::Hidden);
 	}
 	if (ASolPlayerController* MyPC = Cast<ASolPlayerController>(PlayerOwner))
 	{
@@ -715,7 +746,7 @@ void ASolHUD::ShowInGameMenu(bool bEnable)
 		/*if (bShowInGameMenu)
 		{
 			FInputModeUIOnly InputMode;
-			InputMode.SetWidgetToFocus(InGameMenuWidget);
+			InputMode.SetWidgetToFocus(SlateInGameMenuWidget);
 			MyPC->SetInputMode(InputMode);
 		}
 		else
