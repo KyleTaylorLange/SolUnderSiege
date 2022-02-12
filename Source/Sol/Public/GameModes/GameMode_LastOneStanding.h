@@ -44,9 +44,9 @@ protected:
 	    Maybe not the best place to do this? */
 	virtual void RestartPlayer(AController* NewPlayer) override;
 
-	virtual void DetermineMatchWinner() override;
+	virtual void DetermineMatchWinner_Implementation() override;
 
-	virtual void CheckForMatchWinner() override;
+	virtual void CheckForMatchWinner_Implementation() override;
 
 	// Class of the battle royale shield each player spawns with.
 	UPROPERTY(EditDefaultsOnly)

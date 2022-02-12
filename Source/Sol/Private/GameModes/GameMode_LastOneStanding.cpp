@@ -95,7 +95,7 @@ void AGameMode_LastOneStanding::RestartPlayer(AController* NewPlayer)
 	Super::RestartPlayer(NewPlayer);
 }
 
-void AGameMode_LastOneStanding::DetermineMatchWinner()
+void AGameMode_LastOneStanding::DetermineMatchWinner_Implementation()
 {
 	// Identical to Anarchy's implementation.
 	ASolGameState const* const MyGameState = CastChecked<ASolGameState>(GameState);
@@ -121,7 +121,7 @@ void AGameMode_LastOneStanding::DetermineMatchWinner()
 	//WinnerPlayerState = (NumBestPlayers == 1) ? Cast<ASolPlayerState>(MyGameState->PlayerArray[BestPlayer]) : NULL;
 }
 
-void AGameMode_LastOneStanding::CheckForMatchWinner()
+void AGameMode_LastOneStanding::CheckForMatchWinner_Implementation()
 {
 	ASolGameState const* const MyGameState = CastChecked<ASolGameState>(GameState);
 

@@ -48,7 +48,7 @@ void AGameMode_Domination::OnScoreCP(ADominationControlPoint* InCP)
 	}
 }
 
-void AGameMode_Domination::ProcessObjectivePoint(AObjectivePoint* InOP)
+void AGameMode_Domination::ProcessObjectivePoint_Implementation(AObjectivePoint* InOP)
 {
 	if (GetLocalRole() == ROLE_Authority)
 	{

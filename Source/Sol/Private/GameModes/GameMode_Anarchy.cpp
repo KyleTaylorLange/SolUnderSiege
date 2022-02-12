@@ -16,7 +16,7 @@ AGameMode_Anarchy::AGameMode_Anarchy(const FObjectInitializer& ObjectInitializer
 	bDelayedStart = true;
 }
 
-void AGameMode_Anarchy::DetermineMatchWinner()
+void AGameMode_Anarchy::DetermineMatchWinner_Implementation()
 {
 	ASolGameState const* const MyGameState = CastChecked<ASolGameState>(GameState);
 	float BestScore = MAX_FLT;
@@ -41,7 +41,7 @@ void AGameMode_Anarchy::DetermineMatchWinner()
 	// Eventually return a winner or something.
 }
 
-void AGameMode_Anarchy::CheckForMatchWinner()
+void AGameMode_Anarchy::CheckForMatchWinner_Implementation()
 {
 	ASolGameState const* const MyGameState = CastChecked<ASolGameState>(GameState);
 

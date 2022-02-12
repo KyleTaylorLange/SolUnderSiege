@@ -94,10 +94,10 @@ protected:
 	virtual void ScoreKill(AController* Killer, AController* KilledPlayer, APawn* KilledPawn, const UDamageType* DamageType) override;
 
 	/* Choose the team with the highest score as the winner. */
-	virtual void DetermineMatchWinner() override;
+	virtual void DetermineMatchWinner_Implementation() override;
 
 	/* Check to see if any teams have met the score limit. */
-	virtual void CheckForMatchWinner() override;
+	virtual void CheckForMatchWinner_Implementation() override;
 
 	/** Score upon killing a teammate. **/
 	UPROPERTY(config)

@@ -307,7 +307,7 @@ void ATeamGameMode::ScoreKill(AController* Killer, AController* KilledPlayer, AP
 	Super::ScoreKill(Killer, KilledPlayer, KilledPawn, DamageType);
 }
 
-void ATeamGameMode::DetermineMatchWinner()
+void ATeamGameMode::DetermineMatchWinner_Implementation()
 {
 	ASolGameState const* const MyGameState = Cast<ASolGameState>(GameState);
 	int32 BestScore = MAX_uint32;
@@ -332,7 +332,7 @@ void ATeamGameMode::DetermineMatchWinner()
 	//WinnerTeam = (NumBestTeams == 1) ? BestTeam : NumTeams;
 }
 
-void ATeamGameMode::CheckForMatchWinner()
+void ATeamGameMode::CheckForMatchWinner_Implementation()
 {
 	ASolGameState const* const MyGameState = Cast<ASolGameState>(GameState);
 

@@ -265,7 +265,7 @@ void AGameMode_Elimination::DetermineRoundWinner()
 	}
 }
 
-void AGameMode_Elimination::CheckForMatchWinner()
+void AGameMode_Elimination::CheckForMatchWinner_Implementation()
 {
 	ASolGameState const* const MyGameState = Cast<ASolGameState>(GameState);
 

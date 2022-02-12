@@ -105,7 +105,7 @@ void AGameMode_LastTeamStanding::OnPlayerDeath(AController* Killer, AController*
 	}
 }
 
-void AGameMode_LastTeamStanding::DetermineMatchWinner()
+void AGameMode_LastTeamStanding::DetermineMatchWinner_Implementation()
 {
 	// Same implementation as Team Anarchy.
 	ASolGameState const* const MyGameState = Cast<ASolGameState>(GameState);
@@ -131,7 +131,7 @@ void AGameMode_LastTeamStanding::DetermineMatchWinner()
 	//WinnerTeam = (NumBestTeams == 1) ? BestTeam : NumTeams;
 }
 
-void AGameMode_LastTeamStanding::CheckForMatchWinner()
+void AGameMode_LastTeamStanding::CheckForMatchWinner_Implementation()
 {
 	ASolGameState const* const MyGameState = Cast<ASolGameState>(GameState);
 

@@ -201,7 +201,7 @@ bool ASolGameMode::ShouldSpawnAtStartSpot(AController* Player)
 	return false;
 }
 
-void ASolGameMode::HandleMatchIsWaitingToStart()
+void ASolGameMode::HandleMatchIsWaitingToStart_Implementation()
 {
 	Super::HandleMatchIsWaitingToStart();
 	for (TActorIterator<class AObjectivePoint> It(GetWorld()); It; ++It)
@@ -245,7 +245,7 @@ void ASolGameMode::HandleMatchIsWaitingToStart()
 	}
 }
 
-void ASolGameMode::HandleMatchHasStarted()
+void ASolGameMode::HandleMatchHasStarted_Implementation()
 {
 	bNeedsBotCreation = true;
 	Super::HandleMatchHasStarted();
@@ -294,7 +294,7 @@ void ASolGameMode::FinishMatch()
 	}
 }
 
-void ASolGameMode::ProcessObjectivePoint(class AObjectivePoint* InOP)
+void ASolGameMode::ProcessObjectivePoint_Implementation(class AObjectivePoint* InOP)
 {
 	// Nothing in the default implementation.
 }
@@ -401,12 +401,12 @@ bool ASolGameMode::IsSpawnpointPreferred(APlayerStart* SpawnPoint, AController* 
 	return true;
 }
 
-void ASolGameMode::DetermineMatchWinner()
+void ASolGameMode::DetermineMatchWinner_Implementation()
 {
 	// Empty in base class.
 }
 
-void ASolGameMode::CheckForMatchWinner()
+void ASolGameMode::CheckForMatchWinner_Implementation()
 {
 	// Empty in base class.
 }

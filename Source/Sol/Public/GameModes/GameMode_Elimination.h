@@ -31,7 +31,7 @@ protected:
 
 	virtual void EndOvertime();
 
-	virtual void CheckForMatchWinner() override;
+	virtual void CheckForMatchWinner_Implementation() override;
 
 	virtual void CheckForRoundWinner();
 

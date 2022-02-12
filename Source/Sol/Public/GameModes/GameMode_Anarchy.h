@@ -11,14 +11,10 @@
 UCLASS()
 class SOL_API AGameMode_Anarchy : public ASolGameMode
 {
-	GENERATED_BODY()
-	
-public:
-
-	AGameMode_Anarchy(const FObjectInitializer& ObjectInitializer);
+	GENERATED_UCLASS_BODY()
 
 protected:
-	virtual void DetermineMatchWinner() override;
+	virtual void DetermineMatchWinner_Implementation() override;
 
-	virtual void CheckForMatchWinner() override;
+	virtual void CheckForMatchWinner_Implementation() override;
 };

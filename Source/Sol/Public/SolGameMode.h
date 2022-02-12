@@ -136,24 +136,24 @@ public:
 protected:
 
 	/** Called before match starts. **/
-	UFUNCTION(BlueprintImplementableEvent, Category = "Game")
-	virtual void HandleMatchIsWaitingToStart() override;
+	UFUNCTION(BlueprintNativeEvent, Category = "Game")
+	void HandleMatchIsWaitingToStart() override;
 
 	/** Starts new match. **/
-	UFUNCTION(BlueprintImplementableEvent, Category = "Game")
-	virtual void HandleMatchHasStarted() override;
+	UFUNCTION(BlueprintNativeEvent, Category = "Game")
+	void HandleMatchHasStarted() override;
 
 	/* Modifies the map's objective points for the specific game mode. */
-	UFUNCTION(BlueprintImplementableEvent, Category = "Game")
-	virtual void ProcessObjectivePoint(class AObjectivePoint* InOP);
+	UFUNCTION(BlueprintNativeEvent, Category = "Game")
+	void ProcessObjectivePoint(class AObjectivePoint* InOP);
 
 	/** Determine the winner(s). **/
-	UFUNCTION(BlueprintImplementableEvent, Category = "Game")
-	virtual void DetermineMatchWinner();
+	UFUNCTION(BlueprintNativeEvent, Category = "Game")
+	void DetermineMatchWinner();
 
 	/** Check if any player or team has met the victory conditions, and FinishMatch() if there are. **/
-	UFUNCTION(BlueprintImplementableEvent, Category = "Game")
-	virtual void CheckForMatchWinner();
+	UFUNCTION(BlueprintNativeEvent, Category = "Game")
+	void CheckForMatchWinner();
 
 	/** Handle for efficient management of DefaultTimer timer. */
 	FTimerHandle TimerHandle_DefaultTimer;

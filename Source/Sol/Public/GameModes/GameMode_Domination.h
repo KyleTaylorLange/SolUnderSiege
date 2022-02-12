@@ -20,7 +20,7 @@ protected:
 	virtual void OnScoreCP(class ADominationControlPoint* InCP);
 
 	/* Overridden to spawn control points. */
-	virtual void ProcessObjectivePoint(class AObjectivePoint* InOP) override;
+	virtual void ProcessObjectivePoint_Implementation(class AObjectivePoint* InOP) override;
 
 	virtual AActor* ChoosePlayerStart_Implementation(AController* Player) override;
 };
