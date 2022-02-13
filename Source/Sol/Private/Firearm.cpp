@@ -571,7 +571,8 @@ void AFirearm::ServerAddRecoilToPawn_Implementation()
 	const float RandAngle = FMath::DegreesToRadians(FMath::FRandRange(0.0f, 360.f)); //
 	/* Note: X is Pitch and Y is Yaw. If we move to Vector2D, we want to swap these. */
 	FVector TestVector = FVector(FMath::Cos(RandAngle), FMath::Sin(RandAngle), 0.0f) * RecoilPerShot;
-	MyPawn->AddRecoil(TestVector);
+	MyPawn->AimVelocity += FRotator(TestVector.X, TestVector.Y, 0.f);
+	//MyPawn->AddRecoil(TestVector);
 }
 
 FRotator AFirearm::CalculateSpread() const

@@ -438,11 +438,6 @@ public:
 	virtual FRotator GetWeaponAimRot() const;
 	virtual FVector GetWeaponAimLoc() const;
 
-	virtual void AddRecoil(FVector InRecoil);
-
-	/** Reduce recoil after every tick. */
-	void ProcessRecoil(float DeltaSeconds);
-
 	/* Offset the weapon from the view direction based on breathing, movement, etc. */
 	void AddWeaponSway(float DeltaSeconds);
 
@@ -751,20 +746,8 @@ private:
 	// RECOIL STUFF!
 	//  This section will be in constant flux as we test things out.
 
-	/* Amount of recoil left to apply. */
-	FVector CurrentRecoilVelocity;
-
-	/* Percentage of recoil still remaining to apply. */
-	float RecoilCurveTime;
-
-	/* How long it takes to apply all recoil. */
-	float RecoilTimeScalar;
-
 	/** The weapon's offset relative to the character's view direction. */
 	FRotator HeldWeaponOffset;
-
-	// The weapon's aim offset due to the player's breathing.
-	FRotator AimBreathingOffset;
 
 	/* Last control rotation when we processed free aim.
 		Needed to properly apply free aim. */
@@ -774,10 +757,7 @@ private:
 	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
 	float MaxFreeAimRadius;
 
-	/* Maximum radius the character's weapon can be offset due to recoil. */
-	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
-	float MaxRecoilOffsetRadius;
-
+public:
 	/**
 	* Add offset to the character's weapon.
 	*
@@ -788,5 +768,7 @@ private:
 	* @return FRotator of pitch/yaw we were unable to add (exceeded maximum)
 	*/
 	virtual FRotator AddWeaponOffset(FRotator RotationToAdd, float MaxPitch, float MaxYaw);
+
+	FRotator AimVelocity;
 };
 
