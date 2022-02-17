@@ -770,5 +770,8 @@ public:
 	virtual FRotator AddWeaponOffset(FRotator RotationToAdd, float MaxPitch, float MaxYaw);
 
 	FRotator AimVelocity;
+
+	UPROPERTY(EditAnywhere, Category = Temp)
+	FVector TEMP_AnimOffset;
 };
 

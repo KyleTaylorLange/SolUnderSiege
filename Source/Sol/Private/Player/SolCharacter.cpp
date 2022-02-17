@@ -193,6 +193,8 @@ ASolCharacter::ASolCharacter(const FObjectInitializer& ObjectInitializer) //: Su
 
 	WeaponSwayTime = 0.0f;
 	BreathingTime = 0.f;
+
+	TEMP_AnimOffset = FVector(-27.5f, 0.5f, -35.f);
 }
 
 void ASolCharacter::PostInitializeComponents()
@@ -1005,6 +1007,10 @@ void ASolCharacter::FaceRotation(FRotator NewControlRotation, float DeltaTime)
 	Super::FaceRotation(NewControlRotation, DeltaTime);
 }
 
+// TODO: Put these in actual functions.
+#define GET_VIEW_LOCATION (FVector(0.0f, 0.0f, bIsCrouched ? CrouchedEyeHeight : BaseEyeHeight)) 
+#define GET_VIEW_ROTATION (FRotator(GetBaseAimRotation().Pitch, 0.f, 0.f))
+
 void ASolCharacter::OnCameraUpdate(const FVector& CameraLocation, const FRotator& CameraRotation)
 {
 	// Move to camera class in the future.
@@ -1033,44 +1039,53 @@ void ASolCharacter::OnCameraUpdate(const FVector& CameraLocation, const FRotator
 	}
 
 	FVector MeshLoc = DefaultMesh1P->GetRelativeLocation();
-	float EyeHeightTemp = bIsCrouched ? CrouchedEyeHeight : BaseEyeHeight;
-	FVector EyeHeightVector = FVector(0.0f, 0.0f, EyeHeightTemp);
-
-
+	FVector NewCameraLocation = GET_VIEW_LOCATION;
 	FRotator NewCameraRotation = DefaultCamera->GetRelativeRotation() + FRotator(GetControlRotation().Pitch, 0.f, 0.f);
 
-	FirstPersonCameraComponent->SetRelativeLocation(EyeHeightVector);
+	/**TODO: Camera seems to be one frame behind.
+	 * Here's what's probably happening:
+	 * 1. Camera sets final position for frame, then calls this function.
+	 * 2. This function alters the camera position (but only for the next frame).
+	 * 3. The mesh is set to the position the camera will be on the next frame, then it's drawn.
+	 * 4. Repeat
+	 * */
+	FirstPersonCameraComponent->SetRelativeLocation(NewCameraLocation);
 	FirstPersonCameraComponent->SetRelativeRotation(NewCameraRotation);
 
+	FVector TEMP_Offset = TEMP_AnimOffset + NewCameraLocation;
 
-
-
-	FVector TEMP_AnimOffset = FVector(-27.5f, 0.5f, -35.f) + EyeHeightVector; //FVector(-25.f, 1.f, -37.5f);  //23.49, 0, 141.24 vs 0, 0, 165
-
-	FVector TestLocFinal = MeshLoc + TEMP_AnimOffset + GetWeaponLocationOffset();
+	FVector TestLocFinal = MeshLoc + TEMP_Offset + GetWeaponLocationOffset();
 
 	const FMatrix DefMeshLS = FRotationTranslationMatrix(DefaultMesh1P->GetRelativeRotation(), TestLocFinal); // DefMesh1P->RelativeLocation
 	const FMatrix LocalToWorld = ActorToWorld().ToMatrixWithScale();
+
+	const FMatrix CameraLocal = FTransform(NewCameraLocation).ToMatrixWithScale() * LocalToWorld;
 
 	// Mesh rotating code expect uniform scale in LocalToWorld matrix
 
 	const FRotator RotCameraPitch(CameraRotation.Pitch, 0.0f, 0.0f);
 	const FRotator RotCameraYaw(0.0f, CameraRotation.Yaw, 0.0f);
 
-	const FRotator RotationOffset(GetWeaponRotationOffset().Pitch, GetWeaponRotationOffset().Yaw, 0.0f); // TEST
-
-	const FMatrix LeveledCameraLS = FRotationTranslationMatrix(RotCameraYaw, CameraLocation) * LocalToWorld.Inverse();
-	const FMatrix PitchedCameraLS = FRotationMatrix(RotCameraPitch) * LeveledCameraLS;
-	const FMatrix OffsetPitchedCameraLS = FRotationMatrix(RotationOffset) * PitchedCameraLS;
+	const FMatrix LeveledCameraLS = FRotationTranslationMatrix(RotCameraYaw, CameraLocal.GetOrigin()) * LocalToWorld.Inverse();
+	const FMatrix PitchedCameraLS = FRotationMatrix(RotCameraPitch)* LeveledCameraLS;
+	const FMatrix OffsetPitchedCameraLS = FRotationTranslationMatrix(NewCameraRotation, NewCameraLocation);
 	const FMatrix MeshRelativeToCamera = DefMeshLS * LeveledCameraLS.Inverse();
 	const FMatrix PitchedMesh = MeshRelativeToCamera * OffsetPitchedCameraLS;
 
 	Mesh1P->SetRelativeLocationAndRotation(PitchedMesh.GetOrigin(), PitchedMesh.Rotator());
+
+	/*UE_LOG(LogDamage, Warning, TEXT("All Variables:\n  DefMeshLS: %s\n  LocalToWorld: %s\n  LeveledCameraLS: %s\n  PitchedCameraLS: %s\n  MeshRelativeToCamera: %s\n  PitchedMesh: %s"),
+		*DefMeshLS.ToString(), 
+		*LocalToWorld.ToString(),
+		*LeveledCameraLS.ToString(),
+		*PitchedCameraLS.ToString(),
+		*MeshRelativeToCamera.ToString(),
+		*PitchedMesh.ToString());*/
 }
 
 FRotator ASolCharacter::GetWeaponRotationOffset() const
 {
-	return FRotator::ZeroRotator; // HeldWeaponOffset;
+	return HeldWeaponOffset;
 }
 
 FVector ASolCharacter::GetWeaponLocationOffset() const
@@ -1093,17 +1108,40 @@ FVector ASolCharacter::GetWeaponLocationOffset() const
 
 FRotator ASolCharacter::GetWeaponAimRot() const
 {
+	const FMatrix AimLocal = FTransform(FRotator(GetControlRotation().Pitch, 0.f, 0.f), GET_VIEW_LOCATION).ToMatrixWithScale();
+	const FMatrix LocalToWorld = ActorToWorld().ToMatrixWithScale();
+	const FMatrix AimWorld = AimLocal * LocalToWorld;
+
+	return AimWorld.Rotator();
 	// NOTE: GetBaseAimRotation().Clamp() = GetControlRotation()
-	const FRotator FinalRotation = GetBaseAimRotation().Clamp() + GetWeaponRotationOffset().Clamp();
-	return FinalRotation; 
+	//const FRotator FinalRotation = GetBaseAimRotation().Clamp() + GetWeaponRotationOffset().Clamp();
+	//return FinalRotation; 
 }
 
 FVector ASolCharacter::GetWeaponAimLoc() const
 {
-	const FVector EyeLocation = GetActorLocation() + FVector(0.f, 0.f, BaseEyeHeight);
-	const FVector WeaponOffset = GetWeaponLocationOffset(); // +FVector(75.f, 0.f, -7.5f); //Temporary offset for muzzle.
-	const FVector FinalLocation = EyeLocation + GetWeaponAimRot().RotateVector(WeaponOffset);
-	return FinalLocation;
+	// Get offset from our viewpoint.
+	const FMatrix AimOffsetFromLocal = FTransform(GetWeaponLocationOffset()).ToMatrixWithScale();
+	// Get our local view transform.
+	const FMatrix AimLocal = FTransform(FRotator(GetControlRotation().Pitch, 0.f, 0.f), GET_VIEW_LOCATION).ToMatrixWithScale();
+	// Transform the offset to our local view.
+	const FMatrix AimWithOffset = AimOffsetFromLocal * AimLocal;
+	const FMatrix LocalToWorld = ActorToWorld().ToMatrixWithScale();
+	// Transform our offset local view to the world.
+	const FMatrix AimWorld = AimWithOffset * LocalToWorld;
+
+	UE_LOG(LogDamage, Warning, TEXT("All Variables:\n  AimOffsetFromLocal: %s\n  AimLocal: %s\n  AimWithOffset: %s\n  LocalToWorld: %s\n  AimWorld: %s"),
+		*AimOffsetFromLocal.ToString(),
+		*AimLocal.ToString(),
+		*AimWithOffset.ToString(),
+		*LocalToWorld.ToString(),
+		*AimWorld.ToString());
+
+	return AimWorld.GetOrigin();
+	//const FVector EyeLocation = GetActorLocation() + GET_VIEW_LOCATION;
+	//const FVector WeaponOffset = GetWeaponLocationOffset();
+	//const FVector FinalLocation = EyeLocation + GetWeaponAimRot().RotateVector(WeaponOffset);
+	//return FinalLocation;
 }
 
 void ASolCharacter::AddWeaponSway(float DeltaSeconds)
