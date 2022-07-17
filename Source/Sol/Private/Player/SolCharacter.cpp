@@ -1025,18 +1025,11 @@ void ASolCharacter::OnCameraUpdate(const FVector& CameraLocation, const FRotator
 
 	// END move to camera class.
 
+	// TEMP: Hide first-person mesh when no weapon is equipped.
+	Mesh1P->SetVisibility(EquippedItem ? true : false);
+
 	USkeletalMeshComponent* DefaultMesh1P = Cast<USkeletalMeshComponent>(GetClass()->GetDefaultSubobjectByName(TEXT("CharacterMesh1P")));
 	UCameraComponent* DefaultCamera = Cast<UCameraComponent>(GetClass()->GetDefaultSubobjectByName(TEXT("FirstPersonCamera")));
-
-	// TEMP: Hide first-person mesh when no weapon is equipped.
-	if (!EquippedItem)
-	{
-		Mesh1P->SetVisibility(false);
-	}
-	else
-	{
-		Mesh1P->SetVisibility(true);
-	}
 
 	FVector MeshLoc = DefaultMesh1P->GetRelativeLocation();
 	FVector NewCameraLocation = GET_VIEW_LOCATION;
