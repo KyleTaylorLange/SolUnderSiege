@@ -883,8 +883,6 @@ void ASolAIController::UpdateControlRotation(float DeltaTime, bool bUpdatePawn)
 	{
 		FVector Direction = FocalPoint - GetPawn<ASolCharacter>()->GetWeaponAimLoc();
 		FRotator DesiredRotation = Direction.Rotation();
-		DesiredRotation -= GetPawn<ASolCharacter>()->GetWeaponRotationOffset() + (GetPawn<ASolCharacter>()->GetWeaponRotationOffset() * RecoilCompensationError);
-		DesiredRotation += FRotator(AimOffsetVector.X, AimOffsetVector.Y, 0) * AimOffsetError;
 		IdealAimRotation = DesiredRotation;
 
 		float FinalRotSpeed = RotationSpeed;

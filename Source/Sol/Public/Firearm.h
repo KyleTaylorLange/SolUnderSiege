@@ -276,9 +276,6 @@ protected:
 	/** Reduce the weapon's ammo supply. */
 	virtual float UseAmmo(float Amount, int SlotIndex = 0);
 
-	/** Add recoil to the weapon. */
-	virtual void AddRecoil();
-
 	/** Start firing. */
 	virtual void OnBurstStarted();
 
@@ -357,10 +354,6 @@ protected:
 	/** Spawn projectile on server. **/
 	UFUNCTION(reliable, server, WithValidation)
 	void ServerFireHitscan(FVector Origin, FVector_NetQuantizeNormal ShootDir, float TraceLength, float DamageScalar = 1.f);
-
-	/** Add recoil to the pawn holding the weapon. **/
-	UFUNCTION(reliable, server, WithValidation)
-	void ServerAddRecoilToPawn();
 
 	//////////////////////////////////////////////////////////////////////////
 	// Replication & effects

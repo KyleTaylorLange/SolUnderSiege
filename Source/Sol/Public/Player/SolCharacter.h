@@ -224,6 +224,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = Rendering)
 	bool IsFirstPerson() const;
 
+	/** Returns	the pawn's eye location. */
+	FVector GetPawnViewLocation() const override;
+
 	// Gets the correct mesh (first person or third person).
 	USkeletalMeshComponent* GetPawnMesh() const;
 
@@ -430,13 +433,14 @@ public:
 
 	virtual void FaceRotation(FRotator NewControlRotation, float DeltaTime) override;
 
-	/** Get the final offsets of the player's weapon. */
-	virtual FRotator GetWeaponRotationOffset() const;
-	virtual FVector GetWeaponLocationOffset() const;
-
-	/** Get the player's current weapon aim. */
+	/** Get the direction the pawn is currently aiming their held item. */
 	virtual FRotator GetWeaponAimRot() const;
+
+	/** Get the location where the player's aim starts (generally the location of their held item. */
 	virtual FVector GetWeaponAimLoc() const;
+
+	/** Calculates a matrix that represents where the pawn's held weapon is in the world. */
+	virtual FMatrix GetWeaponAimMatrix() const;
 
 	/* Offset the weapon from the view direction based on breathing, movement, etc. */
 	void AddWeaponSway(float DeltaSeconds);
@@ -768,8 +772,6 @@ public:
 	* @return FRotator of pitch/yaw we were unable to add (exceeded maximum)
 	*/
 	virtual FRotator AddWeaponOffset(FRotator RotationToAdd, float MaxPitch, float MaxYaw);
-
-	FRotator AimVelocity;
 
 	UPROPERTY(EditAnywhere, Category = Temp)
 	FVector TEMP_AnimOffset;
