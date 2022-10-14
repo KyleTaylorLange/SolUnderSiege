@@ -353,19 +353,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = Gameplay)
 	float GetFullLegHealth() const;
 
-	UFUNCTION(BlueprintCallable, Category = Gameplay)
-	float GetEnergy() const;
-
-	UFUNCTION(BlueprintCallable, Category = Gameplay)
-	float GetFullEnergy() const;
-
-	UFUNCTION(BlueprintCallable, Category = Gameplay)
-	float GetMaxEnergy() const;
-
-	float IncreaseEnergy(float Amount, bool bCanGoToMax = false);
-
-	float DecreaseEnergy(float Amount);
-
 	/** Player's stamina, which determines how much they can run (for now). */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
 	float Stamina;
@@ -530,18 +517,6 @@ protected:
 	/** Times to regenerate health per second. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated, Category = Gameplay)
 	float HealthTicksPerSec;
-
-	/** Player's energy. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated, Category = Gameplay)
-	float Energy;
-
-	/** Value where player's energy is considered full. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated, Category = Gameplay)
-	float FullEnergy;
-
-	/** Absolute ceiling where player's energy cannot go higher. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated, Category = Gameplay)
-	float MaxEnergy;
 
 	// Timer and function to regenerate health when damaged.
 	FTimerHandle TimerHandle_RegenHealth;

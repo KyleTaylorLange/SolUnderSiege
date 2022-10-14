@@ -156,9 +156,6 @@ ASolCharacter::ASolCharacter(const FObjectInitializer& ObjectInitializer) //: Su
 	LegHealth = 50.f;
 	FullLegHealth = 50.f;
 
-	Energy = 100.f;
-	FullEnergy = 100.f;
-	MaxEnergy = 150.f;
 	Stamina = 10.f;
 	MaxStamina = 10.f;
 
@@ -738,21 +735,6 @@ float ASolCharacter::GetFullLegHealth() const
 	return FullLegHealth;
 }
 
-float ASolCharacter::GetEnergy() const
-{
-	return Energy;
-}
-
-float ASolCharacter::GetFullEnergy() const
-{
-	return FullEnergy;
-}
-
-float ASolCharacter::GetMaxEnergy() const
-{
-	return MaxEnergy;
-}
-
 AInventoryItem* ASolCharacter::GetEquippedItem() const
 {
 	return EquippedItem;
@@ -1184,20 +1166,6 @@ void ASolCharacter::AddWeaponSway(float DeltaSeconds)
 			HeldWeaponOffset *= FMath::Max(0.0f, 1.0f - DeltaSeconds);
 		}
 	}
-}
-
-float ASolCharacter::IncreaseEnergy(float Amount, bool bCanGoToMax)
-{
-	const float AddedEnergy = FMath::Min(Amount, (bCanGoToMax ? MaxEnergy : FullEnergy) - Energy);
-	Energy += AddedEnergy;
-	return AddedEnergy;
-}
-
-float ASolCharacter::DecreaseEnergy(float Amount)
-{
-	const float UsedEnergy = FMath::Min(Amount, Energy);
-	Energy -= UsedEnergy;
-	return UsedEnergy;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -1775,7 +1743,6 @@ void ASolCharacter::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & Out
 	// everyone
 	DOREPLIFETIME(ASolCharacter, EquippedItem);
 	DOREPLIFETIME(ASolCharacter, Health);
-	DOREPLIFETIME(ASolCharacter, Energy);
 }
 
 bool ASolCharacter::IsAiming() const
