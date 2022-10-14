@@ -49,7 +49,7 @@ ASolCharacter::ASolCharacter(const FObjectInitializer& ObjectInitializer) //: Su
 	FirstPersonCameraComponent = ObjectInitializer.CreateDefaultSubobject<UCameraComponent>(this, TEXT("FirstPersonCamera"));
 	FirstPersonCameraComponent->SetupAttachment(GetCapsuleComponent());
 	FirstPersonCameraComponent->SetRelativeLocation(FVector(0.f, 0.f, BaseEyeHeight)); // Position the camera
-	FirstPersonCameraComponent->bUsePawnControlRotation = true;
+	//FirstPersonCameraComponent->bUsePawnControlRotation = true;
 
 	// Mesh sockets
 	WeaponAttachPoint = "HandRSocket"; //"GunSocketTest";
@@ -183,19 +183,14 @@ ASolCharacter::ASolCharacter(const FObjectInitializer& ObjectInitializer) //: Su
 
 	bReplicates = true;
 
-	// Recoil system variables; in constant flux right now. Most intialize as null/zero.
-	CurrentRecoilVelocity = FVector::ZeroVector;
-	RecoilCurveTime = 0.0f;
-	RecoilTimeScalar = 0.5f;
-
 	HeldWeaponOffset = FRotator::ZeroRotator;
-	AimBreathingOffset = FRotator::ZeroRotator;
 	LastControlRotation = FRotator::ZeroRotator;
-	MaxFreeAimRadius = 7.5f; //10.f;
-	MaxRecoilOffsetRadius = 10.f;
+	MaxFreeAimRadius = 7.5f;
 
 	WeaponSwayTime = 0.0f;
 	BreathingTime = 0.f;
+
+	TEMP_AnimOffset = FVector(-27.5f, 0.5f, -35.f);
 }
 
 void ASolCharacter::PostInitializeComponents()
@@ -271,12 +266,6 @@ void ASolCharacter::Tick(float DeltaSeconds)
 			}
 		}
 
-		/** Add recoil to character if necessary. */
-		if (RecoilCurveTime > 0.0f)
-		{
-			ProcessRecoil(DeltaSeconds);
-		}
-
 		// Zoom in if we want to.
 		if (bIsZooming)
 		{
@@ -291,6 +280,7 @@ void ASolCharacter::Tick(float DeltaSeconds)
 			CurrentZoomPct = FMath::Max(CurrentZoomPct - (DeltaSeconds / ZoomOutTime), 0.f);
 		}
 
+		// Add weapon sway.
 		AddWeaponSway(DeltaSeconds);
 	}
 }
@@ -566,7 +556,7 @@ UInteractableComponent* ASolCharacter::FindInteractable(TSubclassOf<UInteraction
 	AActor* UsableObject = nullptr;
 	// Perform a trace to get objects.
 	// Start vector is just the character's eye location.
-	FVector StartVector = GetActorLocation() + FVector(0.f, 0.f, BaseEyeHeight);
+	FVector StartVector = GetPawnViewLocation();
 	// End vector is 1m in the direction the player is looking, with up to an extra 50cm if the player is looking down (since we cannot crouch yet).
 	FVector EndVector = GetControlRotation().Vector();
 	float Scalar = 100.f;
@@ -983,131 +973,130 @@ void ASolCharacter::FaceRotation(FRotator NewControlRotation, float DeltaTime)
 	if (DeltaAimLagPitch != 0 || DeltaAimLagYaw != 0)
 	{
 		const float AimLagScalar = 0.5f;
-		//AddWeaponOffset(FRotator(DeltaAimLagPitch * AimLagScalar, DeltaAimLagYaw * AimLagScalar, 0.0f), MaxFreeAimRadius, MaxFreeAimRadius);
+		AddWeaponOffset(FRotator(-DeltaAimLagPitch * AimLagScalar, -DeltaAimLagYaw * AimLagScalar, 0.0f), MaxFreeAimRadius, MaxFreeAimRadius);
 	}
 
 	LastControlRotation = NewControlRotation;
 	
-	Super::FaceRotation(NewControlRotation, DeltaTime);
+	//Super::FaceRotation(NewControlRotation, DeltaTime);
+
+
+	// Only if we actually are going to use any component of rotation.
+
+	SetActorRotation(NewControlRotation);
+
+	if (bUseControllerRotationPitch || bUseControllerRotationYaw || bUseControllerRotationRoll)
+	{
+		const FRotator CurrentRotation = GetActorRotation();
+
+		if (!bUseControllerRotationPitch)
+		{
+			NewControlRotation.Pitch = CurrentRotation.Pitch;
+		}
+
+		if (!bUseControllerRotationYaw)
+		{
+			NewControlRotation.Yaw = CurrentRotation.Yaw;
+		}
+
+		if (!bUseControllerRotationRoll)
+		{
+			NewControlRotation.Roll = CurrentRotation.Roll;
+		}
+
+#if ENABLE_NAN_DIAGNOSTIC
+		if (NewControlRotation.ContainsNaN())
+		{
+			logOrEnsureNanError(TEXT("APawn::FaceRotation about to apply NaN-containing rotation to actor! New:(%s), Current:(%s)"), *NewControlRotation.ToString(), *CurrentRotation.ToString());
+		}
+#endif
+
+		//const FRotator Diff = (NewControlRotation - CurrentRotation).GetNormalized();
+		//const float Distance = NewControlRotation.GetManhattanDistance(CurrentRotation);
+		
+		//SetActorRotation(CurrentRotation + (Diff * (Distance * DeltaTime * 0.05f)));
+		SetActorRotation(NewControlRotation);
+	}
+}
+
+FVector ASolCharacter::GetPawnViewLocation() const
+{
+	// Get eye location relative to capsule.
+	FVector RelativeViewOffset = FVector(0.0f, 0.0f, bIsCrouched ? CrouchedEyeHeight : BaseEyeHeight);
+	// Transform to match capsule's absolute rotation.
+	FVector AbsoluteViewOffset = GetActorRotation().RotateVector(RelativeViewOffset);
+	// Add absolute eye offset to pawn's world location.
+	return GetActorLocation() + AbsoluteViewOffset;
 }
 
 void ASolCharacter::OnCameraUpdate(const FVector& CameraLocation, const FRotator& CameraRotation)
 {
+	// Determine camera location.
+	const FMatrix WorldPawnEyesLocation = FRotationTranslationMatrix(GetViewRotation(), GetPawnViewLocation());
+	const FMatrix WorldActorLocation = FRotationTranslationMatrix(GetActorRotation(), GetActorLocation());
+	const FMatrix WorldToLocal = ActorToWorld().ToMatrixWithScale().Inverse();
+	const FMatrix EyesToLocal = WorldPawnEyesLocation * WorldToLocal;
+	FirstPersonCameraComponent->SetRelativeLocation(EyesToLocal.GetOrigin());
+
+	// TEMP: Hide first-person mesh when no weapon is equipped.
+	Mesh1P->SetVisibility(EquippedItem ? true : false);
+	if (EquippedItem)
+	{
+		FMatrix WeaponInWorld = FRotationTranslationMatrix(GetWeaponAimRot(), GetWeaponAimLoc());
+		FMatrix WeaponToLocal = WeaponInWorld * WorldToLocal;
+		Mesh1P->SetRelativeLocationAndRotation(WeaponToLocal.GetOrigin(), WeaponToLocal.Rotator());
+	}
 	// Move to camera class in the future.
 	const float DefaultFOV = 90.f;
 	const float AimedFOV = 75.f;
 	const float ZoomedFOV = DefaultFOV / ZoomScale;
-
 	const float DesiredZoomFOV = FMath::LerpStable(DefaultFOV, ZoomedFOV, CurrentZoomPct);
 	const float DesiredAimFOV = FMath::LerpStable(DefaultFOV, AimedFOV, CurrentAimPct);
 	// Pick whichever has the largest zoom.
 	FirstPersonCameraComponent->FieldOfView = FMath::Min(DesiredZoomFOV, DesiredAimFOV);
-
 	// END move to camera class.
 
-	USkeletalMeshComponent* DefMesh1P = Cast<USkeletalMeshComponent>(GetClass()->GetDefaultSubobjectByName(TEXT("CharacterMesh1P")));
-
-	FVector MeshLoc = DefMesh1P->GetRelativeLocation();
-	float EyeHeightTemp = bIsCrouched ? CrouchedEyeHeight : BaseEyeHeight;
-	FVector EyeHeightVector = FVector(0.0f, 0.0f, EyeHeightTemp);
-	FirstPersonCameraComponent->SetRelativeLocation(EyeHeightVector);
-	FVector TempOffset = FVector(-27.5f, 0.5f, -35.f) + EyeHeightVector; //FVector(-25.f, 1.f, -37.5f);  //23.49, 0, 141.24 vs 0, 0, 165
-	// Temp to remove arms when nothing is equipped.
-	if (!EquippedItem)
-	{
-		TempOffset -= FVector(0.f, 0.f, -200.f);
-	}
-	FVector TestLocFinal = MeshLoc + TempOffset + GetWeaponLocationOffset();
-
-	const FMatrix DefMeshLS = FRotationTranslationMatrix(DefMesh1P->GetRelativeRotation(), TestLocFinal); // DefMesh1P->RelativeLocation
-	const FMatrix LocalToWorld = ActorToWorld().ToMatrixWithScale();
-
-	// Mesh rotating code expect uniform scale in LocalToWorld matrix
-
-	const FRotator RotCameraPitch(CameraRotation.Pitch, 0.0f, 0.0f);
-	const FRotator RotCameraYaw(0.0f, CameraRotation.Yaw, 0.0f);
-
-	const FRotator RotationOffset(GetWeaponRotationOffset().Pitch, GetWeaponRotationOffset().Yaw, 0.0f); // TEST
-
-	const FMatrix LeveledCameraLS = FRotationTranslationMatrix(RotCameraYaw, CameraLocation) * LocalToWorld.Inverse();
-	const FMatrix PitchedCameraLS = FRotationMatrix(RotCameraPitch) * LeveledCameraLS;
-	const FMatrix OffsetPitchedCameraLS = FRotationMatrix(RotationOffset) * PitchedCameraLS;
-	const FMatrix MeshRelativeToCamera = DefMeshLS * LeveledCameraLS.Inverse();
-	const FMatrix PitchedMesh = MeshRelativeToCamera * OffsetPitchedCameraLS;
-
-	Mesh1P->SetRelativeLocationAndRotation(PitchedMesh.GetOrigin(), PitchedMesh.Rotator());
-}
-
-FRotator ASolCharacter::GetWeaponRotationOffset() const
-{
-	const FRotator FinalRot = HeldWeaponOffset + AimBreathingOffset;
-	return FinalRot;
-}
-
-FVector ASolCharacter::GetWeaponLocationOffset() const
-{
-	const AInventoryItem* Weapon = GetEquippedItem();
-	FVector AimedVector = FVector::ZeroVector;
-	FVector UnaimedVector = FVector::ZeroVector;
-	if (Weapon)
-	{
-		UnaimedVector += Weapon->GetMeshOffset();
-		AFirearm* Firearm = Cast<AFirearm>(EquippedItem);
-		if (Firearm)
-		{
-			AimedVector += Firearm->GetAimedOffset();
-		}
-	}
-	// Function to make interpolation sigmoid (i.e. more natural).
-	const float ModifiedAimPct = 0.5f + ((2 * (CurrentAimPct - 0.5f)) / (1 + (2 * FMath::Abs(CurrentAimPct - 0.5f))));
-	const FVector FinalVector = FMath::LerpStable(UnaimedVector, AimedVector, ModifiedAimPct);
-	return FinalVector;
+	//USkeletalMeshComponent* DefaultMesh1P = Cast<USkeletalMeshComponent>(GetClass()->GetDefaultSubobjectByName(TEXT("CharacterMesh1P")));
 }
 
 FRotator ASolCharacter::GetWeaponAimRot() const
 {
-	// NOTE: GetBaseAimRotation().Clamp() = GetControlRotation()
-	const FRotator FinalRotation = GetBaseAimRotation().Clamp() + GetWeaponRotationOffset().Clamp();
-	return FinalRotation; 
+	return GetWeaponAimMatrix().Rotator();
 }
 
 FVector ASolCharacter::GetWeaponAimLoc() const
 {
-	const FVector EyeLocation = GetActorLocation() + FVector(0.f, 0.f, BaseEyeHeight);
-	const FVector WeaponOffset = GetWeaponLocationOffset(); // +FVector(75.f, 0.f, -7.5f); //Temporary offset for muzzle.
-	const FVector FinalLocation = EyeLocation + GetWeaponAimRot().RotateVector(WeaponOffset);
-	return FinalLocation;
+	return GetWeaponAimMatrix().GetOrigin();
 }
 
-void ASolCharacter::AddRecoil(FVector InRecoil)
+FMatrix ASolCharacter::GetWeaponAimMatrix() const
 {
-	if (RecoilCurveTime <= 0.0f)
+	// Get the pawn's view origin.
+	const FMatrix ViewMatrix = FRotationTranslationMatrix(GetViewRotation(), GetPawnViewLocation());
+
+	// Offset the view origin for things like aim lag.
+	const FMatrix AimOffsetMatrix = FRotationTranslationMatrix(FRotator::ZeroRotator, FVector::ZeroVector);
+	const FMatrix AimMatrix = AimOffsetMatrix * ViewMatrix;
+
+	// Determine the equipped  item's relative offset from the pawn's (offset) aim origin.
+	FVector WeaponOffset(FVector::ZeroVector);
+	// Get equipped item's desired mesh offset.
+	if (EquippedItem)
 	{
-		CurrentRecoilVelocity = FVector::ZeroVector;
+		WeaponOffset = EquippedItem->GetMeshOffset();
+		// If it's a firearm, lerp between the aimed and regular offsets.
+		if (AFirearm* EquippedFirearm = Cast<AFirearm>(EquippedItem))
+		{
+			// Function to make interpolation sigmoid (i.e. more natural).
+			const float ModifiedAimPct = 0.5f + ((2 * (CurrentAimPct - 0.5f)) / (1 + (2 * FMath::Abs(CurrentAimPct - 0.5f))));
+			WeaponOffset = FMath::LerpStable(WeaponOffset, EquippedFirearm->GetAimedOffset(), ModifiedAimPct);
+		}
 	}
-	CurrentRecoilVelocity += InRecoil;
-	RecoilCurveTime = 1.0f;
-}
+	FMatrix ItemOffsetMatrix = FRotationTranslationMatrix(FRotator::ZeroRotator, WeaponOffset);
 
-void ASolCharacter::ProcessRecoil(float DeltaSeconds)
-{
-	if (RecoilCurveTime > 0.0f)
-	{
-		// Make a pseudo-curve (faster to slower).
-		const float ScaledTime = DeltaSeconds / RecoilTimeScalar;
-		const float RecoilThisTick = FMath::Clamp(ScaledTime, 0.0f, RecoilCurveTime);
-
-		// Calculate recoil to apply this tick.
-		const FVector TotalRecoilThisTick = RecoilThisTick * CurrentRecoilVelocity;
-
-		AddWeaponOffset(FRotator(TotalRecoilThisTick.X, TotalRecoilThisTick.Y, 0.0f), MaxRecoilOffsetRadius * 3.f, MaxRecoilOffsetRadius * 3.f);
-
-		// Finally, update the recoil.
-		const float NewRecoilTime = FMath::Max(RecoilCurveTime - RecoilThisTick, 0.0f);
-		RecoilCurveTime = NewRecoilTime;
-		const float RecoilDampening = FMath::Min(CurrentRecoilVelocity.Size() * DeltaSeconds, 1.f);
-		CurrentRecoilVelocity -= CurrentRecoilVelocity * RecoilDampening;
-	}
+	// Offset the weapon from the pawn's view origin.
+	FMatrix FinalMatrix = ItemOffsetMatrix * AimMatrix;
+	return FinalMatrix;
 }
 
 void ASolCharacter::AddWeaponSway(float DeltaSeconds)
@@ -1122,11 +1111,12 @@ void ASolCharacter::AddWeaponSway(float DeltaSeconds)
 
 	FRotator BreathingSwayRange(0.25f, 0.125f, 0.125f);
 	FRotator BreathingSwayChange = FRotator(BreathingSwayRange.Pitch * BreathPitchSwayValue, BreathingSwayRange.Yaw * BreathYawSwayValue, 0);
-	AimBreathingOffset += BreathingSwayChange;
+	//AddWeaponOffset(BreathingSwayChange, 100.f, 100.f);
+	//AimBreathingOffset += BreathingSwayChange;
 
+	/**
 	// Handle weapon bob due to movement.
-	USolCharacterMovementComponent* SolMoveComp = Cast< USolCharacterMovementComponent>(GetCharacterMovement());
-	if (SolMoveComp)
+	if (USolCharacterMovementComponent* SolMoveComp = Cast< USolCharacterMovementComponent>(GetCharacterMovement()))
 	{
 		// If moving, keep swaying left to right.
 		if (!SolMoveComp->Velocity.IsZero() && SolMoveComp->IsWalking())
@@ -1166,6 +1156,7 @@ void ASolCharacter::AddWeaponSway(float DeltaSeconds)
 			HeldWeaponOffset *= FMath::Max(0.0f, 1.0f - DeltaSeconds);
 		}
 	}
+	*/
 }
 
 //////////////////////////////////////////////////////////////////////////
