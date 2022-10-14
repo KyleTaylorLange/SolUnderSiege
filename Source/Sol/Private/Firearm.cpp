@@ -556,24 +556,6 @@ float AFirearm::UseAmmo(float Amount, int SlotIndex)
 	return 0;
 }
 
-void AFirearm::AddRecoil()
-{
-	ServerAddRecoilToPawn();
-}
-
-bool AFirearm::ServerAddRecoilToPawn_Validate()
-{
-	return true;
-}
-
-void AFirearm::ServerAddRecoilToPawn_Implementation()
-{
-	const float RandAngle = FMath::DegreesToRadians(FMath::FRandRange(0.0f, 360.f)); //
-	/* Note: X is Pitch and Y is Yaw. If we move to Vector2D, we want to swap these. */
-	FVector TestVector = FVector(FMath::Cos(RandAngle), FMath::Sin(RandAngle), 0.0f) * RecoilPerShot;
-	MyPawn->AddRecoil(TestVector);
-}
-
 FRotator AFirearm::CalculateSpread() const
 {
 	if (SpreadRadius > 0 && SpreadRange > 0)
@@ -603,7 +585,6 @@ void AFirearm::HandleFiring()
 			UseAmmo(AmmoToUse, AmmoSlot);
 
 			FireWeapon();
-			AddRecoil();
 
 			// update firing FX on remote clients if function was called on server
 			BurstCounter++;
