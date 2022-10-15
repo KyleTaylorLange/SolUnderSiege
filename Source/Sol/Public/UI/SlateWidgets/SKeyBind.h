@@ -85,7 +85,7 @@ public:
 			KeyText->SetColorAndOpacity(NewKey == DefaultKey ? FLinearColor::Black : FLinearColor::White);
 			bWaitingForKey = false;
 			FSlateApplication::Get().GetPlatformApplication().Get()->Cursor->Show(true);
-			FSlateApplication::Get().ClearKeyboardFocus(EKeyboardFocusCause::SetDirectly);
+			FSlateApplication::Get().ClearKeyboardFocus(EFocusCause::SetDirectly);
 
 			if (bNotify)
 			{

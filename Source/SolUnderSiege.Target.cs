@@ -5,9 +5,9 @@ using System.Collections.Generic;
 
 public class SolUnderSiegeTarget : TargetRules
 {
-	public SolUnderSiegeTarget(TargetInfo Target) : base(Target)
-	{
-		Type = TargetType.Game;
+    public SolUnderSiegeTarget(TargetInfo Target) : base(Target)
+    {
+        Type = TargetType.Game;
         ExtraModuleNames.Add("Sol");
         bUsesSteam = true;
     }

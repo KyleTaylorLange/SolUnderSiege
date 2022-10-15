@@ -73,7 +73,7 @@ void ASolHUD::PostInitializeComponents()
 		// Create the HUD widget.
 		if (HUDWidgetClass)
 		{
-			if ((HUDWidget = CreateWidget<UUserWidget>(PlayerOwner, HUDWidgetClass)) != nullptr)
+			if ((HUDWidget = CreateWidget<UUserWidget, APlayerController>(PlayerOwner, HUDWidgetClass)) != nullptr)
 			{
 				HUDWidget->AddToViewport();
 			}
@@ -82,7 +82,7 @@ void ASolHUD::PostInitializeComponents()
 		// Create a UMG scoreboard widget if we have one.
 		if (ScoreboardWidgetClass)
 		{
-			if ((ScoreboardWidget = CreateWidget<UUserWidget>(PlayerOwner, ScoreboardWidgetClass)) != nullptr)
+			if ((ScoreboardWidget = CreateWidget<UUserWidget, APlayerController>(PlayerOwner, ScoreboardWidgetClass)) != nullptr)
 			{
 				ScoreboardWidget->AddToViewport();
 			}
@@ -110,7 +110,7 @@ void ASolHUD::PostInitializeComponents()
 		// Create a UMG in-game menu if we have one.
 		if (InGameMenuWidgetClass)
 		{
-			if ((InGameMenuWidget = CreateWidget<UUserWidget>(PlayerOwner, InGameMenuWidgetClass)) != nullptr)
+			if ((InGameMenuWidget = CreateWidget<UUserWidget, APlayerController>(PlayerOwner, InGameMenuWidgetClass)) != nullptr)
 			{
 				InGameMenuWidget->AddToViewport();
 			}
@@ -685,7 +685,7 @@ void ASolHUD::ShowInventory(bool bEnable)
 		// Create the Inventory widget if it is not already created.
 		if (!InventoryWidget)
 		{
-			if ((InventoryWidget = CreateWidget<UUserWidget>(PlayerOwner, InventoryWidgetClass)) != nullptr)
+			if ((InventoryWidget = CreateWidget<UUserWidget, APlayerController>(PlayerOwner, InventoryWidgetClass)) != nullptr)
 			{
 				InventoryWidget->AddToViewport();
 				InventoryWidget->SetVisibility(ESlateVisibility::Visible);

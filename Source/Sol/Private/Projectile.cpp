@@ -113,13 +113,12 @@ void AProjectile::Detonate(const FHitResult Hit)
 	}
 	*/
 	////GEngine->AddOnScreenDebugMessage(-1, 15.f, FColor::Red, FString::Printf(TEXT("HitPhysMat: %s"), *PDEvent.HitInfo.PhysMaterial->GetClass() ));
-
-	if ( (ImpactDamage > 0) && (Hit.Actor != NULL) && (Hit.Actor != this) ) //&& DamageTypeClass)
+	if ( (ImpactDamage > 0) && (Hit.GetActor()) && (Hit.GetActor() != this)) //&& DamageTypeClass)
 	{
 		// Quick workaround to prevent killing ourselves.
-		if (Hit.Actor != GetInstigator())
+		if (Hit.GetActor() != GetInstigator())
 		{
-			Hit.Actor->TakeDamage(ImpactDamage, PDEvent, GetInstigator()->Controller, this);
+			Hit.GetActor()->TakeDamage(ImpactDamage, PDEvent, GetInstigator()->Controller, this);
 
 			// Disabled for now. (causes Pickup locations to be out of synch.)
 			if (Hit.Component != NULL && Hit.Component->IsSimulatingPhysics())

@@ -14,7 +14,7 @@ ABullet::ABullet(const FObjectInitializer& ObjectInitializer)
 
 	ParticleSysComp = ObjectInitializer.CreateDefaultSubobject<UParticleSystemComponent>(this, TEXT("ParticleSysComp"));
 	ParticleSysComp->SetTemplate(FoundPS.Object);
-	ParticleSysComp->AttachTo(GetRootComponent());
+	ParticleSysComp->AttachToComponent(GetRootComponent(), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 
 	// The below speeds are for testing purposes only. 
 	// Remember, 10 000 cm/s = 100 m/s, so the values are huge.

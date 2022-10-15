@@ -32,7 +32,7 @@ public class Sol : ModuleRules
                 "OnlineSubsystemNull"
             }
         );
-        if ((Target.Platform == UnrealTargetPlatform.Win32) || (Target.Platform == UnrealTargetPlatform.Win64) || (Target.Platform == UnrealTargetPlatform.Linux) || (Target.Platform == UnrealTargetPlatform.Mac))
+        if ((Target.Platform == UnrealTargetPlatform.Win64) || (Target.Platform == UnrealTargetPlatform.Linux) || (Target.Platform == UnrealTargetPlatform.Mac))
         {
             DynamicallyLoadedModuleNames.Add("OnlineSubsystemSteam");
         }
