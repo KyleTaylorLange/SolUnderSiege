@@ -1,3 +1,5 @@
+***Note: this game is being fully redeveloped for Unreal Engine 5 in a new repository, [SolGame](https://github.com/KyleTaylorLange/SolGame). This repository is historical.***
+
 # Sol Under Siege
 
 Author: Kyle Taylor Lange
@@ -14,7 +16,7 @@ for small-scale deathmatch to large open-terrain battlefields for objective-base
 
 ## Notes
 
-  A [larger instruction manual](https://github.com/Dakatsu/SolUnderSiege/blob/master/SolUnderSiege_Manual.pdf) serves as an introduction for the game that will better document its current 
+  A [larger instruction manual](https://github.com/KyleTaylorLange/SolUnderSiege/blob/master/SolUnderSiege_Manual.pdf) serves as an introduction for the game that will better document its current 
 development state, but the game should be considered "pre-alpha" with multiple bugs and incomplete 
 features. It is currently only being distributed to potential employers and internships as an example of
 my programming skills. Almost all graphics are very simple placeholders. I intend to publicly release the
